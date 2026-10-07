@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="confirm(id, message, action)" class="modal" th:id="${id}" hidden>
+    <div class="modal-box card">
+        <p th:text="${message}">Mensaje</p>
+        <form th:action="${action}" method="post">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <button type="submit" class="btn-primary">Confirmar</button>
+            <button type="button" th:onclick="'document.getElementById(\'' + ${id} + '\').setAttribute(\'hidden\', \'hidden\')'">Cancelar</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#E91E63">
+    <title th:text="${title} ?: 'Shared'">Shared</title>
+    <link rel="manifest" th:href="@{/manifest.webmanifest}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+    <script th:src="@{/js/sw-register.js}" defer></script>
+</head>
+<body>
+<nav th:fragment="nav(active)" class="bottom-nav">
+    <a th:href="@{/feed}" th:classappend="${active == 'feed'} ? 'active'">
+        <span class="icon">🏠</span>Feed
+    </a>
+    <a th:href="@{/favorites}" th:classappend="${active == 'favorites'} ? 'active'">
+        <span class="icon">❤️</span>Favoritos
+    </a>
+    <a th:href="@{/my-experiences}" th:classappend="${active == 'mine'} ? 'active'">
+        <span class="icon">➕</span>Tus Experiencias
+    </a>
+    <a th:href="@{/notifications}" th:classappend="${active == 'notifications'} ? 'active'">
+        <span class="icon">🔔</span>Avisos
+    </a>
+    <a th:href="@{/settings}" th:classappend="${active == 'settings'} ? 'active'">
+        <span class="icon">⚙️</span>Config
+    </a>
+</nav>
+</body>
+</html>
