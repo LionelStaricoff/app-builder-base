@@ -24,6 +24,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByUserIdOrderByCreatedAtDesc(Long userId);
 
+    List<Reservation> findByUserIdAndStatus(Long userId, ReservationStatus status);
+
     Reservation findFirstByUserIdOrderByCreatedAtDesc(Long userId);
 
     java.util.Optional<Reservation> findFirstByInstanceIdAndUserIdAndStatus(
