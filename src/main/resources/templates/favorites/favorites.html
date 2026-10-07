@@ -34,6 +34,19 @@
         <span class="tab">Experiencias Vividas</span>
     </div>
     <div class="empty" th:if="${#lists.isEmpty(lived)}">Todavía no viviste experiencias</div>
+
+    <div class="card" th:each="l : ${lived}" style="padding:1rem">
+        <p>
+            <strong th:text="${l.experienceName}">Experiencia</strong>
+            · 📅 <span th:text="${l.date}">01/11/2026</span>
+        </p>
+        <p class="meta">
+            <span class="stars">★</span> <span th:text="${l.stars}">5</span>
+            <span th:if="${l.comment != null && !l.comment.isEmpty()}">
+                · <span th:text="${l.comment}">Comentario</span>
+            </span>
+        </p>
+    </div>
 </main>
 </body>
 </html>

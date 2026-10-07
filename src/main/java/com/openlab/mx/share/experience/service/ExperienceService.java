@@ -84,6 +84,11 @@ public class ExperienceService {
         return owned(id, editor);
     }
 
+    /** Experiencias propias para "Tus Experiencias" (spec §6.3). */
+    public java.util.List<Experience> mine(Long creatorId) {
+        return experienceRepository.findByCreatorId(creatorId);
+    }
+
     public Experience get(Long id) {
         return experienceRepository.findById(id)
                 .orElseThrow(() -> new DomainException("Experiencia no encontrada"));

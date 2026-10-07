@@ -20,7 +20,7 @@ public class FavoriteController {
     public String favorites(Model model) {
         var user = currentUser.require();
         model.addAttribute("favorites", favoriteService.listFavorites(user));
-        model.addAttribute("lived", java.util.List.of()); // se llena en Task 5 (Experiencias Vividas)
+        model.addAttribute("lived", favoriteService.listLived(user));
         return "favorites/favorites";
     }
 

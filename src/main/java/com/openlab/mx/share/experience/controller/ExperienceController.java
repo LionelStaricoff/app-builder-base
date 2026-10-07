@@ -115,6 +115,14 @@ public class ExperienceController {
         return "redirect:/my-experiences";
     }
 
+    /** "Tus Experiencias" (spec §6.3): lista de las experiencias propias. */
+    @GetMapping("/my-experiences")
+    public String mine(Model model) {
+        User user = currentUser();
+        model.addAttribute("experiencias", experienceService.mine(user.getId()));
+        return "experience/my-experiences";
+    }
+
     private User currentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return userRepository.findByUsername(authentication.getName())

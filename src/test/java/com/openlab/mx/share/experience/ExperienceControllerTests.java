@@ -120,6 +120,14 @@ class ExperienceControllerTests {
     }
 
     @Test
+    @WithMockUser("demo_creator")
+    void misExperienciasRenderiza() throws Exception {
+        mockMvc.perform(get("/my-experiences"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Mis Experiencias")));
+    }
+
+    @Test
     @WithMockUser("demo_user")
     void experienciaInexistenteRedirigeConMensajeFlash() throws Exception {
         mockMvc.perform(get("/experiences/99999999"))
