@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Iniciar sesión')}"></head>
+<body>
+<main class="app-main">
+    <div class="card" style="padding:1.5rem">
+        <h1 style="color:var(--color-primary)">Shared</h1>
+        <h2>Iniciar sesión</h2>
+        <div th:if="${param.error}" style="color:var(--color-primary)">Usuario o contraseña incorrectos</div>
+        <form th:action="@{/login}" method="post">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <label>Usuario
+                <input type="text" name="username" required autofocus>
+            </label>
+            <label>Contraseña
+                <input type="password" name="password" required>
+            </label>
+            <button type="submit" class="btn-primary">Entrar</button>
+        </form>
+        <p>¿No tenés cuenta? <a th:href="@{/register}">Registrate</a></p>
+    </div>
+</main>
+</body>
+</html>

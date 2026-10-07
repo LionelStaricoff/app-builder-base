@@ -24,7 +24,9 @@ public class SecurityConfig {
                 ).permitAll()
                 .anyRequest().authenticated()
             )
-            .formLogin(Customizer.withDefaults())
+            .formLogin(form -> form
+                .defaultSuccessUrl("/feed", true)
+                .permitAll())
             .logout(logout -> logout.logoutSuccessUrl("/login"));
         return http.build();
     }
