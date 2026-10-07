@@ -75,6 +75,9 @@ public class ExperienceController {
         model.addAttribute("experience", experience);
         model.addAttribute("images", images);
         model.addAttribute("instances", instances);
+        var usuario = currentUser();
+        model.addAttribute("esDueno", usuario != null && experience.getCreator() != null
+                && usuario.getId().equals(experience.getCreator().getId()));
         return "experience/detail";
     }
 

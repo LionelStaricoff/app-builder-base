@@ -33,6 +33,12 @@
             · <span th:text="${r.status}">PENDIENTE</span>
         </p>
 
+        <form th:if="${r.status.name() != 'CANCELADO'}"
+              th:action="@{/reservations/{id}/cancel(id=${r.id})}" method="post">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <button type="submit" class="btn-secondary">Cancelar reserva</button>
+        </form>
+
         <form th:if="${r.status.name() == 'CONFIRMADA'}"
               th:action="@{/instances/{id}/rate(id=${r.instance.id})}" method="post"
               style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">

@@ -18,6 +18,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByInstanceIdAndStatus(Long instanceId, ReservationStatus status);
 
+    List<Reservation> findByInstanceIdAndStatusNot(Long instanceId, ReservationStatus status);
+
     List<Reservation> findByInstanceIdInAndStatus(List<Long> instanceIds, ReservationStatus status);
 
     List<Reservation> findByUserIdOrderByCreatedAtDesc(Long userId);

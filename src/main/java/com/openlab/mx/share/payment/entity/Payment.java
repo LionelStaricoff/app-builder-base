@@ -59,4 +59,8 @@ public class Payment {
     /** Lo que efectivamente cobra el creador: amount - commission. */
     @Column(precision = 10, scale = 2)
     private BigDecimal payout;
+
+    /** Lo que se devolvió al participante al cancelar. */
+    @Column(precision = 10, scale = 2)
+    private BigDecimal refund;
 }

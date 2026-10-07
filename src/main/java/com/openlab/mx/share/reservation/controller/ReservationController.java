@@ -1,5 +1,7 @@
 package com.openlab.mx.share.reservation.controller;
 
+import com.openlab.mx.share.notification.entity.NotificationType;
+import com.openlab.mx.share.notification.service.NotificationService;
 import com.openlab.mx.share.reservation.dto.ReservationRequest;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
@@ -28,6 +30,7 @@ public class ReservationController {
 
     private final ReservationService reservationService;
     private final ReservationRepository reservationRepository;
+    private final NotificationService notificationService;
     private final CurrentUser currentUser;
 
     @Value("${escrow.commission-rate}")
@@ -36,14 +39,26 @@ public class ReservationController {
     @PostMapping("/reservations/{instanceId}")
     public String reserve(@PathVariable Long instanceId,
                           @Valid @ModelAttribute ReservationRequest request) {
-        reservationService.reserve(instanceId, request.attendees(), currentUser.require());
+        User user = currentUser.require();
+        Reservation reservation = reservationService.reserve(instanceId, request.attendees(), user);
+        User creador = reservation.getInstance().getExperience().getCreator();
+        if (creador != null) {
+            notificationService.notify(creador, NotificationType.SOLICITUD_RESERVA,
+                    user.getUsername() + " reservó " + request.attendees() + " lugar(es) en "
+                            + reservation.getInstance().getExperience().getName(),
+                    "/reservations");
+        }
         return "redirect:/checkout/" + instanceId;
     }
 
     /** El creador confirma la reserva pendiente (spec §5.3). */
     @PostMapping("/reservations/{id}/confirm")
     public String confirm(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        reservationService.confirm(id, currentUser.require());
+        Reservation reservation = reservationService.confirm(id, currentUser.require());
+        notificationService.notify(reservation.getUser(), NotificationType.RESERVA_CONFIRMADA,
+                "Tu reserva en " + reservation.getInstance().getExperience().getName()
+                        + " fue confirmada",
+                "/reservations");
         redirectAttributes.addFlashAttribute("ok", "Reserva confirmada");
         return CurrentUser.backOr("/reservations");
     }

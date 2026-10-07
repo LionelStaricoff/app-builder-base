@@ -31,6 +31,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -47,6 +49,8 @@ class EscrowServiceTest {
     private RatingRepository ratingRepository;
     @Mock
     private CommentRepository commentRepository;
+    @Mock
+    private com.openlab.mx.share.notification.service.NotificationService notificationService;
 
     @InjectMocks
     private EscrowService escrowService;
@@ -119,6 +123,10 @@ class EscrowServiceTest {
         assertEquals(0, pago.getPayout().compareTo(new BigDecimal("361.00")),
                 "payout = amount - commission (95%)");
         verify(paymentRepository).save(pago);
+        verify(notificationService).notify(
+                org.mockito.ArgumentMatchers.argThat(u -> u != null && Long.valueOf(1L).equals(u.getId())),
+                eq(com.openlab.mx.share.notification.entity.NotificationType.PAGO_LIBERADO),
+                anyString(), anyString());
     }
 
     @Test

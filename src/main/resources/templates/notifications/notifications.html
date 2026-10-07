@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Avisos')}"></head>
+<body>
+<main class="app-main">
+    <div class="empty" th:if="${#lists.isEmpty(notificaciones)}">No tenés avisos todavía.</div>
+
+    <div class="card" th:each="n : ${notificaciones}" style="padding:1rem"
+         th:classappend="${!n.read} ? 'unread'">
+        <p>
+            <strong th:text="${n.type}">SOLICITUD_RESERVA</strong>
+            <span th:if="${!n.read}" class="chip">Nuevo</span>
+        </p>
+        <p th:text="${n.message}">Mensaje</p>
+        <p class="meta">
+            <span th:text="${#temporals.format(n.createdAt, 'dd/MM/yyyy HH:mm')}">01/11/2026 10:00</span>
+            <a th:if="${n.link}" th:href="${n.link}">Ver</a>
+        </p>
+        <form th:if="${!n.read}" th:action="@{/notifications/{id}/read(id=${n.id})}" method="post">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <button type="submit" class="btn-primary">Marcar como leído</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

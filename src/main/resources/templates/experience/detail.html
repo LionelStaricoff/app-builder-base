@@ -37,6 +37,12 @@
                     <strong th:text="${#temporals.format(inst.date, 'dd/MM/yyyy')} + ' — ' + ${#temporals.format(inst.startTime, 'HH:mm')}">01/11/2026 — 10:00</strong>
                 </p>
                 <div th:replace="~{experience/picker-modal :: picker(${inst.id})}"></div>
+                <form th:if="${esDueno}"
+                      th:action="@{/instances/{id}/cancel(id=${inst.id})}" method="post"
+                      onsubmit="return confirm('¿Cancelar esta fecha? Se reembolsa el 100% a los inscritos.');">
+                    <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                    <button type="submit" class="btn-secondary">Cancelar fecha</button>
+                </form>
             </div>
         </div>
     </div>

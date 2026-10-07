@@ -1,5 +1,7 @@
 package com.openlab.mx.share.payment.service;
 
+import com.openlab.mx.share.notification.entity.NotificationType;
+import com.openlab.mx.share.notification.service.NotificationService;
 import com.openlab.mx.share.experience.entity.Comment;
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.entity.InstanceStatus;
@@ -37,6 +39,7 @@ public class EscrowService {
     private final PaymentRepository paymentRepository;
     private final RatingRepository ratingRepository;
     private final CommentRepository commentRepository;
+    private final NotificationService notificationService;
 
     @Value("${escrow.auto-release-days}")
     private long autoReleaseDays = 2;
@@ -75,6 +78,14 @@ public class EscrowService {
         payment.setReleasedAt(LocalDateTime.now());
         payment.setPayout(payment.getAmount().subtract(payment.getCommission()));
         paymentRepository.save(payment);
+
+        var creador = reservation.getInstance().getExperience().getCreator();
+        if (creador != null) {
+            notificationService.notify(creador, NotificationType.PAGO_LIBERADO,
+                    "Te liberamos $" + payment.getPayout() + " por "
+                            + reservation.getInstance().getExperience().getName(),
+                    "/reservations");
+        }
         return true;
     }
 
