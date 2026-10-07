@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Mis favoritos')}"></head>
+<body>
+<main class="app-main">
+    <div class="tabs">
+        <span class="tab active">Experiencias Favoritas</span>
+        <span class="tab">Experiencias Vividas</span>
+    </div>
+
+    <div class="empty" th:if="${#lists.isEmpty(favorites)}">Todavía no guardaste favoritos</div>
+
+    <div class="card" th:each="dto : ${favorites}">
+        <img class="cover" th:if="${dto.coverBase64 != null}"
+             th:src="'data:image/png;base64,' + ${dto.coverBase64}" th:alt="${dto.name}">
+        <div style="padding:1rem">
+            <div class="card-head">
+                <h3><a th:href="@{/experiences/{id}(id=${dto.id})}" th:text="${dto.name}">Nombre</a></h3>
+                <form th:action="@{/favorites/{id}/remove(id=${dto.id})}" method="post" class="heart">
+                    <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                    <button type="submit"
+                            th:onclick="'return confirm(\'¿Quitar de favoritos?\')'">❤️</button>
+                </form>
+            </div>
+            <p class="meta">
+                <strong th:text="'$' + ${dto.price} + ' MXN'">$190 MXN</strong>
+                · 📅 <span th:text="${dto.nextDate} ?: 'Sin fecha'">2026-12-01</span>
+            </p>
+        </div>
+    </div>
+
+    <div class="tab-divider"></div>
+    <div class="tabs">
+        <span class="tab">Experiencias Vividas</span>
+    </div>
+    <div class="empty" th:if="${#lists.isEmpty(lived)}">Todavía no viviste experiencias</div>
+</main>
+</body>
+</html>

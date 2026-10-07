@@ -1,0 +1,57 @@
+package com.openlab.mx.share.experience.controller;
+
+import com.openlab.mx.share.experience.dto.ExperienceFeedDTO;
+import com.openlab.mx.share.experience.entity.ExperienceCategory;
+import com.openlab.mx.share.experience.service.FeedService;
+import com.openlab.mx.share.shared.CurrentUser;
+import com.openlab.mx.share.user.entity.User;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+/**
+ * Feed: render inicial de la página 0 (Thymeleaf) + API paginada
+ * pageSize=1 para el scroll infinito. El navegador puede mandar lat/lng
+ * (GPS) que pisan los del perfil.
+ */
+@Controller
+@RequiredArgsConstructor
+public class FeedController {
+
+    private final FeedService feedService;
+    private final CurrentUser currentUser;
+
+    @GetMapping("/feed")
+    public String feed(@RequestParam(required = false) ExperienceCategory category, Model model) {
+        User user = currentUser.get();
+        Page<ExperienceFeedDTO> feedPage = feedService.page(
+                user != null ? user.getId() : null,
+                user != null ? user.getCity() : null,
+                user != null ? user.getLat() : null,
+                user != null ? user.getLng() : null,
+                category, 0);
+        model.addAttribute("feedPage", feedPage);
+        model.addAttribute("categories", ExperienceCategory.values());
+        model.addAttribute("selectedCategory", category);
+        return "feed";
+    }
+
+    @GetMapping("/feed/api")
+    @ResponseBody
+    public Page<ExperienceFeedDTO> feedApi(@RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(required = false) ExperienceCategory category,
+                                           @RequestParam(required = false) Double lat,
+                                           @RequestParam(required = false) Double lng) {
+        User user = currentUser.get();
+        return feedService.page(
+                user != null ? user.getId() : null,
+                user != null ? user.getCity() : null,
+                lat != null ? lat : (user != null ? user.getLat() : null),
+                lng != null ? lng : (user != null ? user.getLng() : null),
+                category, page);
+    }
+}

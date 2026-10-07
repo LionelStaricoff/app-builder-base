@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ExperienceInstanceRepository extends JpaRepository<ExperienceInstance, Long> {
     List<ExperienceInstance> findByExperienceIdAndDateGreaterThanEqualOrderByDateAsc(Long experienceId, LocalDate date);
     List<ExperienceInstance> findByStatus(InstanceStatus status);
     List<ExperienceInstance> findByExperienceIdOrderByDateAsc(Long experienceId);
+    Optional<ExperienceInstance> findFirstByExperienceIdAndDateGreaterThanEqualAndStatusOrderByDateAsc(
+            Long experienceId, LocalDate date, InstanceStatus status);
 }

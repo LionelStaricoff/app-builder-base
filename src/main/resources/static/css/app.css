@@ -66,6 +66,29 @@ body {
   cursor: pointer;
 }
 
+/* Feed y favoritos */
+.chips { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .5rem; }
+.chip { flex: none; padding: .4rem .9rem; border-radius: 999px; background: var(--surface); box-shadow: var(--shadow); text-decoration: none; color: var(--text); font-size: .85rem; }
+.chip.active { background: var(--color-primary); color: #fff; }
+.card .cover { width: 100%; aspect-ratio: 16/10; object-fit: cover; display: block; }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.card-head h3 { margin: 0; }
+.card-head a { color: var(--text); text-decoration: none; }
+.heart { border: none; background: none; }
+.heart button { border: none; background: none; font-size: 1.4rem; cursor: pointer; }
+.meta { color: #555; font-size: .9rem; }
+.stars { color: var(--star); }
+.empty { text-align: center; color: #777; padding: 2rem 1rem; }
+.tabs { display: flex; gap: 1rem; margin-bottom: 1rem; }
+.tab { padding: .5rem 0; border-bottom: 3px solid transparent; color: #777; }
+.tab.active { border-color: var(--color-primary); color: var(--text); font-weight: 600; }
+.tab-divider { height: 1px; background: #eee; margin: 1.5rem 0; }
+.hint { font-size: .8rem; color: #777; }
+.btn-secondary { background: var(--surface); border: 1px solid #ccc; border-radius: var(--radius); padding: .5rem 1rem; cursor: pointer; }
+.field-error, span.error, div.error { color: var(--color-primary); font-size: .85rem; }
+label { display: block; margin: .75rem 0; font-size: .9rem; }
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], select, textarea { width: 100%; padding: .6rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+
 .confirm-screen {
   min-height: 100vh;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
