@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Pagar')}"></head>
+<body>
+<main class="app-main">
+    <div class="card" style="padding:1rem">
+        <h2>Pago simulado</h2>
+        <p><strong th:text="${instance.experience.name}">Experiencia</strong></p>
+        <p class="meta">
+            📅 <span th:text="${instance.date} + ' ' + ${instance.startTime}">01/11/2026 10:00</span>
+            · Cupos: <span th:text="${attendees}">1</span>
+            · <strong th:text="'$' + ${total} + ' MXN'">$0 MXN</strong>
+        </p>
+        <p class="hint">El pago queda retenido en garantía hasta que la experiencia termine.</p>
+
+        <div class="empty" th:if="${error}" th:text="${error}">Error</div>
+
+        <form th:action="@{/checkout/{id}(id=${instance.id})}" method="post">
+            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <label>Número de tarjeta
+                <input name="cardNumber" inputmode="numeric" pattern="\d{12,19}"
+                       placeholder="123456789012" required>
+            </label>
+            <label>Titular
+                <input name="holder" placeholder="Nombre como figura en la tarjeta" required>
+            </label>
+            <label>Vencimiento
+                <input name="expiry" placeholder="MM/AA">
+            </label>
+            <label>CVV
+                <input name="cvv" inputmode="numeric" placeholder="123">
+            </label>
+            <button type="submit" class="btn-primary">Pagar</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

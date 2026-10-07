@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Confirmación')}"></head>
+<body>
+<main class="app-main">
+    <div class="card" style="padding:1.5rem;background:linear-gradient(135deg,#E91E63,#D81B60);color:#fff;text-align:center">
+        <div th:if="${reservation == null}" style="padding:1rem">
+            <h2>Todavía no tenés reservas</h2>
+            <a class="btn-primary" th:href="@{/feed}" style="background:#fff;color:#E91E63">Ver experiencias</a>
+        </div>
+        <div th:if="${reservation != null}">
+            <p style="font-size:2rem;margin:.5rem 0"
+               th:text="${esCreador} ? 'COBRASTE ' + ${monto} : 'PAGASTE ' + ${monto}">PAGASTE $0</p>
+            <p th:text="${reservation.instance.experience.name}">Experiencia</p>
+            <p class="meta" th:text="'Para ' + ${reservation.attendees} + ' cupo(s) · llega a tu cuenta ' + ${payout} + ' MXN menos 5% de comisión'">
+                Detalle
+            </p>
+            <a class="btn-primary" th:href="@{/reservations}" style="background:#fff;color:#E91E63">Mis reservas</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

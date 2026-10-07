@@ -36,9 +36,7 @@
                 <p>
                     <strong th:text="${#temporals.format(inst.date, 'dd/MM/yyyy')} + ' — ' + ${#temporals.format(inst.startTime, 'HH:mm')}">01/11/2026 — 10:00</strong>
                 </p>
-                <form th:action="@{/reservations/{id}(id=${inst.id})}" method="post">
-                    <button type="submit" class="btn-primary">Reservar</button>
-                </form>
+                <div th:replace="~{experience/picker-modal :: picker(${inst.id})}"></div>
             </div>
         </div>
     </div>

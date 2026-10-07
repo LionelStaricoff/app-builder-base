@@ -27,6 +27,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -116,6 +117,14 @@ class ExperienceControllerTests {
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("error")));
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void experienciaInexistenteRedirigeConMensajeFlash() throws Exception {
+        mockMvc.perform(get("/experiences/99999999"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attributeExists("error"));
     }
 
     @Test

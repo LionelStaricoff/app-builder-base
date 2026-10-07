@@ -1,0 +1,147 @@
+package com.openlab.mx.share.reservation.service;
+
+import com.openlab.mx.share.experience.entity.Experience;
+import com.openlab.mx.share.experience.entity.ExperienceInstance;
+import com.openlab.mx.share.experience.entity.InstanceStatus;
+import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
+import com.openlab.mx.share.payment.entity.Payment;
+import com.openlab.mx.share.payment.entity.PaymentStatus;
+import com.openlab.mx.share.payment.repository.PaymentRepository;
+import com.openlab.mx.share.reservation.entity.Reservation;
+import com.openlab.mx.share.reservation.entity.ReservationStatus;
+import com.openlab.mx.share.reservation.repository.ReservationRepository;
+import com.openlab.mx.share.shared.exception.CupoAgotadoException;
+import com.openlab.mx.share.shared.exception.InstancePastException;
+import com.openlab.mx.share.shared.exception.NotOwnerException;
+import com.openlab.mx.share.user.entity.User;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class ReservationServiceTest {
+
+    @Mock
+    private ExperienceInstanceRepository instanceRepository;
+    @Mock
+    private ReservationRepository reservationRepository;
+    @Mock
+    private PaymentRepository paymentRepository;
+
+    @InjectMocks
+    private ReservationService reservationService;
+
+    private User user(Long id) {
+        return User.builder().id(id).username("u" + id).build();
+    }
+
+    private ExperienceInstance instance(Long id, int maxCapacity, BigDecimal price, LocalDate date) {
+        Experience experience = Experience.builder()
+                .id(1L)
+                .creator(user(1L))
+                .name("Tour")
+                .price(price)
+                .minCapacity(1)
+                .maxCapacity(maxCapacity)
+                .build();
+        return ExperienceInstance.builder()
+                .id(id)
+                .experience(experience)
+                .date(date)
+                .startTime(LocalTime.of(10, 0))
+                .endTime(LocalTime.of(12, 0))
+                .status(InstanceStatus.SCHEDULED)
+                .build();
+    }
+
+    private void stubGuardar() {
+        when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> {
+            Reservation r = inv.getArgument(0);
+            r.setId(1L);
+            return r;
+        });
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> {
+            Payment p = inv.getArgument(0);
+            p.setId(1L);
+            return p;
+        });
+    }
+
+    @Test
+    void testReservaHappyPathCreaPaymentHeld() {
+        when(instanceRepository.findById(5L)).thenReturn(
+                Optional.of(instance(5L, 8, BigDecimal.valueOf(190), LocalDate.now().plusDays(10))));
+        when(reservationRepository.countAttendees(anyLong())).thenReturn(0L);
+        stubGuardar();
+
+        Reservation reservation = reservationService.reserve(5L, 2, user(2L));
+
+        assertEquals(ReservationStatus.PENDIENTE, reservation.getStatus());
+        assertEquals(2, reservation.getAttendees());
+
+        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+        verify(paymentRepository).save(captor.capture());
+        Payment payment = captor.getValue();
+        assertEquals(PaymentStatus.HELD, payment.getStatus());
+        assertEquals(0, payment.getAmount().compareTo(BigDecimal.valueOf(380)),
+                "amount = price * attendees");
+        assertEquals(0, payment.getCommission().compareTo(BigDecimal.valueOf(19)),
+                "commission = amount * 0.05");
+    }
+
+    @Test
+    void testRechazaCupoAgotado() {
+        when(instanceRepository.findById(5L)).thenReturn(
+                Optional.of(instance(5L, 1, BigDecimal.valueOf(100), LocalDate.now().plusDays(10))));
+        when(reservationRepository.countAttendees(anyLong())).thenReturn(0L, 1L);
+        stubGuardar();
+
+        reservationService.reserve(5L, 1, user(2L));
+
+        assertThrows(CupoAgotadoException.class,
+                () -> reservationService.reserve(5L, 1, user(3L)));
+    }
+
+    @Test
+    void testRechazaInstanciaPasada() {
+        when(instanceRepository.findById(5L)).thenReturn(
+                Optional.of(instance(5L, 8, BigDecimal.valueOf(190), LocalDate.now().minusDays(1))));
+
+        assertThrows(InstancePastException.class,
+                () -> reservationService.reserve(5L, 1, user(2L)));
+    }
+
+    @Test
+    void testConfirmSoloElDueno() {
+        Reservation pendiente = Reservation.builder()
+                .id(7L)
+                .instance(instance(5L, 8, BigDecimal.valueOf(190), LocalDate.now().plusDays(10)))
+                .attendees(2)
+                .status(ReservationStatus.PENDIENTE)
+                .build();
+        when(reservationRepository.findById(7L)).thenReturn(Optional.of(pendiente));
+        when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Reservation confirmada = reservationService.confirm(7L, user(1L));
+        assertEquals(ReservationStatus.CONFIRMADA, confirmada.getStatus());
+
+        assertThrows(NotOwnerException.class, () -> reservationService.confirm(7L, user(2L)));
+        assertEquals(ReservationStatus.CONFIRMADA, pendiente.getStatus(),
+                "el no-dueño no muta la reserva");
+    }
+}

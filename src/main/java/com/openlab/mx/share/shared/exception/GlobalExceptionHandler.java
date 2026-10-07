@@ -19,10 +19,15 @@ public class GlobalExceptionHandler {
         response.sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
     }
 
+    /**
+     * PRG con mensaje flash de vuelta a donde vino el usuario (spec §8).
+     * Devolver la excepción como return value haría que Spring buscara una
+     * vista con el nombre de la URL y respondiera 500.
+     */
     @ExceptionHandler(DomainException.class)
-    public DomainException domain(DomainException e, RedirectAttributes redirectAttributes) {
+    public String domain(DomainException e, RedirectAttributes redirectAttributes) {
         log.warn("DomainException: {}", e.getMessage());
         redirectAttributes.addFlashAttribute("error", e.getMessage());
-        return e;
+        return com.openlab.mx.share.shared.CurrentUser.backOr("/feed");
     }
 }
