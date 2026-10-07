@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Configuración')}"></head>
+<body>
+<main class="app-main">
+    <div class="empty" th:if="${ok}" th:text="${ok}">OK</div>
+    <div class="empty" th:if="${error}" th:text="${error}">Error</div>
+
+    <div class="card" style="padding:1rem;text-align:center">
+        <img th:if="${user.avatarBase64 != null}" alt="Avatar"
+             th:src="'data:image/png;base64,' + ${user.avatarBase64}"
+             style="width:88px;height:88px;border-radius:50%;object-fit:cover">
+        <p><strong th:text="${user.username}">usuario</strong></p>
+        <p class="meta"><strong th:text="${user.spPoints} + ' SP'">0 SP</strong></p>
+    </div>
+
+    <form th:action="@{/settings/update}" method="post" enctype="multipart/form-data"
+          class="card" style="padding:1rem;display:flex;flex-direction:column;gap:.8rem">
+        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+        <label>Nombre
+            <input name="username" th:value="${user.username}" required>
+        </label>
+        <label>Avatar (máx 2 MB)
+            <input type="file" name="avatar" accept="image/*">
+        </label>
+        <button type="submit" class="btn-primary">Guardar</button>
+    </form>
+
+    <form th:action="@{/settings/logout}" method="post" style="margin-top:1rem">
+        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+        <button type="submit" class="btn-secondary">Cerrar sesión</button>
+    </form>
+</main>
+</body>
+</html>
