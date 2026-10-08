@@ -89,11 +89,19 @@ public class FeedService {
         return userCity.equalsIgnoreCase(creatorCity) ? 0 : 1;
     }
 
+    /** Distancia Haversine en km (la hipotenusa de grados no es comparable entre lat/lng). */
     private double distance(Double lat, Double lng, Experience experience) {
-        if (lat == null || lng == null) {
-            return 0.0;
+        if (lat == null || lng == null || experience.getMeetingLat() == null
+                || experience.getMeetingLng() == null) {
+            return Double.MAX_VALUE; // sin coordenadas: al final, no primero
         }
-        return Math.hypot(lat - experience.getMeetingLat(), lng - experience.getMeetingLng());
+        double earthRadiusKm = 6371.0;
+        double dLat = Math.toRadians(experience.getMeetingLat() - lat);
+        double dLng = Math.toRadians(experience.getMeetingLng() - lng);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat)) * Math.cos(Math.toRadians(experience.getMeetingLat()))
+                * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
     private LocalDate nextDateOf(Experience experience, LocalDate today) {

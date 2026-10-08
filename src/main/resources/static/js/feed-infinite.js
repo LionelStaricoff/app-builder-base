@@ -1,5 +1,6 @@
 // Scroll infinito estilo Instagram: paga la siguiente página (pageSize=1)
-// cuando el sentinel está por entrar en pantalla. GPS opcional por request.
+// cuando el sentinel está por entrar en pantalla. La ordenación por
+// ubicación la resuelve el backend con la ciudad guardada del perfil.
 (function () {
   const list = document.getElementById('feed-list');
   const sentinel = document.getElementById('feed-sentinel');
@@ -13,15 +14,6 @@
   let page = 1;
   let loading_page = false;
   let done = false;
-  let lat = null;
-  let lng = null;
-
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { lat = pos.coords.latitude; lng = pos.coords.longitude; },
-      () => {}
-    );
-  }
 
   function cardHtml(dto) {
     const images = Array.isArray(dto.images) && dto.images.length > 0
@@ -79,8 +71,6 @@
     try {
       const query = new URLSearchParams({ page: String(page) });
       if (category) query.set('category', category);
-      if (lat !== null) query.set('lat', String(lat));
-      if (lng !== null) query.set('lng', String(lng));
       const res = await fetch(`/feed/api?${query}`, {
         headers: { Accept: 'application/json' },
       });

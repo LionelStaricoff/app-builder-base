@@ -24,7 +24,10 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (userRepository.count() > 0) {
+        // Idempotente: recrea los demos si faltan (una BD compartida puede
+        // perderlos; sin ellos la suite de tests y el login demo se rompen).
+        if (userRepository.existsByUsername("demo_creator")
+                && userRepository.existsByUsername("demo_user")) {
             return;
         }
         userRepository.save(User.builder()

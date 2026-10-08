@@ -26,17 +26,23 @@ public class FeedController {
     private final CurrentUser currentUser;
 
     @GetMapping("/feed")
-    public String feed(@RequestParam(required = false) ExperienceCategory category, Model model) {
+    public String feed(@RequestParam(required = false) ExperienceCategory category,
+                       @RequestParam(required = false) String city,
+                       Model model) {
         User user = currentUser.get();
+        // Búsqueda manual de otra ciudad pisa la ciudad del perfil.
+        String effectiveCity = city != null && !city.isBlank() ? city.trim() : (user != null ? user.getCity() : null);
         Page<ExperienceFeedDTO> feedPage = feedService.page(
                 user != null ? user.getId() : null,
-                user != null ? user.getCity() : null,
+                effectiveCity,
                 user != null ? user.getLat() : null,
                 user != null ? user.getLng() : null,
                 category, 0);
         model.addAttribute("feedPage", feedPage);
         model.addAttribute("categories", ExperienceCategory.values());
         model.addAttribute("selectedCategory", category);
+        model.addAttribute("searchedCity", effectiveCity);
+        model.addAttribute("savedCity", user != null ? user.getCity() : null);
         return "feed";
     }
 

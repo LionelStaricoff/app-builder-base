@@ -5,10 +5,22 @@
 <main class="app-main" id="feed-main">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <div class="location-banner" id="location-banner" hidden
+         th:attr="data-city=${savedCity}">
+        <div class="location-banner-row">
+            <span id="location-status">Activá tu ubicación para ver primero experiencias cerca tuyo.</span>
+            <button type="button" class="btn-secondary location-allow" id="location-allow">📍 Activar</button>
+        </div>
+        <form id="location-manual-form" class="location-manual">
+            <input type="text" id="location-manual-input" placeholder="Buscar en otra ciudad…" aria-label="Buscar experiencias en otra ciudad">
+            <button type="submit" class="btn-secondary">Buscar</button>
+        </form>
+    </div>
 
     <div class="page-hero">
         <h1>Descubrí experiencias</h1>
-        <p>Primero lo cerca tuyo, después el resto del mundo</p>
+        <p th:if="${searchedCity != null}">Mostrando primero lo de <strong th:text="${searchedCity}">Ciudad</strong></p>
+        <p th:if="${searchedCity == null}">Primero lo cerca tuyo, después el resto del mundo</p>
     </div>
 
     <div class="chips">
@@ -75,5 +87,6 @@
 <nav th:replace="~{fragments/layout :: nav('feed')}"></nav>
 <script th:src="@{/js/carousel.js}"></script>
 <script th:src="@{/js/feed-infinite.js}"></script>
+<script th:src="@{/js/feed-location.js}"></script>
 </body>
 </html>
