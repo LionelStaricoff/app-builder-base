@@ -109,7 +109,7 @@ class FeedAndFavoritesControllerTests {
         mockMvc.perform(get("/feed").param("category", "AVENTURA"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(
-                        "No hay experiencias todavía")));
+                        "Todavía no hay experiencias por acá")));
     }
 
     @Test
