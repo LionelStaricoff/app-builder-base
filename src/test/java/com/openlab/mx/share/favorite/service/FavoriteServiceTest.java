@@ -60,6 +60,7 @@ class FavoriteServiceTest {
         when(favoriteRepository.findByExperienceIdAndUserId(3L, 7L))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(Favorite.builder().id(1L).build()));
+        when(feedService.experienceRef(3L)).thenReturn(experience());
 
         favoriteService.add(3L, user());
         favoriteService.add(3L, user()); // segunda vez: ya existe, no duplica
@@ -93,7 +94,7 @@ class FavoriteServiceTest {
         when(favoriteRepository.findByUserIdOrderByIdDesc(7L)).thenReturn(List.of(favorite));
         when(feedService.dtoFor(any(Experience.class), eq(7L)))
                 .thenReturn(new com.openlab.mx.share.experience.dto.ExperienceFeedDTO(
-                        3L, "n", "d", "c", "1.0, 2.0", 60,
+                        3L, "n", "d", "c", List.of("c"), "1.0, 2.0", 60,
                         java.time.LocalDate.of(2026, 12, 1),
                         java.math.BigDecimal.TEN, 4.5, true));
 

@@ -105,11 +105,11 @@ public class FeedService {
     }
 
     private ExperienceFeedDTO toDto(Experience experience, LocalDate nextDate, Long userId) {
-        String cover = imageRepository
-                .findByExperienceIdAndPositionOrderByIdAsc(experience.getId(), 0).stream()
-                .findFirst()
+        List<String> images = imageRepository
+                .findByExperienceIdOrderByIdAsc(experience.getId()).stream()
                 .map(img -> img.getData())
-                .orElse(null);
+                .toList();
+        String cover = images.isEmpty() ? null : images.get(0);
         boolean favorite = userId != null
                 && favoriteRepository.existsByExperienceIdAndUserId(experience.getId(), userId);
         String label = String.format(Locale.US, "%.4f, %.4f",
@@ -119,6 +119,7 @@ public class FeedService {
                 experience.getName(),
                 experience.getDescription(),
                 cover,
+                images,
                 label,
                 experience.getDurationMinutes(),
                 nextDate,

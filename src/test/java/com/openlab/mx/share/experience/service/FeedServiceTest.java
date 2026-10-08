@@ -26,8 +26,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,7 +72,7 @@ class FeedServiceTest {
     }
 
     private void stubCover(Experience e, String base64) {
-        when(imageRepository.findByExperienceIdAndPositionOrderByIdAsc(e.getId(), 0))
+        when(imageRepository.findByExperienceIdOrderByIdAsc(e.getId()))
                 .thenReturn(List.of(ExperienceImage.builder()
                         .experience(e).data(base64).position(0).build()));
     }
@@ -142,18 +140,20 @@ class FeedServiceTest {
     }
 
     @Test
-    void testDtoContieneSoloLaTapa() {
+    void testDtoContieneTodasLasImagenes() {
         Experience a = experience(1L, "A", "CDMX", 19.43, -99.13, ExperienceCategory.CULTURAL);
         when(experienceRepository.findByStatus(ExperienceStatus.ACTIVE)).thenReturn(List.of(a));
         stubNextDate(a, LocalDate.of(2026, 12, 1));
-        stubCover(a, "UNICAMENTE-TAPA");
+        when(imageRepository.findByExperienceIdOrderByIdAsc(1L)).thenReturn(List.of(
+                ExperienceImage.builder().experience(a).data("FOTO-1").position(0).build(),
+                ExperienceImage.builder().experience(a).data("FOTO-2").position(1).build()));
 
         var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, 0);
 
         ExperienceFeedDTO dto = page.getContent().get(0);
-        assertEquals("UNICAMENTE-TAPA", dto.coverBase64());
-        verify(imageRepository).findByExperienceIdAndPositionOrderByIdAsc(1L, 0);
-        verify(imageRepository, never()).findByExperienceIdOrderByIdAsc(anyLong());
+        assertEquals(List.of("FOTO-1", "FOTO-2"), dto.images());
+        assertEquals("FOTO-1", dto.coverBase64());
+        verify(imageRepository).findByExperienceIdOrderByIdAsc(1L);
         assertEquals("19.4300, -99.1300", dto.meetingPointLabel());
         assertNotNull(dto.nextDate());
     }

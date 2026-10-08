@@ -28,7 +28,22 @@
 
     <div id="feed-list">
         <div class="card" th:each="dto : ${feedPage.content}" th:id="'card-' + ${dto.id}">
-            <img class="cover" th:if="${dto.coverBase64 != null}"
+            <div class="carousel" data-carousel
+                 th:if="${dto.images != null and not #lists.isEmpty(dto.images)}">
+                <div class="carousel-track" data-carousel-track>
+                    <figure class="carousel-slide" th:each="imgData : ${dto.images}">
+                        <a th:href="@{/experiences/{id}(id=${dto.id})}">
+                            <img th:src="'data:image/png;base64,' + ${imgData}"
+                                 th:alt="${dto.name}" loading="lazy">
+                        </a>
+                    </figure>
+                </div>
+                <button type="button" class="carousel-btn prev" data-carousel-prev aria-label="Anterior">‹</button>
+                <button type="button" class="carousel-btn next" data-carousel-next aria-label="Siguiente">›</button>
+                <div class="carousel-dots" data-carousel-dots></div>
+                <span class="carousel-counter" data-carousel-counter>1 / 1</span>
+            </div>
+            <img class="cover" th:if="${(dto.images == null or #lists.isEmpty(dto.images)) and dto.coverBase64 != null}"
                  th:src="'data:image/png;base64,' + ${dto.coverBase64}" th:alt="${dto.name}">
             <div style="padding:1rem">
                 <div class="card-head">
@@ -58,6 +73,7 @@
     <div id="feed-loading" class="empty" hidden>Cargando…</div>
 </main>
 <nav th:replace="~{fragments/layout :: nav('feed')}"></nav>
+<script th:src="@{/js/carousel.js}"></script>
 <script th:src="@{/js/feed-infinite.js}"></script>
 </body>
 </html>

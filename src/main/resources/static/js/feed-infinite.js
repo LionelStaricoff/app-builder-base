@@ -24,8 +24,23 @@
   }
 
   function cardHtml(dto) {
-    const cover = dto.coverBase64
-      ? `<img class="cover" src="data:image/png;base64,${dto.coverBase64}" alt="">`
+    const images = Array.isArray(dto.images) && dto.images.length > 0
+      ? dto.images
+      : (dto.coverBase64 ? [dto.coverBase64] : []);
+    const slides = images.map((b64) => `
+      <figure class="carousel-slide">
+        <a href="/experiences/${dto.id}">
+          <img src="data:image/png;base64,${b64}" alt="" loading="lazy">
+        </a>
+      </figure>`).join('');
+    const gallery = images.length > 0
+      ? `<div class="carousel" data-carousel>
+           <div class="carousel-track" data-carousel-track>${slides}</div>
+           <button type="button" class="carousel-btn prev" data-carousel-prev aria-label="Anterior">‹</button>
+           <button type="button" class="carousel-btn next" data-carousel-next aria-label="Siguiente">›</button>
+           <div class="carousel-dots" data-carousel-dots></div>
+           <span class="carousel-counter" data-carousel-counter>1 / 1</span>
+         </div>`
       : '';
     const heartAction = dto.favorite
       ? `/favorites/${dto.id}/remove`
@@ -34,7 +49,7 @@
     const next = dto.nextDate || 'Sin fecha';
     return `
       <div class="card" id="card-${dto.id}">
-        ${cover}
+        ${gallery}
         <div style="padding:1rem">
           <div class="card-head">
             <h3><a href="/experiences/${dto.id}">${escapeHtml(dto.name)}</a></h3>
@@ -75,6 +90,7 @@
         done = true;
       } else {
         items.forEach((dto) => list.insertAdjacentHTML('beforeend', cardHtml(dto)));
+        window.initCarousels?.(list);
         page += 1;
       }
     } catch (e) {
