@@ -8,6 +8,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -29,6 +30,13 @@ class BaseLayoutTests {
 	@WithMockUser
 	void manifestSeSirveComoJson() throws Exception {
 		mockMvc.perform(get("/manifest.webmanifest"))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType("application/manifest+json"));
+	}
+
+	@Test
+	void serviceWorkerEnRaizEsPublico() throws Exception {
+		mockMvc.perform(get("/sw.js"))
 				.andExpect(status().isOk());
 	}
 }
