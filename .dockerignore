@@ -1,0 +1,15 @@
+# El contexto de build viaja entero al daemon en cada build. Sin esto son ~114 MB,
+# de los cuales 103 MB son target/ y 6.5 MB .git — nada de eso entra en la imagen.
+target/
+.git/
+.github/
+.idea/
+.vscode/
+.atl/
+docs/
+*.md
+!README.md
+.env
+.env.*
+*.log
+*.txt
