@@ -31,6 +31,7 @@
         <button type="submit" class="btn-primary">Enviar</button>
     </form>
 </main>
+<nav th:replace="~{fragments/layout :: nav('chats')}"></nav>
 <script th:inline="javascript">
     window.CHAT_INSTANCE_ID = /*[[${instanceId}]]*/ 0;
 </script>

@@ -3,6 +3,11 @@
 <head th:replace="~{fragments/layout :: head('Mis reservas')}"></head>
 <body>
 <main class="app-main">
+    <div class="tabs">
+        <a class="tab" th:href="@{/my-experiences}">Mis Experiencias</a>
+        <span class="tab active">Mis Reservas</span>
+    </div>
+
     <div class="empty" th:if="${ok}" th:text="${ok}">OK</div>
     <div class="empty" th:if="${error}" th:text="${error}">Error</div>
 
@@ -55,5 +60,6 @@
         </form>
     </div>
 </main>
+<nav th:replace="~{fragments/layout :: nav('mine')}"></nav>
 </body>
 </html>

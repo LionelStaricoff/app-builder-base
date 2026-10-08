@@ -3,6 +3,11 @@
 <head th:replace="~{fragments/layout :: head('Avisos')}"></head>
 <body>
 <main class="app-main">
+    <div class="tabs">
+        <span class="tab active">Notificaciones</span>
+        <a class="tab" th:href="@{/chats}">Mensajes</a>
+    </div>
+
     <div class="empty" th:if="${#lists.isEmpty(notificaciones)}">No tenés avisos todavía.</div>
 
     <div class="card" th:each="n : ${notificaciones}" style="padding:1rem"
@@ -22,5 +27,6 @@
         </form>
     </div>
 </main>
+<nav th:replace="~{fragments/layout :: nav('notifications')}"></nav>
 </body>
 </html>

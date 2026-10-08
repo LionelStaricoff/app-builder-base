@@ -47,6 +47,7 @@
     <div id="feed-sentinel" style="height:1px"></div>
     <div id="feed-loading" class="empty" hidden>Cargando…</div>
 </main>
+<nav th:replace="~{fragments/layout :: nav('feed')}"></nav>
 <script th:src="@{/js/feed-infinite.js}"></script>
 </body>
 </html>

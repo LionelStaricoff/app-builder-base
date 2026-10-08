@@ -3,9 +3,10 @@
 <head th:replace="~{fragments/layout :: head('Mensajes')}"></head>
 <body>
 <main class="app-main">
-    <p class="meta">
-        <a th:href="@{/notifications}">Notificaciones</a> · <strong>Mensajes</strong>
-    </p>
+    <div class="tabs">
+        <a class="tab" th:href="@{/notifications}">Notificaciones</a>
+        <span class="tab active">Mensajes</span>
+    </div>
 
     <div class="empty" th:if="${#lists.isEmpty(grupos)}">Todavía no tenés chats.</div>
 
@@ -18,5 +19,6 @@
         </p>
     </a>
 </main>
+<nav th:replace="~{fragments/layout :: nav('chats')}"></nav>
 </body>
 </html>

@@ -56,6 +56,12 @@ body {
 
 .bottom-nav a .icon { font-size: 1.3rem; display: block; }
 
+.bottom-nav a.active {
+  color: var(--color-primary);
+  opacity: 1;
+  font-weight: 600;
+}
+
 .btn-primary {
   background: var(--color-primary);
   color: #fff;
