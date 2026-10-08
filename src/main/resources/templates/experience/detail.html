@@ -1,15 +1,23 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head(${experience.name})}">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-</head>
+<head th:replace="~{fragments/layout :: head(${experience.name})}"></head>
 <body>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <main class="app-main">
     <div class="card">
-        <div class="gallery">
-            <img th:each="img : ${images}" th:src="'data:image/png;base64,' + ${img.data}"
-                 th:alt="${experience.name}" style="width:100%;display:block">
+        <div class="carousel" data-carousel th:if="${not #lists.isEmpty(images)}">
+            <div class="carousel-track" data-carousel-track>
+                <figure class="carousel-slide" th:each="img : ${images}">
+                    <img th:src="'data:image/png;base64,' + ${img.data}"
+                         th:alt="${experience.name}" loading="lazy">
+                </figure>
+            </div>
+            <button type="button" class="carousel-btn prev" data-carousel-prev aria-label="Anterior">‹</button>
+            <button type="button" class="carousel-btn next" data-carousel-next aria-label="Siguiente">›</button>
+            <div class="carousel-dots" data-carousel-dots></div>
+            <span class="carousel-counter" data-carousel-counter>1 / 1</span>
         </div>
+        <div class="carousel-empty" th:if="${#lists.isEmpty(images)}">Sin fotos todavía</div>
         <div style="padding:1rem">
             <h1 th:text="${experience.name}">Nombre</h1>
             <p class="meta">
@@ -25,9 +33,8 @@
                 <span th:text="${experience.minCapacity} + ' a ' + ${experience.maxCapacity}">2 a 8</span>
             </p>
 
-            <div id="detail-map" data-map="view"
-                 th:attr="data-lat=${experience.meetingLat},data-lng=${experience.meetingLng}"
-                 style="height:220px;border-radius:16px"></div>
+            <div id="detail-map" class="map-box" data-map="view"
+                 th:attr="data-lat=${experience.meetingLat},data-lng=${experience.meetingLng}"></div>
             <p class="hint">Punto de encuentro: <span th:text="${experience.meetingLat} + ', ' + ${experience.meetingLng}">0, 0</span></p>
 
             <h3>Próximas fechas</h3>
@@ -50,5 +57,6 @@
 <nav th:replace="~{fragments/layout :: nav('feed')}"></nav>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script th:src="@{/js/map.js}"></script>
+<script th:src="@{/js/carousel.js}"></script>
 </body>
 </html>

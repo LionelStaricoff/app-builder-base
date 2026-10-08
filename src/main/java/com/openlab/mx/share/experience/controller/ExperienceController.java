@@ -119,7 +119,16 @@ public class ExperienceController {
     @GetMapping("/my-experiences")
     public String mine(Model model) {
         User user = currentUser();
-        model.addAttribute("experiencias", experienceService.mine(user.getId()));
+        List<Experience> experiencias = experienceService.mine(user.getId());
+        model.addAttribute("experiencias", experiencias);
+        // Todas las fotos por experiencia para el carousel de la lista.
+        java.util.Map<Long, List<String>> covers = new java.util.HashMap<>();
+        for (Experience e : experiencias) {
+            List<String> todas = imageRepository.findByExperienceIdOrderByIdAsc(e.getId())
+                    .stream().map(ExperienceImage::getData).toList();
+            if (!todas.isEmpty()) covers.put(e.getId(), todas);
+        }
+        model.addAttribute("covers", covers);
         return "experience/my-experiences";
     }
 

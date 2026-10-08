@@ -224,3 +224,145 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   color: var(--color-primary);
   font-weight: 600;
 }
+
+/* Carousel de imágenes (detalle de experiencia) */
+.carousel {
+  position: relative;
+  background: #111;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+}
+.carousel-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  margin: 0;
+}
+.carousel-slide a { display: block; }
+.carousel-slide img {
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  display: block;
+}
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.carousel-btn.prev { left: 0.6rem; }
+.carousel-btn.next { right: 0.6rem; }
+.carousel-counter {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.6rem;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+.carousel-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.6rem;
+  display: flex;
+  gap: 0.35rem;
+  justify-content: center;
+  pointer-events: none;
+}
+.carousel-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+}
+.carousel-dots span.on { background: #fff; }
+.carousel-empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #bbb;
+  font-size: 0.9rem;
+}
+
+/* Portada en "Mis experiencias" */
+.mine-cover {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  display: block;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: #eee;
+}
+
+/* Mapa: altura garantizada + estado de error legible */
+.map-box {
+  height: 220px;
+  border-radius: 16px;
+  background: #e9e9e9;
+  overflow: hidden;
+}
+.map-box.leaflet-container { z-index: 0; }
+.map-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #777;
+  font-size: 0.85rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+/* Login: botón secundario + foco visible */
+.auth-card input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-color: var(--color-accent);
+}
+.btn-ghost {
+  display: block;
+  width: 100%;
+  text-align: center;
+  text-decoration: none;
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-primary);
+  border-radius: var(--radius);
+  padding: 0.7rem 1.25rem;
+  font-weight: 700;
+  margin-top: 0.6rem;
+  background: #fff;
+}
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #999;
+  font-size: 0.8rem;
+  margin: 1rem 0 0.2rem;
+}
+.auth-divider::before, .auth-divider::after {
+  content: "";
+  height: 1px;
+  background: #eee;
+  flex: 1;
+}

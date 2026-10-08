@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Crear experiencia')}">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-</head>
+<head th:replace="~{fragments/layout :: head('Crear experiencia')}"></head>
 <body>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <main class="app-main">
     <div class="card" style="padding:1.25rem">
         <h2 th:text="${experienceId} != null ? 'Editar experiencia' : 'Nueva experiencia'">Experiencia</h2>
@@ -88,7 +87,7 @@
 
             <fieldset>
                 <legend>Punto de encuentro (tocá el mapa)</legend>
-                <div id="form-map" data-map="pick" style="height:260px;border-radius:16px"></div>
+                <div id="form-map" class="map-box" data-map="pick" style="height:260px"></div>
                 <input type="hidden" th:field="*{meetingLat}" id="meetingLat">
                 <input type="hidden" th:field="*{meetingLng}" id="meetingLng">
                 <p class="hint">Se centra en tu ubicación automáticamente; mové el marcador para ajustar.</p>
@@ -99,7 +98,6 @@
     </div>
 </main>
 <nav th:replace="~{fragments/layout :: nav('mine')}"></nav>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script th:src="@{/js/map.js}"></script>
 <script th:src="@{/js/experience-form.js}"></script>

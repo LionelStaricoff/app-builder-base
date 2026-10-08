@@ -31,7 +31,9 @@
             <p th:if="${#fields.hasErrors('birthDate')}" th:errors="*{birthDate}">Error</p>
             <button type="submit" class="btn-primary btn-block">Registrarme</button>
         </form>
-        <p class="auth-switch">¿Ya tenés cuenta? <a th:href="@{/login}">Iniciá sesión</a></p>
+        <div class="auth-divider">o</div>
+        <p class="auth-switch">¿Ya tenés cuenta?</p>
+        <a class="btn-ghost" th:href="@{/login}">Iniciá sesión</a>
     </div>
 </div>
 </body>
