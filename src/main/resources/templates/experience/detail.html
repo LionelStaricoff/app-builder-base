@@ -23,7 +23,7 @@
             <p class="meta">
                 <span class="stars">★</span>
                 <span th:text="${#numbers.formatDecimal(experience.ratingAverage, 1, 1)}">0.0</span>
-                · <span th:text="${experience.category}">Categoria</span>
+                · <span class="pill" th:text="${experience.category}">Categoria</span>
                 · <span th:text="${experience.durationMinutes} + ' min'">60 min</span>
                 · <strong th:text="'$' + ${experience.price} + ' MXN'">$190 MXN</strong>
             </p>
@@ -38,8 +38,9 @@
             <p class="hint">Punto de encuentro: <span th:text="${experience.meetingLat} + ', ' + ${experience.meetingLng}">0, 0</span></p>
 
             <h3>Próximas fechas</h3>
-            <div th:if="${#lists.isEmpty(instances)}" class="empty">No hay fechas disponibles</div>
-            <div class="card slot" th:each="inst : ${instances}">
+            <div class="slot-list">
+                <div th:if="${#lists.isEmpty(instances)}" class="empty">No hay fechas disponibles</div>
+                <div class="card slot" th:each="inst : ${instances}">
                 <p>
                     <strong th:text="${#temporals.format(inst.date, 'dd/MM/yyyy')} + ' — ' + ${#temporals.format(inst.startTime, 'HH:mm')}">01/11/2026 — 10:00</strong>
                 </p>
@@ -50,6 +51,7 @@
                     <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                     <button type="submit" class="btn-secondary">Cancelar fecha</button>
                 </form>
+            </div>
             </div>
         </div>
     </div>

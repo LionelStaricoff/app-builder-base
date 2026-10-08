@@ -109,7 +109,12 @@ h1, h2, h3, .brand-name {
 .btn-secondary { background: var(--surface); border: 1px solid #ccc; border-radius: var(--radius); padding: .5rem 1rem; cursor: pointer; }
 .field-error, span.error, div.error { color: var(--color-primary); font-size: .85rem; }
 label { display: block; margin: .75rem 0; font-size: .9rem; }
-input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], select, textarea { width: 100%; padding: .6rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], select, textarea { width: 100%; padding: .65rem .75rem; border: 1.5px solid #e2e2e6; border-radius: 10px; font-size: 1rem; background: var(--surface); transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=number]:focus, input[type=date]:focus, input[type=time]:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15);
+}
 
 .confirm-screen {
   min-height: 100vh;
@@ -141,6 +146,41 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   font-size: 0.9rem;
   opacity: 0.9;
 }
+
+/* Radio y checkbox con acento de marca */
+input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); width: auto; }
+
+/* Pill de categoría (detalle) y lista de fechas */
+.pill {
+  display: inline-block;
+  background: #FCE4EC;
+  color: var(--color-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+}
+
+.slot-list { display: flex; flex-direction: column; gap: 0.6rem; }
+.slot-list .slot { margin-bottom: 0; }
+
+/* Chips: mejor feedback táctil */
+.chip { transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease; }
+.chip:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12); }
+
+/* Cards del feed: elevación sutil al pasar */
+.card { transition: box-shadow 0.15s ease; }
+.card:hover { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1); }
+
+/* Nav inferior: icono activo con leve escala */
+.bottom-nav a .icon { transition: transform 0.15s ease; }
+.bottom-nav a.active .icon { transform: scale(1.1); }
+
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(233, 30, 99, 0.4); }
+.btn-primary:hover:active { transform: scale(0.98); }
+
+.btn-secondary { transition: border-color 0.15s ease, color 0.15s ease; }
+.btn-secondary:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
 /* Estado vacío con ilustración local */
 .empty-illustration {
@@ -331,6 +371,78 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   font-size: 0.85rem;
   padding: 1rem;
   text-align: center;
+}
+
+/* Picker de imágenes (formulario de experiencia) */
+.image-picker { margin: 0.75rem 0; }
+
+.image-picker-drop {
+  border: 2px dashed #f3b8cd;
+  border-radius: var(--radius);
+  background: #FDF2F6;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.image-picker-drop:hover,
+.image-picker-drop:focus-visible,
+.image-picker-drop.dragging {
+  border-color: var(--color-primary);
+  background: #FCE4EC;
+  outline: none;
+}
+
+.image-picker-icon { font-size: 1.8rem; }
+
+.image-picker-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.image-picker-previews {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.image-picker-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #eee;
+}
+
+.image-picker-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.image-picker-item.too-big img { opacity: 0.45; }
+
+.image-picker-badge {
+  position: absolute;
+  left: 0.35rem;
+  bottom: 0.35rem;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+}
+
+.image-picker-item.too-big .image-picker-badge {
+  background: rgba(198, 40, 40, 0.9);
 }
 
 /* Login: botón secundario + foco visible */

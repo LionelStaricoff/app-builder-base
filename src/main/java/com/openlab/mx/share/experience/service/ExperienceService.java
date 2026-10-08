@@ -109,6 +109,15 @@ public class ExperienceService {
         if (request.schedules() == null || request.schedules().isEmpty()) {
             throw new DomainException("Debe definir al menos un horario");
         }
+        if (request.images() != null) {
+            for (MultipartFile img : request.images()) {
+                if (img == null || img.isEmpty()) continue;
+                String contentType = img.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    throw new DomainException("Solo se permiten imágenes (JPG, PNG, WebP, HEIC)");
+                }
+            }
+        }
     }
 
     private Experience build(ExperienceFormRequest request, User creator) {

@@ -1,4 +1,4 @@
-const CACHE = 'shared-shell-v2';
+const CACHE = 'shared-shell-v3';
 const SHELL = ['/css/app.css', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {

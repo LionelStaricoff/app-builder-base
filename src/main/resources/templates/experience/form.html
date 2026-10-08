@@ -20,9 +20,18 @@
             </label>
             <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Error</span>
 
-            <label>Imágenes (1 a 5, la primera es la tapa)
-                <input type="file" name="images" accept="image/*" multiple>
-            </label>
+            <label>Imágenes (1 a 5, la primera es la tapa)</label>
+            <div class="image-picker" id="image-picker">
+                <input type="file" id="images-input" name="images" accept="image/*" multiple hidden>
+                <div class="image-picker-drop" id="image-picker-drop" role="button" tabindex="0"
+                     aria-label="Elegir imágenes">
+                    <span class="image-picker-icon">🖼️</span>
+                    <span class="image-picker-title">Arrastrá tus fotos o tocá para elegir</span>
+                    <span class="hint">JPG, PNG o WebP · hasta 5 MB por foto · máx. 5</span>
+                </div>
+                <div class="image-picker-previews" id="image-picker-previews"></div>
+                <p class="error" id="image-picker-error" hidden></p>
+            </div>
 
             <label>Duración (minutos)
                 <input type="number" th:field="*{durationMinutes}" min="1" required>
@@ -101,5 +110,6 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script th:src="@{/js/map.js}"></script>
 <script th:src="@{/js/experience-form.js}"></script>
+<script th:src="@{/js/image-picker.js}"></script>
 </body>
 </html>
