@@ -2,32 +2,37 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Registrarse')}"></head>
 <body>
-<main class="app-main">
-    <div class="card" style="padding:1.5rem">
-        <h1 style="color:var(--color-primary)">Crear cuenta</h1>
-        <div th:if="${error}" style="color:var(--color-primary)" th:text="${error}">Error</div>
+<div class="auth-screen">
+    <div class="auth-brand">
+        <img th:src="@{/img/logo.svg}" alt="Shared">
+        <p class="brand-name">Shared</p>
+        <p class="brand-tag">Creá tu cuenta y empezá a vivir</p>
+    </div>
+    <div class="auth-card">
+        <h2>Crear cuenta</h2>
+        <div class="auth-error" th:if="${error}" th:text="${error}">Error</div>
         <form th:action="@{/register}" th:object="${registerRequest}" method="post">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <label>Usuario
-                <input type="text" th:field="*{username}" required>
+                <input type="text" th:field="*{username}" required autocomplete="username">
             </label>
             <p th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Error</p>
             <label>Email
-                <input type="email" th:field="*{email}" required>
+                <input type="email" th:field="*{email}" required autocomplete="email">
             </label>
             <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Error</p>
             <label>Contraseña (mínimo 8 caracteres)
-                <input type="password" th:field="*{password}" required>
+                <input type="password" th:field="*{password}" required autocomplete="new-password">
             </label>
             <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Error</p>
             <label>Fecha de nacimiento (debes tener 18 años o más)
                 <input type="date" th:field="*{birthDate}" required>
             </label>
             <p th:if="${#fields.hasErrors('birthDate')}" th:errors="*{birthDate}">Error</p>
-            <button type="submit" class="btn-primary">Registrarme</button>
+            <button type="submit" class="btn-primary btn-block">Registrarme</button>
         </form>
-        <p>¿Ya tenés cuenta? <a th:href="@{/login}">Iniciá sesión</a></p>
+        <p class="auth-switch">¿Ya tenés cuenta? <a th:href="@{/login}">Iniciá sesión</a></p>
     </div>
-</main>
+</div>
 </body>
 </html>

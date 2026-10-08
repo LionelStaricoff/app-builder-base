@@ -3,12 +3,22 @@
 <head th:replace="~{fragments/layout :: head('Mis favoritos')}"></head>
 <body>
 <main class="app-main">
+    <div class="page-hero">
+        <h1>Mis favoritos</h1>
+        <p>Todo lo que guardaste y lo que ya viviste</p>
+    </div>
+
     <div class="tabs">
         <span class="tab active">Experiencias Favoritas</span>
         <span class="tab">Experiencias Vividas</span>
     </div>
 
-    <div class="empty" th:if="${#lists.isEmpty(favorites)}">Todavía no guardaste favoritos</div>
+    <div class="empty-illustration" th:if="${#lists.isEmpty(favorites)}">
+        <img th:src="@{/img/empty-favorites.svg}" alt="Sin favoritos">
+        <p><strong>Todavía no guardaste favoritos</strong></p>
+        <p class="hint">Tocá el 🤍 en cualquier experiencia para guardarla acá.</p>
+        <a class="btn-primary" th:href="@{/feed}">Explorar el feed</a>
+    </div>
 
     <div class="card" th:each="dto : ${favorites}">
         <img class="cover" th:if="${dto.coverBase64 != null}"
@@ -33,7 +43,11 @@
     <div class="tabs">
         <span class="tab">Experiencias Vividas</span>
     </div>
-    <div class="empty" th:if="${#lists.isEmpty(lived)}">Todavía no viviste experiencias</div>
+    <div class="empty-illustration" th:if="${#lists.isEmpty(lived)}">
+        <img th:src="@{/img/empty-lived.svg}" alt="Sin experiencias vividas">
+        <p><strong>Todavía no viviste experiencias</strong></p>
+        <p class="hint">Cuando completes tu primera reserva, aparece acá con tu evaluación.</p>
+    </div>
 
     <div class="card" th:each="l : ${lived}" style="padding:1rem">
         <p>

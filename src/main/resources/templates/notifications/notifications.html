@@ -3,12 +3,21 @@
 <head th:replace="~{fragments/layout :: head('Avisos')}"></head>
 <body>
 <main class="app-main">
+    <div class="page-hero">
+        <h1>Avisos</h1>
+        <p>Confirmaciones, solicitudes y reembolsos</p>
+    </div>
+
     <div class="tabs">
         <span class="tab active">Notificaciones</span>
         <a class="tab" th:href="@{/chats}">Mensajes</a>
     </div>
 
-    <div class="empty" th:if="${#lists.isEmpty(notificaciones)}">No tenés avisos todavía.</div>
+    <div class="empty-illustration" th:if="${#lists.isEmpty(notificaciones)}">
+        <img th:src="@{/img/empty-notifications.svg}" alt="Sin avisos">
+        <p><strong>No tenés avisos todavía</strong></p>
+        <p class="hint">Confirmaciones, solicitudes y reembolsos aparecen acá.</p>
+    </div>
 
     <div class="card" th:each="n : ${notificaciones}" style="padding:1rem"
          th:classappend="${!n.read} ? 'unread'">

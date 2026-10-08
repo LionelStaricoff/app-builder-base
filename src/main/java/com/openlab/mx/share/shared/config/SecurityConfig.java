@@ -20,7 +20,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/login", "/register",
                     "/manifest.webmanifest", "/sw.js",
-                    "/css/**", "/js/**", "/icons/**", "/error"
+                    "/css/**", "/js/**", "/icons/**", "/img/**", "/error"
                 ).permitAll()
                 .anyRequest().authenticated()
             )

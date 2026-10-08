@@ -6,6 +6,11 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
 
+    <div class="page-hero">
+        <h1>Descubrí experiencias</h1>
+        <p>Primero lo cerca tuyo, después el resto del mundo</p>
+    </div>
+
     <div class="chips">
         <a class="chip" th:classappend="${selectedCategory == null} ? 'active'"
            th:href="@{/feed}">Todas</a>
@@ -14,7 +19,12 @@
            th:href="@{/feed(category=${c})}" th:text="${c}">Categoria</a>
     </div>
 
-    <div class="empty" th:if="${feedPage.empty}">No hay experiencias todavía. ¡Creá la primera!</div>
+    <div class="empty-illustration" th:if="${feedPage.empty}">
+        <img th:src="@{/img/empty-feed.svg}" alt="Sin experiencias">
+        <p><strong>Todavía no hay experiencias por acá</strong></p>
+        <p class="hint">¡Creá la primera y estrená el feed!</p>
+        <a class="btn-primary" th:href="@{/experiences/new}">Crear experiencia</a>
+    </div>
 
     <div id="feed-list">
         <div class="card" th:each="dto : ${feedPage.content}" th:id="'card-' + ${dto.id}">

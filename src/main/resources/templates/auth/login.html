@@ -2,23 +2,28 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Iniciar sesión')}"></head>
 <body>
-<main class="app-main">
-    <div class="card" style="padding:1.5rem">
-        <h1 style="color:var(--color-primary)">Shared</h1>
+<div class="auth-screen">
+    <div class="auth-brand">
+        <img th:src="@{/img/logo.svg}" alt="Shared">
+        <p class="brand-name">Shared</p>
+        <p class="brand-tag">Viví experiencias únicas cerca tuyo</p>
+    </div>
+    <div class="auth-card">
         <h2>Iniciar sesión</h2>
-        <div th:if="${param.error}" style="color:var(--color-primary)">Usuario o contraseña incorrectos</div>
+        <div class="auth-error" th:if="${param.error}">Usuario o contraseña incorrectos</div>
+        <div class="auth-error" th:if="${param.logout}">Cerraste sesión correctamente</div>
         <form th:action="@{/login}" method="post">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <label>Usuario
-                <input type="text" name="username" required autofocus>
+                <input type="text" name="username" required autofocus autocomplete="username">
             </label>
             <label>Contraseña
-                <input type="password" name="password" required>
+                <input type="password" name="password" required autocomplete="current-password">
             </label>
-            <button type="submit" class="btn-primary">Entrar</button>
+            <button type="submit" class="btn-primary btn-block">Entrar</button>
         </form>
-        <p>¿No tenés cuenta? <a th:href="@{/register}">Registrate</a></p>
+        <p class="auth-switch">¿No tenés cuenta? <a th:href="@{/register}">Registrate</a></p>
     </div>
-</main>
+</div>
 </body>
 </html>

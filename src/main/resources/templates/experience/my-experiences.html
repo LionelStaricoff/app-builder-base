@@ -3,6 +3,11 @@
 <head th:replace="~{fragments/layout :: head('Tus Experiencias')}"></head>
 <body>
 <main class="app-main">
+    <div class="page-hero">
+        <h1>Tus experiencias</h1>
+        <p>Creá, editá y mirá quién se anota</p>
+    </div>
+
     <div class="tabs">
         <span class="tab active">Mis Experiencias</span>
         <a class="tab" th:href="@{/reservations}">Mis Reservas</a>
@@ -11,8 +16,11 @@
     <div class="empty" th:if="${success}" th:text="${success}">OK</div>
     <div class="empty" th:if="${error}" th:text="${error}">Error</div>
 
-    <div class="empty" th:if="${#lists.isEmpty(experiencias)}">
-        Todavía no creaste experiencias.
+    <div class="empty-illustration" th:if="${#lists.isEmpty(experiencias)}">
+        <img th:src="@{/img/empty-mine.svg}" alt="Sin experiencias creadas">
+        <p><strong>Todavía no creaste experiencias</strong></p>
+        <p class="hint">Tocá el + y publicá la primera en minutos.</p>
+        <a class="btn-primary" th:href="@{/experiences/new}">Crear la primera</a>
     </div>
 
     <div class="card" th:each="e : ${experiencias}" style="padding:1rem">

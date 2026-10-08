@@ -3,12 +3,22 @@
 <head th:replace="~{fragments/layout :: head('Mensajes')}"></head>
 <body>
 <main class="app-main">
+    <div class="page-hero">
+        <h1>Mensajes</h1>
+        <p>Grupos de cada experiencia confirmada</p>
+    </div>
+
     <div class="tabs">
         <a class="tab" th:href="@{/notifications}">Notificaciones</a>
         <span class="tab active">Mensajes</span>
     </div>
 
-    <div class="empty" th:if="${#lists.isEmpty(grupos)}">Todavía no tenés chats.</div>
+    <div class="empty-illustration" th:if="${#lists.isEmpty(grupos)}">
+        <img th:src="@{/img/empty-chats.svg}" alt="Sin chats">
+        <p><strong>Todavía no tenés chats</strong></p>
+        <p class="hint">Cuando tu reserva sea confirmada, se abre acá el grupo con el organizador.</p>
+        <a class="btn-primary" th:href="@{/feed}">Buscar experiencias</a>
+    </div>
 
     <a class="card" th:each="g : ${grupos}" th:href="@{/chats/{id}(id=${g.id})}"
        style="display:block;padding:1rem;text-decoration:none;color:inherit">

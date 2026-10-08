@@ -1,0 +1,88 @@
+<!-- 1. Gastronomía -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="50" fill="#00E5D1"/>
+  <!-- Hamburguesa -->
+  <path fill="#FFFFFF" d="M30 42 C30 33, 70 33, 70 42 Z"/>
+  <rect x="30" y="46" width="40" height="5" rx="2.5" fill="#FFFFFF"/>
+  <path fill="#FFFFFF" d="M32 54 Q36 58 40 54 Q44 58 48 54 Q52 58 56 54 Q60 58 64 54 Q68 58 70 54 L70 57 L30 57 Z"/>
+  <path fill="#FFFFFF" d="M30 61 C30 67, 70 67, 70 61 Z"/>
+  <!-- Ajonjolí -->
+  <circle cx="42" cy="38" r="1" fill="#00E5D1"/>
+  <circle cx="50" cy="36" r="1" fill="#00E5D1"/>
+  <circle cx="58" cy="38" r="1" fill="#00E5D1"/>
+</svg>
+
+<!-- 2. Vida nocturna -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="50" fill="#CDDC39"/>
+  <!-- Copa de Cóctel -->
+  <path fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" d="M32 32 L50 56 L68 32 Z M50 56 L50 72 M40 72 L60 72"/>
+  <!-- Pitillo / Sombrillita -->
+  <line x1="50" y1="42" x2="65" y2="24" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+</svg>
+
+<!-- 3. Aventura -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="50" fill="#FFC107"/>
+  <!-- Pino -->
+  <polygon points="50,22 62,38 56,38 66,52 58,52 68,66 32,66 42,52 34,52 44,38 38,38" fill="#FFFFFF"/>
+  <rect x="47" y="66" width="6" height="10" fill="#FFFFFF"/>
+</svg>
+
+<!-- 4. Entretenimiento -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="50" fill="#FF7043"/>
+  <!-- Máscara trasera -->
+  <path fill="#FFFFFF" opacity="0.7" d="M25 45 C25 35 45 33 48 45 C50 55 42 63 35 63 C27 63 25 55 25 45 Z"/>
+  <!-- Máscara delantera -->
+  <path fill="#FFFFFF" d="M40 38 C40 28 65 26 73 38 C78 50 68 62 58 62 C46 62 40 50 40 38 Z"/>
+  <!-- Ojos y sonrisa -->
+  <ellipse cx="50" cy="38" rx="4" ry="2.5" fill="#FF7043"/>
+  <ellipse cx="64" cy="38" rx="4" ry="2.5" fill="#FF7043"/>
+  <path fill="none" stroke="#FF7043" stroke-width="2.5" stroke-linecap="round" d="M51 48 Q57 55 63 48"/>
+</svg>
+
+<!-- 5. Arte y cultura -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="50" fill="#E91E63"/>
+  <!-- Vasija / Jarrón -->
+  <path fill="#FFFFFF" d="M38 28 L62 28 L60 33 C60 33 66 42 66 52 C66 62 58 72 50 72 C42 72 34 62 34 52 C34 42 40 33 40 33 Z"/>
+  <!-- Asas -->
+  <path fill="none" stroke="#FFFFFF" stroke-width="3" d="M36 36 C28 38 28 48 35 50 M64 36 C72 38 72 48 65 50"/>
+  <!-- Detalles -->
+  <line x1="40" y1="42" x2="60" y2="42" stroke="#E91E63" stroke-width="2"/>
+  <line x1="38" y1="58" x2="62" y2="58" stroke="#E91E63" stroke-width="2"/>
+</svg>
+
+<!-- 6. Salud y belleza -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="50" fill="#FF007F"/>
+  <!-- Corazón -->
+  <path fill="#FFFFFF" d="M50 68 C50 68 28 52 28 38 C28 30 34 25 41 25 C46 25 49 28 50 31 C51 28 54 25 59 25 C66 25 72 30 72 38 C72 52 50 68 50 68 Z"/>
+</svg>
+
+<!-- 7. Deportes -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="50" fill="#651FFF"/>
+  <!-- Aperetón de manos -->
+  <path fill="#FFFFFF" d="M26 42 L38 32 L50 42 L42 50 Z M74 42 L62 32 L50 42 L58 50 Z"/>
+  <path fill="#FFFFFF" d="M36 48 L50 62 L64 48 L56 40 L50 46 L44 40 Z"/>
+  <!-- Mangas -->
+  <rect x="22" y="38" width="8" height="18" fill="#FFFFFF" transform="rotate(-20 26 47)"/>
+  <rect x="70" y="38" width="8" height="18" fill="#FFFFFF" transform="rotate(20 74 47)"/>
+</svg>
+
+<!-- 8. Altruismo -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <circle cx="50" cy="50" r="50" fill="#0088FF"/>
+  <!-- Balón de Fútbol -->
+  <circle cx="50" cy="50" r="22" fill="#FFFFFF"/>
+  <!-- Pentágono central -->
+  <polygon points="50,42 57,47 54,55 46,55 43,47" fill="#0088FF"/>
+  <!-- Parches periféricos -->
+  <polygon points="50,28 44,32 46,38 54,38 56,32" fill="#0088FF"/>
+  <polygon points="68,44 63,40 58,45 61,51 67,50" fill="#0088FF"/>
+  <polygon points="60,65 58,59 51,60 50,66 56,69" fill="#0088FF"/>
+  <polygon points="40,65 42,59 49,60 50,66 44,69" fill="#0088FF"/>
+  <polygon points="32,44 37,40 42,45 39,51 33,50" fill="#0088FF"/>
+</svg>

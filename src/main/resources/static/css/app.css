@@ -14,9 +14,14 @@
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   background: var(--bg);
   color: var(--text);
+}
+
+h1, h2, h3, .brand-name {
+  font-family: "Poppins", "Inter", system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 .app-main {
@@ -63,14 +68,25 @@ body {
 }
 
 .btn-primary {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
   color: #fff;
   border: none;
   border-radius: var(--radius);
   padding: 0.75rem 1.25rem;
   font-size: 1rem;
+  font-weight: 600;
+  font-family: "Poppins", "Inter", system-ui, sans-serif;
   cursor: pointer;
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(233, 30, 99, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
+
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-block { width: 100%; }
 
 /* Feed y favoritos */
 .chips { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .5rem; }
@@ -102,4 +118,109 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   align-items: center;
   justify-content: center;
   padding: 1rem;
+}
+
+/* Encabezado de sección: título + bajada, sello del sistema de diseño */
+.page-hero {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: #fff;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.page-hero h1, .page-hero h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.page-hero p {
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Estado vacío con ilustración local */
+.empty-illustration {
+  text-align: center;
+  padding: 2rem 1.25rem;
+}
+
+.empty-illustration img {
+  width: 148px;
+  height: auto;
+  margin-bottom: 0.5rem;
+}
+
+.empty-illustration p { margin: 0.4rem 0 1rem; }
+
+/* Auth: hero degradado + card flotante */
+.auth-screen {
+  min-height: 100vh;
+  background: linear-gradient(160deg, var(--color-primary) 0%, var(--color-secondary) 55%, #8E0E3B 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1rem 2rem;
+}
+
+.auth-brand {
+  text-align: center;
+  color: #fff;
+  margin-bottom: 1.5rem;
+}
+
+.auth-brand img {
+  width: 84px;
+  height: 84px;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.3));
+}
+
+.auth-brand .brand-name {
+  margin: 0.6rem 0 0;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.auth-brand .brand-tag {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  padding: 1.5rem;
+}
+
+.auth-card h2 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.auth-error {
+  background: #FCE4EC;
+  border: 1px solid var(--color-accent);
+  color: var(--color-secondary);
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.auth-switch {
+  text-align: center;
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+}
+
+.auth-switch a {
+  color: var(--color-primary);
+  font-weight: 600;
 }

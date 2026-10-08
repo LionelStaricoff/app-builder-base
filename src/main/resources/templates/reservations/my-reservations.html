@@ -3,6 +3,11 @@
 <head th:replace="~{fragments/layout :: head('Mis reservas')}"></head>
 <body>
 <main class="app-main">
+    <div class="page-hero">
+        <h1>Mis reservas</h1>
+        <p>Tus próximas fechas y las que esperan confirmación</p>
+    </div>
+
     <div class="tabs">
         <a class="tab" th:href="@{/my-experiences}">Mis Experiencias</a>
         <span class="tab active">Mis Reservas</span>
@@ -28,7 +33,12 @@
     </section>
 
     <h3>Mis reservas</h3>
-    <div class="empty" th:if="${#lists.isEmpty(reservations)}">Todavía no reservaste nada.</div>
+    <div class="empty-illustration" th:if="${#lists.isEmpty(reservations)}">
+        <img th:src="@{/img/empty-reservations.svg}" alt="Sin reservas">
+        <p><strong>Todavía no reservaste nada</strong></p>
+        <p class="hint">Reservá tu primera experiencia y aparece acá con fecha y cupos.</p>
+        <a class="btn-primary" th:href="@{/feed}">Ver experiencias</a>
+    </div>
 
     <div class="card" th:each="r : ${reservations}" style="padding:1rem">
         <p>
