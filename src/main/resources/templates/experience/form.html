@@ -21,7 +21,7 @@
             <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Error</span>
 
             <label>Imágenes (1 a 5, la primera es la tapa)</label>
-            <div class="image-picker" id="image-picker">
+            <div class="image-picker" id="image-picker" data-max-files="5" data-max-bytes="5242880">
                 <input type="file" id="images-input" name="images" accept="image/*" multiple hidden>
                 <div class="image-picker-drop" id="image-picker-drop" role="button" tabindex="0"
                      aria-label="Elegir imágenes">

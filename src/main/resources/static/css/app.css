@@ -482,6 +482,20 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
   background: rgba(198, 40, 40, 0.9);
 }
 
+/* Variante avatar (settings): respeta la lógica del avatar circular,
+   preview única centrada en 50% para anticipar el .avatar-ring final. */
+.image-picker--avatar .image-picker-previews {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  justify-items: center;
+}
+
+.image-picker--avatar .image-picker-item {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 3px solid var(--color-primary);
+}
+
 /* Login: botón secundario + foco visible */
 .auth-card input:focus {
   outline: 2px solid var(--color-accent);

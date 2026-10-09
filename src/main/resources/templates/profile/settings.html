@@ -21,9 +21,18 @@
         <label>Nombre
             <input name="username" th:value="${user.username}" required>
         </label>
-        <label>Avatar (máx 2 MB)
-            <input type="file" name="avatar" accept="image/*">
-        </label>
+        <label>Avatar (máx 2 MB)</label>
+        <div class="image-picker image-picker--avatar" id="avatar-picker" data-max-files="1" data-max-bytes="2097152">
+            <input type="file" id="avatar-input" name="avatar" accept="image/*" hidden>
+            <div class="image-picker-drop" id="avatar-picker-drop" role="button" tabindex="0"
+                 aria-label="Elegir avatar">
+                <span class="image-picker-icon">👤</span>
+                <span class="image-picker-title">Tocá para elegir tu avatar</span>
+                <span class="hint">JPG, PNG o WebP · hasta 2 MB · 1 foto</span>
+            </div>
+            <div class="image-picker-previews" id="avatar-picker-previews"></div>
+            <p class="error" id="avatar-picker-error" hidden></p>
+        </div>
         <button type="submit" class="btn-primary">Guardar</button>
     </form>
 
@@ -33,5 +42,6 @@
     </form>
 </main>
 <nav th:replace="~{fragments/layout :: nav('settings')}"></nav>
+<script th:src="@{/js/image-picker.js}"></script>
 </body>
 </html>
