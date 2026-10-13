@@ -26,7 +26,7 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class ProfileController {
 
-    private static final long MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+    private static final long MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
     private final UserRepository userRepository;
     private final CurrentUser currentUser;
@@ -46,42 +46,60 @@ public class ProfileController {
         User user = currentUser.require();
         String nuevo = username == null ? "" : username.trim();
 
-        if (!nuevo.isEmpty() && !nuevo.equals(user.getUsername())) {
-            if (userRepository.findByUsername(nuevo).isPresent()) {
-                redirectAttributes.addFlashAttribute("error", "Ese nombre de usuario ya existe");
-                return "redirect:/settings";
-            }
-            String anterior = user.getUsername();
-            user.setUsername(nuevo);
-            userRepository.save(user);
-            sincronizarSesion(anterior, nuevo);
+        // FASE 1 — validar todo sin persistir nada (el form es atómico:
+        // o se guarda todo o no se guarda nada, sin estados a medias).
+        boolean usernameChanged = !nuevo.isEmpty() && !nuevo.equals(user.getUsername());
+        if (usernameChanged && userRepository.findByUsername(nuevo).isPresent()) {
+            redirectAttributes.addFlashAttribute("error", "Ese nombre de usuario ya existe");
+            return "redirect:/settings";
         }
 
+        String nuevoAvatarBase64 = null;
+        boolean avatarChanged = false;
         if (avatar != null && !avatar.isEmpty()) {
             if (avatar.getSize() > MAX_AVATAR_BYTES) {
-                redirectAttributes.addFlashAttribute("error", "El avatar no puede superar 2 MB");
+                redirectAttributes.addFlashAttribute("error", "El avatar no puede superar 5 MB");
                 return "redirect:/settings";
             }
-            user.setAvatarBase64(Base64.getEncoder().encodeToString(avatar.getBytes()));
-            userRepository.save(user);
+            nuevoAvatarBase64 = Base64.getEncoder().encodeToString(avatar.getBytes());
+            avatarChanged = true;
         }
 
-        boolean locationChanged = false;
-        if (country != null && !country.isBlank()
+        String nuevoCountry = null;
+        boolean countryChanged = country != null && !country.isBlank()
                 && !country.trim().equalsIgnoreCase(
-                        user.getCountry() == null ? "" : user.getCountry())) {
-            user.setCountry(country.trim());
-            locationChanged = true;
+                        user.getCountry() == null ? "" : user.getCountry());
+        if (countryChanged) {
+            nuevoCountry = country.trim();
         }
         String normalizedCurrency = currencyCode == null || currencyCode.isBlank()
                 ? null
                 : com.openlab.mx.share.user.service.UserService.normalizeCurrency(currencyCode);
-        if (normalizedCurrency != null && !normalizedCurrency.equals(user.getCurrencyCode())) {
-            user.setCurrencyCode(normalizedCurrency);
-            locationChanged = true;
+        boolean currencyChanged = normalizedCurrency != null
+                && !normalizedCurrency.equals(user.getCurrencyCode());
+
+        if (!usernameChanged && !avatarChanged && !countryChanged && !currencyChanged) {
+            redirectAttributes.addFlashAttribute("ok", "Sin cambios para guardar");
+            return "redirect:/settings";
         }
-        if (locationChanged) {
-            userRepository.save(user);
+
+        // FASE 2 — un solo save con todo lo validado.
+        String anterior = user.getUsername();
+        if (usernameChanged) {
+            user.setUsername(nuevo);
+        }
+        if (avatarChanged) {
+            user.setAvatarBase64(nuevoAvatarBase64);
+        }
+        if (countryChanged) {
+            user.setCountry(nuevoCountry);
+        }
+        if (currencyChanged) {
+            user.setCurrencyCode(normalizedCurrency);
+        }
+        userRepository.save(user);
+        if (usernameChanged) {
+            sincronizarSesion(anterior, nuevo);
         }
 
         redirectAttributes.addFlashAttribute("ok", "Perfil actualizado");

@@ -5,7 +5,7 @@
 (function () {
   var DEFAULT_MULTI_MAX_FILES = 5;
   var DEFAULT_MULTI_MAX_BYTES = 5 * 1024 * 1024;
-  var DEFAULT_SINGLE_MAX_BYTES = 2 * 1024 * 1024;
+  var DEFAULT_SINGLE_MAX_BYTES = 5 * 1024 * 1024;
 
   function formatMB(bytes) {
     return (bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1);
@@ -205,6 +205,19 @@
       });
     });
     drop.addEventListener('drop', function (e) { setFiles(e.dataTransfer.files); });
+
+    // El error de tamaño BLOQUEA el submit: sin esto el archivo pesado viaja
+    // igual al servidor, que lo rechaza y descarta el resto del form.
+    var form = root.closest('form');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        var tooBig = current.some(function (f) { return f.size > maxBytes; });
+        if (tooBig) {
+          e.preventDefault();
+          showError('La imagen supera los ' + maxLabel + '. Exportala en un tamaño menor (en Mac: Vista previa → Ajustar tamaño).');
+        }
+      });
+    }
   }
 
   document.querySelectorAll('.image-picker').forEach(initImagePicker);

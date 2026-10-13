@@ -89,7 +89,7 @@ class FavoriteServiceTest {
     }
 
     @Test
-    void testListSoloLosDelUsuario() {
+    void n() {
         Favorite favorite = Favorite.builder().id(1L).experience(experience()).build();
         when(favoriteRepository.findByUserIdOrderByIdDesc(7L)).thenReturn(List.of(favorite));
         when(feedService.dtoFor(any(Experience.class), eq(7L)))
