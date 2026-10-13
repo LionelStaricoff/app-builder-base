@@ -6,12 +6,17 @@ import com.openlab.mx.share.experience.entity.ExperienceSchedule;
 import com.openlab.mx.share.experience.entity.InstanceStatus;
 import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
+import com.openlab.mx.share.reservation.entity.ReservationStatus;
+import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Genera instancias futuras a partir de la agenda de una experiencia.
@@ -22,6 +27,7 @@ import java.util.List;
 public class InstanceGenerationService {
 
     private final ExperienceInstanceRepository instanceRepository;
+    private final ReservationRepository reservationRepository;
 
     public List<ExperienceInstance> generateFor(Experience experience,
                                                 List<ExperienceSchedule> schedules,
@@ -49,20 +55,38 @@ public class InstanceGenerationService {
     }
 
     /**
-     * Borra las instancias futuras existentes y genera las nuevas;
-     * las pasadas quedan intactas con su id.
+     * Regenera solo las instancias futuras LIBRES; las pasadas y las futuras
+     * con reservas vigentes quedan intactas con su id (borrarlas rompería el
+     * FK con reservations y destruiría reservas pagadas: esas se cancelan por
+     * el flujo explícito de cancelación, nunca por edición). Tampoco duplica
+     * un slot que sigue vigente con reservas.
      */
     public List<ExperienceInstance> regenerateFutures(Experience experience,
                                                       List<ExperienceSchedule> schedules,
                                                       List<ExperienceInstance> existing,
                                                       LocalDate today) {
-        List<ExperienceInstance> futures = existing.stream()
-                .filter(i -> !i.getDate().isBefore(today))
-                .toList();
-        if (!futures.isEmpty()) {
-            instanceRepository.deleteAll(futures);
+        Set<Slot> bookedSlots = new HashSet<>();
+        List<ExperienceInstance> free = new ArrayList<>();
+        for (ExperienceInstance i : existing) {
+            if (i.getDate().isBefore(today)) continue; // pasadas: intactas
+            if (i.getId() != null && reservationRepository.existsByInstanceIdAndStatusNot(
+                    i.getId(), ReservationStatus.CANCELADO)) {
+                bookedSlots.add(new Slot(i.getDate(), i.getStartTime(), i.getEndTime()));
+            } else if (i.getId() != null) {
+                free.add(i);
+            }
         }
-        return generateFor(experience, schedules, today);
+        if (!free.isEmpty()) {
+            instanceRepository.deleteAll(free);
+        }
+        return generateFor(experience, schedules, today).stream()
+                .filter(inst -> !bookedSlots.contains(
+                        new Slot(inst.getDate(), inst.getStartTime(), inst.getEndTime())))
+                .toList();
+    }
+
+    /** Un slot fecha+horario: lo que una reserva vigente ocupa. */
+    private record Slot(LocalDate date, LocalTime startTime, LocalTime endTime) {
     }
 
     private ExperienceInstance instance(Experience experience, LocalDate date,

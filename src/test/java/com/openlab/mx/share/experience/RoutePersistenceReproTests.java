@@ -28,8 +28,10 @@ import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -287,6 +289,58 @@ class RoutePersistenceReproTests {
         var restantes = imageRepository.findByExperienceIdOrderByIdAsc(id);
         assertEquals(1, restantes.size(), "solo se borra la marcada");
         assertEquals(guardadas.get(1).getId(), restantes.get(0).getId());
+    }
+
+    @Test
+    void editarConInstanciaReservadaGuardaTodoSinRomper() throws Exception {
+        var image = new MockMultipartFile("images", "f.png", "image/png", "vieja".getBytes());
+        Experience experience = experienceService.create(new ExperienceFormRequest(
+                        "Repro reserva " + UUID.randomUUID(), "Desc", 120, 2, 8, BigDecimal.valueOf(190),
+                        ExperienceCategory.CULTURAL, RecurrenceType.UNIQUE,
+                        19.4326, -99.1332,
+                        List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(30), null,
+                                LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
+                        List.of(image)),
+                userRepository.findByUsername("demo_creator").orElseThrow());
+        Long expId = experience.getId();
+        Long instanceId = instanceRepository.findByExperienceIdOrderByDateAsc(expId).get(0).getId();
+
+        // demo_user reserva la fecha (queda vigente, no cancelada).
+        mockMvc.perform(post("/reservations/" + instanceId)
+                        .with(user("demo_user")).with(csrf())
+                        .param("attendees", "1"))
+                .andExpect(status().is3xxRedirection());
+
+        // demo_creator edita todo (descripción + imagen nueva) con la misma agenda.
+        var nueva = new MockMultipartFile("images", "n.png", "image/png", "nueva".getBytes());
+        mockMvc.perform(multipart("/experiences/" + expId)
+                        .file(nueva)
+                        .with(user("demo_creator")).with(csrf())
+                        .param("name", experience.getName())
+                        .param("description", "Desc editada con reserva vigente")
+                        .param("durationMinutes", "120")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "8")
+                        .param("price", "190.00")
+                        .param("currencyCode", "MXN")
+                        .param("category", "CULTURAL")
+                        .param("recurrenceType", "UNIQUE")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].date", LocalDate.now().plusDays(30).toString())
+                        .param("schedules[0].startTime", "10:00")
+                        .param("schedules[0].endTime", "12:00"))
+                .andExpect(status().is3xxRedirection());
+
+        var instancias = instanceRepository.findByExperienceIdOrderByDateAsc(expId);
+        assertEquals(1, instancias.size(), "no duplica el slot reservado");
+        assertEquals(instanceId, instancias.get(0).getId(), "la instancia reservada sigue intacta");
+        var imagenes = imageRepository.findByExperienceIdOrderByIdAsc(expId);
+        assertEquals(1, imagenes.size());
+        assertEquals(java.util.Base64.getEncoder().encodeToString("nueva".getBytes()),
+                imagenes.get(0).getData(), "la imagen nueva sí se guarda");
+        assertEquals("Desc editada con reserva vigente",
+                experienceService.get(expId).getDescription());
     }
 
     @Test

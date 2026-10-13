@@ -34,4 +34,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByInstanceExperienceCreatorIdAndStatus(Long creatorId, ReservationStatus status);
 
     boolean existsByInstanceIdAndUserIdAndStatus(Long instanceId, Long userId, ReservationStatus status);
+
+    /** La instancia tiene reservas vigentes (las canceladas liberan el slot). */
+    boolean existsByInstanceIdAndStatusNot(Long instanceId, ReservationStatus status);
 }

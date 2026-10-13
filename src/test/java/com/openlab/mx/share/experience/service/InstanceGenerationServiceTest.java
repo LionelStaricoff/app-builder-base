@@ -5,6 +5,8 @@ import com.openlab.mx.share.experience.entity.ExperienceSchedule;
 import com.openlab.mx.share.experience.entity.InstanceStatus;
 import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
+import com.openlab.mx.share.reservation.entity.ReservationStatus;
+import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -26,6 +28,9 @@ class InstanceGenerationServiceTest {
 
     @Mock
     private ExperienceInstanceRepository instanceRepository;
+
+    @Mock
+    private ReservationRepository reservationRepository;
 
     @InjectMocks
     private InstanceGenerationService service;
@@ -113,5 +118,34 @@ class InstanceGenerationServiceTest {
         assertEquals(1, regenerated.size());
         assertEquals(LocalDate.of(2026, 12, 1), regenerated.get(0).getDate());
         assertNull(regenerated.get(0).getId(), "las nuevas van sin id");
+    }
+
+    @Test
+    void testAlEditarAgendaConservaFuturasConReservasYSinDuplicar() {
+        Experience e = experience(RecurrenceType.UNIQUE);
+        var booked = com.openlab.mx.share.experience.entity.ExperienceInstance.builder()
+                .id(7L).experience(e).date(LocalDate.of(2026, 11, 1))
+                .startTime(LocalTime.of(10, 0)).endTime(LocalTime.of(12, 0))
+                .status(InstanceStatus.SCHEDULED).build();
+        var free = com.openlab.mx.share.experience.entity.ExperienceInstance.builder()
+                .id(8L).experience(e).date(LocalDate.of(2026, 11, 8))
+                .startTime(LocalTime.of(10, 0)).endTime(LocalTime.of(12, 0))
+                .status(InstanceStatus.SCHEDULED).build();
+        // La agenda no cambia: mismo slot del sábado 1.
+        List<ExperienceSchedule> sameSchedules = List.of(
+                uniqueSchedule(LocalDate.of(2026, 11, 1), LocalTime.of(10, 0), LocalTime.of(12, 0)),
+                uniqueSchedule(LocalDate.of(2026, 11, 8), LocalTime.of(10, 0), LocalTime.of(12, 0)));
+        when(reservationRepository.existsByInstanceIdAndStatusNot(7L, ReservationStatus.CANCELADO))
+                .thenReturn(true);
+
+        var regenerated = service.regenerateFutures(e, sameSchedules,
+                List.of(booked, free), LocalDate.of(2026, 10, 7));
+
+        ArgumentCaptor<List<com.openlab.mx.share.experience.entity.ExperienceInstance>> captor =
+                ArgumentCaptor.forClass(List.class);
+        verify(instanceRepository).deleteAll(captor.capture());
+        assertEquals(List.of(free), captor.getValue(), "la reservada no se borra");
+        assertEquals(1, regenerated.size(), "no duplica el slot que sigue vigente");
+        assertEquals(LocalDate.of(2026, 11, 8), regenerated.get(0).getDate());
     }
 }
