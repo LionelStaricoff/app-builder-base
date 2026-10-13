@@ -117,8 +117,8 @@
             </div>
 
             <fieldset>
-                <legend>Punto de encuentro y recorrido (un solo mapa)</legend>
-                <p class="hint">Tocá el mapa para mover el punto de encuentro. Agregá paradas con su nombre: el próximo toque las ubica y se unen con una línea. Arrastrá los pines para ajustarlas.</p>
+                <legend>Punto de partida y recorrido (un solo mapa)</legend>
+                <p class="hint">Tocá el mapa para mover el punto de partida o arrastralo directo. Agregá paradas con su nombre: el próximo toque las ubica y se unen con una línea desde la partida. Arrastrá los pines para ajustarlos.</p>
                 <div id="form-map" class="map-box" data-map="pick-route" style="height:300px"
                      th:attr="data-fresh=${experienceId == null}"></div>
                 <input type="hidden" th:field="*{meetingLat}" id="meetingLat">

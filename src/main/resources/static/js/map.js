@@ -126,8 +126,8 @@
     // Mapa único del form: punto de encuentro + paradas con polyline.
     const latInput = document.getElementById('meetingLat');
     const lngInput = document.getElementById('meetingLng');
-    const meetingMarker = L.marker(map.getCenter()).addTo(map);
-    meetingMarker.bindTooltip('Punto de encuentro', { direction: 'top', offset: [0, -28] });
+    const meetingMarker = L.marker(map.getCenter(), { draggable: true }).addTo(map);
+    meetingMarker.bindTooltip('Punto de partida (arrastrame)', { direction: 'top', offset: [0, -28] });
     const routeLayer = L.layerGroup().addTo(map);
 
     const setMeeting = (la, lo, moveView) => {
@@ -137,6 +137,12 @@
       if (lngInput) lngInput.value = lo.toFixed(6);
       if (moveView) map.setView([la, lo]);
     };
+    // Arrastrar el pin de partida lo modifica directo, sin tocar las paradas.
+    meetingMarker.on('dragend', () => {
+      const pos = meetingMarker.getLatLng();
+      setMeeting(pos.lat, pos.lng, false);
+      refreshRoute(false);
+    });
 
     const refreshRoute = (fitBounds) => {
       routeLayer.clearLayers();
@@ -144,9 +150,12 @@
       pts.forEach((p, i) => addStopPin(routeLayer, p, i, true,
         (la, lo) => window.__stopsApi?.moveTo(p.index, la, lo),
         () => window.__stopsApi?.select(p.index)));
-      if (pts.length >= 2) {
-        L.polyline(pts.map((p) => [p.lat, p.lng]), { weight: 4, opacity: 0.85 }).addTo(routeLayer);
-        if (fitBounds) map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lng])).pad(0.25));
+      // La línea arranca en el punto de partida y sigue por las paradas.
+      const start = meetingMarker.getLatLng();
+      const line = [[start.lat, start.lng], ...pts.map((p) => [p.lat, p.lng])];
+      if (pts.length >= 1) {
+        L.polyline(line, { weight: 4, opacity: 0.85 }).addTo(routeLayer);
+        if (fitBounds) map.fitBounds(L.latLngBounds(line).pad(0.25));
       }
     };
 
