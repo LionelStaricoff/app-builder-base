@@ -13,15 +13,24 @@
             <button type="button" class="btn-secondary location-allow" id="location-allow">📍 Activar</button>
         </div>
         <form id="location-manual-form" class="location-manual">
-            <input type="text" id="location-manual-input" placeholder="Buscar en otra ciudad…" aria-label="Buscar experiencias en otra ciudad">
+            <input type="text" id="location-manual-input" list="country-options"
+                   placeholder="Buscar por país y/o ciudad…" aria-label="Buscar experiencias por país y/o ciudad"
+                   th:value="${searchedQuery}" autocomplete="off">
+            <datalist id="country-options">
+                <option th:each="c : ${countries}" th:value="${c}"></option>
+            </datalist>
             <button type="submit" class="btn-secondary">Buscar</button>
         </form>
     </div>
 
     <div class="page-hero">
         <h1>Descubrí experiencias</h1>
-        <p th:if="${searchedCity != null}">Mostrando primero lo de <strong th:text="${searchedCity}">Ciudad</strong></p>
-        <p th:if="${searchedCity == null}">Primero lo cerca tuyo, después el resto del mundo</p>
+        <p th:if="${searchedQuery != null}">Filtrando por <strong th:text="${searchedQuery}">Lugar</strong>
+            <a class="chip" th:href="@{/feed(category=${selectedCategory}, country=${selectedCountry})}"
+               title="Quitar búsqueda">✕ Limpiar</a>
+        </p>
+        <p th:if="${searchedQuery == null and searchedCity != null}">Mostrando primero lo de <strong th:text="${searchedCity}">Ciudad</strong></p>
+        <p th:if="${searchedQuery == null and searchedCity == null}">Primero lo cerca tuyo, después el resto del mundo</p>
     </div>
 
     <div class="chips">
@@ -31,22 +40,6 @@
            th:classappend="${selectedCategory == c} ? 'active'"
            th:href="@{/feed(category=${c})}" th:text="${c}">Categoria</a>
     </div>
-
-    <form class="country-filter" method="get" th:action="@{/feed}">
-        <input type="hidden" name="category" th:if="${selectedCategory != null}"
-               th:value="${selectedCategory}">
-        <label class="country-filter-label" for="country-filter-input">🌎 País</label>
-        <input class="country-filter-input" list="country-options" id="country-filter-input"
-               name="country" th:value="${selectedCountry}"
-               placeholder="Buscar país…" aria-label="Filtrar experiencias por país"
-               autocomplete="country-name" onchange="this.form.submit()">
-        <datalist id="country-options">
-            <option th:each="c : ${countries}" th:value="${c}"></option>
-        </datalist>
-        <button type="submit" class="btn-secondary">Filtrar</button>
-        <a class="chip" th:if="${selectedCountry != null and !#strings.isEmpty(selectedCountry)}"
-           th:href="@{/feed(category=${selectedCategory})}" title="Quitar filtro de país">✕ Limpiar</a>
-    </form>
 
     <div class="empty-illustration" th:if="${feedPage.empty}">
         <img th:src="@{/img/empty-feed.svg}" alt="Sin experiencias">

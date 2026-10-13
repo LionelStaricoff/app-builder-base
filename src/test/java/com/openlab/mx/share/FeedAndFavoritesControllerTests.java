@@ -161,10 +161,10 @@ class FeedAndFavoritesControllerTests {
 
     @Test
     @WithMockUser("demo_user")
-    void feedBuscadorDePaisSeRenderiza() throws Exception {
+    void feedBuscadorUnicoSeRenderiza() throws Exception {
         mockMvc.perform(get("/feed"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("country-filter-input")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("location-manual-input")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("country-options")));
     }
 

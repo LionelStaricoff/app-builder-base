@@ -17,6 +17,7 @@ import com.openlab.mx.share.experience.repository.ExperienceScheduleRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.shared.exception.NotOwnerException;
+import com.openlab.mx.share.shared.location.GeocodingService;
 import com.openlab.mx.share.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,10 @@ public class ExperienceService {
     private final ExperienceStopRepository stopRepository;
     private final ExperienceInstanceRepository instanceRepository;
     private final InstanceGenerationService generationService;
+    private final GeocodingService geocodingService;
+
+    /** País/ciudad vacíos en las paradas se guardan como "—" si ni el form ni Nominatim los dan. */
+    private static final String PLACEHOLDER = "—";
 
     @Transactional
     public Experience create(ExperienceFormRequest request, User creator) {
@@ -227,7 +232,12 @@ public class ExperienceService {
         return "MXN";
     }
 
-    /** Paradas opcionales: se ignoran filas vacías para no romper forms viejos. */
+    /**
+     * Paradas opcionales: se ignoran filas vacías para no romper forms viejos.
+     * Si el form no trae ciudad/país (el picker del mapa solo manda nombre +
+     * coords), se resuelven con Nominatim best-effort para que el filtro por
+     * país del feed tenga datos reales en vez del placeholder "—".
+     */
     private void saveStops(Experience experience, List<ExperienceStopDTO> stops) {
         if (stops == null || stops.isEmpty()) return;
         List<ExperienceStop> entities = new ArrayList<>();
@@ -235,17 +245,41 @@ public class ExperienceService {
         for (ExperienceStopDTO s : stops) {
             if (s == null || s.placeName() == null || s.placeName().isBlank()) continue;
             if (s.lat() == 0 && s.lng() == 0) continue;
+            String city = cleanLocation(s.city());
+            String country = cleanLocation(s.country());
+            if ((city == null || country == null)) {
+                GeocodingService.Place place = reverseGeocode(s.lat(), s.lng());
+                if (place != null) {
+                    if (city == null) city = cleanLocation(place.city());
+                    if (country == null) country = cleanLocation(place.country());
+                }
+            }
             entities.add(ExperienceStop.builder()
                     .experience(experience)
                     .position(pos++)
                     .placeName(s.placeName().trim())
-                    .city(s.city() == null || s.city().isBlank() ? "—" : s.city().trim())
-                    .country(s.country() == null || s.country().isBlank() ? "—" : s.country().trim())
+                    .city(city != null ? city : PLACEHOLDER)
+                    .country(country != null ? country : PLACEHOLDER)
                     .lat(s.lat())
                     .lng(s.lng())
                     .build());
         }
         if (!entities.isEmpty()) stopRepository.saveAll(entities);
+    }
+
+    /** null = sin dato (vacío o placeholder "—"); si no, valor recortado. */
+    private static String cleanLocation(String raw) {
+        if (raw == null || raw.isBlank() || PLACEHOLDER.equals(raw.trim())) return null;
+        return raw.trim();
+    }
+
+    /** Reverse geocoding best-effort: nunca frena la creación si Nominatim falla. */
+    private GeocodingService.Place reverseGeocode(double lat, double lng) {
+        try {
+            return geocodingService.resolve(lat, lng);
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     public List<ExperienceStopDTO> stopsOf(Long experienceId) {

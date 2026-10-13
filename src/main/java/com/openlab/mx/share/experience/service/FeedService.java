@@ -53,14 +53,27 @@ public class FeedService {
     private final GeocodingService geocodingService;
 
     /**
-     * País geocodificado del punto de reunión por experiencia ("" = sin dato).
+     * Lugar geocodificado del punto de reunión por experiencia.
      * Cache en memoria: el filtro solo geocodifica una vez por experiencia y
      * no repite llamadas a Nominatim en cada página del scroll infinito.
      */
-    private final Map<Long, String> geocodedCountryCache = new ConcurrentHashMap<>();
+    private final Map<Long, GeocodingService.Place> geocodedPlaceCache = new ConcurrentHashMap<>();
 
+    /** Firma original: sin buscador libre (delega con cityQuery = null). */
     public Page<ExperienceFeedDTO> page(Long userId, String userCity, Double lat, Double lng,
                                         ExperienceCategory category, String country, int pageNumber) {
+        return page(userId, userCity, lat, lng, category, country, null, pageNumber);
+    }
+
+    /**
+     * Buscador libre {@code cityQuery}: filtra por país y/o ciudad (contiene,
+     * sin distinguir mayúsculas) contra cualquier parada, la ciudad del
+     * creador o el punto de reunión geocodificado. Se combina (AND) con el
+     * filtro exacto {@code country} del dropdown.
+     */
+    public Page<ExperienceFeedDTO> page(Long userId, String userCity, Double lat, Double lng,
+                                        ExperienceCategory category, String country,
+                                        String cityQuery, int pageNumber) {
         List<Experience> experiences = category != null
                 ? experienceRepository.findByStatusAndCategory(ExperienceStatus.ACTIVE, category)
                 : experienceRepository.findByStatus(ExperienceStatus.ACTIVE);
@@ -69,6 +82,14 @@ public class FeedService {
             Map<Long, String> byExperience = firstStopCountriesById();
             experiences = experiences.stream()
                     .filter(e -> wanted.equalsIgnoreCase(countryOf(e, byExperience)))
+                    .toList();
+        }
+        if (cityQuery != null && !cityQuery.isBlank()) {
+            String wanted = cityQuery.trim();
+            Map<Long, List<com.openlab.mx.share.experience.entity.ExperienceStop>> stopsByExperience =
+                    allActiveStopsById();
+            experiences = experiences.stream()
+                    .filter(e -> matchesLocationQuery(e, wanted, stopsByExperience))
                     .toList();
         }
 
@@ -125,6 +146,54 @@ public class FeedService {
         return byExperience;
     }
 
+    /** Mapa experiencia → todas sus paradas, en una sola query (buscador libre). */
+    private Map<Long, List<com.openlab.mx.share.experience.entity.ExperienceStop>> allActiveStopsById() {
+        Map<Long, List<com.openlab.mx.share.experience.entity.ExperienceStop>> byExperience = new HashMap<>();
+        List<com.openlab.mx.share.experience.entity.ExperienceStop> stops;
+        try {
+            stops = stopRepository.findAllActive(ExperienceStatus.ACTIVE);
+        } catch (Exception ignored) {
+            // Tabla aún no creada en H2 viejo: sin paradas no se filtra nada.
+            return byExperience;
+        }
+        for (com.openlab.mx.share.experience.entity.ExperienceStop s : stops) {
+            if (s.getExperience() == null || s.getExperience().getId() == null) continue;
+            byExperience.computeIfAbsent(s.getExperience().getId(), k -> new java.util.ArrayList<>()).add(s);
+        }
+        return byExperience;
+    }
+
+    /**
+     * ¿La experiencia matchea el buscador libre? Contiene (case-insensitive)
+     * en ciudad/país/lugar de cualquier parada, ciudad del creador o lugar
+     * geocodificado del punto de reunión (cubre datos viejos con "—").
+     */
+    private boolean matchesLocationQuery(Experience experience, String query,
+                                         Map<Long, List<com.openlab.mx.share.experience.entity.ExperienceStop>> stopsByExperience) {
+        String want = query.toLowerCase(Locale.ROOT);
+        String creatorCity = experience.getCreator() != null ? experience.getCreator().getCity() : null;
+        if (containsLocation(creatorCity, want)) return true;
+        List<com.openlab.mx.share.experience.entity.ExperienceStop> stops =
+                stopsByExperience.get(experience.getId());
+        if (stops != null) {
+            for (com.openlab.mx.share.experience.entity.ExperienceStop s : stops) {
+                if (containsLocation(s.getCity(), want)
+                        || containsLocation(s.getCountry(), want)
+                        || containsLocation(s.getPlaceName(), want)) {
+                    return true;
+                }
+            }
+        }
+        GeocodingService.Place place = geocodedPlace(experience);
+        return place != null
+                && (containsLocation(place.city(), want) || containsLocation(place.country(), want));
+    }
+
+    private static boolean containsLocation(String value, String wantLower) {
+        if (value == null || value.isBlank() || PLACEHOLDER.equals(value.trim())) return false;
+        return value.toLowerCase(Locale.ROOT).contains(wantLower);
+    }
+
     /**
      * País de una experiencia para el filtro: la primera parada manda; si no
      * tiene, se reverse-geocodifica el punto de reunión (best effort, cacheado).
@@ -134,18 +203,31 @@ public class FeedService {
         if (c != null && !c.isBlank() && !PLACEHOLDER.equals(c)) {
             return c;
         }
-        if (experience.getMeetingLat() == null || experience.getMeetingLng() == null) {
+        GeocodingService.Place place = geocodedPlace(experience);
+        if (place == null || place.country() == null || place.country().isBlank()) {
             return "";
         }
-        return geocodedCountryCache.computeIfAbsent(experience.getId(), id -> {
-            GeocodingService.Place place = geocodingService.resolve(
-                    experience.getMeetingLat(), experience.getMeetingLng());
-            if (place == null || place.country() == null || place.country().isBlank()) {
-                return "";
-            }
-            return place.country().trim();
-        });
+        return place.country().trim();
     }
+
+    /** Lugar geocodificado del punto de reunión (best effort, cacheado). */
+    private GeocodingService.Place geocodedPlace(Experience experience) {
+        if (experience.getMeetingLat() == null || experience.getMeetingLng() == null) {
+            return null;
+        }
+        if (experience.getId() == null) {
+            return geocodingService.resolve(experience.getMeetingLat(), experience.getMeetingLng());
+        }
+        // ConcurrentHashMap no admite nulls: el marcador NULLO representa "sin dato".
+        GeocodingService.Place place = geocodedPlaceCache.computeIfAbsent(experience.getId(), id -> {
+            GeocodingService.Place resolved = geocodingService.resolve(
+                    experience.getMeetingLat(), experience.getMeetingLng());
+            return resolved != null ? resolved : NULLO;
+        });
+        return place == NULLO ? null : place;
+    }
+
+    private static final GeocodingService.Place NULLO = new GeocodingService.Place(null, null);
 
     /** Referencia a experiencia para otras capas (favoritos, etc.). */
     public Experience experienceRef(Long experienceId) {

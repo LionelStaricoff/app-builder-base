@@ -12,6 +12,7 @@
   const params = new URLSearchParams(window.location.search);
   const category = params.get('category');
   const country = params.get('country');
+  const city = params.get('city');
   let page = 1;
   let loading_page = false;
   let done = false;
@@ -111,6 +112,7 @@
       const query = new URLSearchParams({ page: String(page) });
       if (category) query.set('category', category);
       if (country) query.set('country', country);
+      if (city) query.set('city', city);
       const res = await fetch(`/feed/api?${query}`, {
         headers: { Accept: 'application/json' },
       });

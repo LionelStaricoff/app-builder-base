@@ -21,4 +21,11 @@ public interface ExperienceStopRepository extends JpaRepository<ExperienceStop, 
             + "from ExperienceStop s where s.position = 0 "
             + "and s.experience.status = :status")
     List<FirstStopCountry> findFirstStopCountries(@Param("status") ExperienceStatus status);
+
+    /**
+     * Todas las paradas de experiencias activas para el buscador libre de
+     * país y/o ciudad: matchea contra cualquier parada, no solo la primera.
+     */
+    @Query("select s from ExperienceStop s where s.experience.status = :status")
+    List<ExperienceStop> findAllActive(@Param("status") ExperienceStatus status);
 }

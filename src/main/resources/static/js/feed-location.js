@@ -1,7 +1,7 @@
 // Ubicación en el feed: pide GPS una vez, lo guarda en el perfil
 // (con reverse geocoding a ciudad en el backend) y recarga para que
 // la página 0 salga ya ordenada por cercanía. Incluye búsqueda manual
-// para explorar experiencias de otra ciudad.
+// por país y/o ciudad para explorar experiencias de otro lugar.
 (function () {
   const banner = document.getElementById('location-banner');
   if (!banner) return;
@@ -93,7 +93,10 @@
       e.preventDefault();
       const city = (manualInput?.value || '').trim();
       if (!city) return;
-      window.location.href = '/feed?city=' + encodeURIComponent(city);
+      // Conservar los filtros activos (categoría/país): solo se cambia la búsqueda.
+      const params = new URLSearchParams(window.location.search);
+      params.set('city', city);
+      window.location.href = '/feed?' + params.toString();
     });
   }
 

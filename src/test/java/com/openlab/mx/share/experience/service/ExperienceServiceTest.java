@@ -10,7 +10,9 @@ import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceScheduleRepository;
+import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.shared.exception.NotOwnerException;
+import com.openlab.mx.share.shared.location.GeocodingService;
 import com.openlab.mx.share.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +43,10 @@ class ExperienceServiceTest {
     private ExperienceImageRepository imageRepository;
     @Mock
     private ExperienceScheduleRepository scheduleRepository;
+    @Mock
+    private ExperienceStopRepository stopRepository;
+    @Mock
+    private GeocodingService geocodingService;
     @Mock
     private ExperienceInstanceRepository instanceRepository;
     @Mock

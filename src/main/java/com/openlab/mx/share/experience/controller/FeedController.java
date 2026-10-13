@@ -31,20 +31,21 @@ public class FeedController {
                        @RequestParam(required = false) String country,
                        Model model) {
         User user = currentUser.get();
-        // Búsqueda manual de otra ciudad pisa la ciudad del perfil.
+        // Búsqueda manual de otro lugar (país y/o ciudad) pisa la ciudad del perfil.
         String effectiveCity = city != null && !city.isBlank() ? city.trim() : (user != null ? user.getCity() : null);
         Page<ExperienceFeedDTO> feedPage = feedService.page(
                 user != null ? user.getId() : null,
                 effectiveCity,
                 user != null ? user.getLat() : null,
                 user != null ? user.getLng() : null,
-                category, country, 0);
+                category, country, city, 0);
         model.addAttribute("feedPage", feedPage);
         model.addAttribute("categories", ExperienceCategory.values());
         model.addAttribute("selectedCategory", category);
         model.addAttribute("selectedCountry", country);
         model.addAttribute("countries", feedService.countryOptions());
         model.addAttribute("searchedCity", effectiveCity);
+        model.addAttribute("searchedQuery", city != null && !city.isBlank() ? city.trim() : null);
         model.addAttribute("savedCity", user != null ? user.getCity() : null);
         return "feed";
     }
@@ -54,14 +55,17 @@ public class FeedController {
     public Page<ExperienceFeedDTO> feedApi(@RequestParam(defaultValue = "0") int page,
                                            @RequestParam(required = false) ExperienceCategory category,
                                            @RequestParam(required = false) String country,
+                                           @RequestParam(required = false) String city,
                                            @RequestParam(required = false) Double lat,
                                            @RequestParam(required = false) Double lng) {
         User user = currentUser.get();
+        String effectiveCity = city != null && !city.isBlank() ? city.trim()
+                : (user != null ? user.getCity() : null);
         return feedService.page(
                 user != null ? user.getId() : null,
-                user != null ? user.getCity() : null,
+                effectiveCity,
                 lat != null ? lat : (user != null ? user.getLat() : null),
                 lng != null ? lng : (user != null ? user.getLng() : null),
-                category, country, page);
+                category, country, city, page);
     }
 }
