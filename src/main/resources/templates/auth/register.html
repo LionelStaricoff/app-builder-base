@@ -29,7 +29,52 @@
                 <input type="date" th:field="*{birthDate}" required>
             </label>
             <p th:if="${#fields.hasErrors('birthDate')}" th:errors="*{birthDate}">Error</p>
+            <div class="form-grid">
+                <label>País
+                    <select th:field="*{country}" id="country-select" required>
+                        <option value="">Elegí tu país</option>
+                        <option value="México">México</option>
+                        <option value="Argentina">Argentina</option>
+                        <option value="Colombia">Colombia</option>
+                        <option value="Chile">Chile</option>
+                        <option value="Perú">Perú</option>
+                        <option value="Uruguay">Uruguay</option>
+                        <option value="España">España</option>
+                        <option value="Estados Unidos">Estados Unidos</option>
+                        <option value="Brasil">Brasil</option>
+                    </select>
+                </label>
+                <label>Moneda
+                    <select th:field="*{currencyCode}" id="currency-select" required>
+                        <option value="">Moneda</option>
+                        <option value="MXN">MXN — Peso mexicano</option>
+                        <option value="ARS">ARS — Peso argentino</option>
+                        <option value="COP">COP — Peso colombiano</option>
+                        <option value="CLP">CLP — Peso chileno</option>
+                        <option value="PEN">PEN — Sol peruano</option>
+                        <option value="UYU">UYU — Peso uruguayo</option>
+                        <option value="EUR">EUR — Euro</option>
+                        <option value="USD">USD — Dólar</option>
+                        <option value="BRL">BRL — Real</option>
+                    </select>
+                </label>
+            </div>
+            <p class="hint">Usamos tu país para mostrarte los precios en tu moneda local.</p>
             <button type="submit" class="btn-primary btn-block">Registrarme</button>
+        </form>
+        <script>
+            // Sincroniza moneda sugerida al elegir país (el usuario igual puede cambiarla).
+            (function () {
+                var map = { 'México': 'MXN', 'Argentina': 'ARS', 'Colombia': 'COP', 'Chile': 'CLP', 'Perú': 'PEN', 'Uruguay': 'UYU', 'España': 'EUR', 'Estados Unidos': 'USD', 'Brasil': 'BRL' };
+                var country = document.getElementById('country-select');
+                var currency = document.getElementById('currency-select');
+                if (!country || !currency) return;
+                country.addEventListener('change', function () {
+                    var sugerida = map[country.value];
+                    if (sugerida) currency.value = sugerida;
+                });
+            })();
+        </script>
         </form>
         <div class="auth-divider">o</div>
         <p class="auth-switch">¿Ya tenés cuenta?</p>

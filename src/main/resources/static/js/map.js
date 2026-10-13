@@ -1,4 +1,4 @@
-// Mapas Leaflet: data-map="view" (solo lectura) o data-map="pick" (elegir punto).
+// Mapas Leaflet: view/pick + recorridos con polyline numerada.
 (function () {
   const FALLBACK = { lat: 19.4326, lng: -99.1332 }; // CDMX
 
@@ -16,12 +16,209 @@
     return Number.isFinite(n) ? n : dflt;
   }
 
-  document.querySelectorAll('[data-map]').forEach((el) => {
+  function parseStops(el) {
+    // data-stops puede venir como JSON en el atributo (detalle/feed).
+    try {
+      const raw = el.dataset.stops;
+      if (!raw || raw === '[]') return [];
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return [];
+      return arr
+        .map((s) => ({
+          // Soporta tanto camelCase (JSON Jackson) como minúsculas.
+          lat: num(s.lat ?? s.Lat, NaN),
+          lng: num(s.lng ?? s.Lng ?? s.lon, NaN),
+          placeName: s.placeName ?? s.placename ?? s.name ?? '',
+          city: s.city ?? '',
+        }))
+        .filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lng) && (s.lat !== 0 || s.lng !== 0));
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function numberedIcon(n) {
+    return L.divIcon({
+      className: 'route-number',
+      html: `<span>${n}</span>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+    });
+  }
+
+  function drawRoute(map, stops) {
+    const latlngs = stops.map((s) => [s.lat, s.lng]);
+    stops.forEach((s, i) => {
+      L.marker([s.lat, s.lng], { icon: numberedIcon(i + 1) })
+        .addTo(map)
+        .bindPopup(`<strong>${i + 1}. ${escapeHtml(s.placeName || 'Parada')}</strong>${s.city ? `<br>${escapeHtml(s.city)}` : ''}`);
+    });
+    if (latlngs.length >= 2) {
+      L.polyline(latlngs, { weight: 4, opacity: 0.85 }).addTo(map);
+      map.fitBounds(L.latLngBounds(latlngs).pad(0.25));
+    } else if (latlngs.length === 1) {
+      map.setView(latlngs[0], 14);
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text ?? '';
+    return div.innerHTML;
+  }
+
+  function initRouteEdit(el, map) {
+    // Editor del form (mapa de recorrido solo): click ubica la parada pendiente.
+    const refresh = () => {
+      map.eachLayer((layer) => {
+        if (layer instanceof L.Marker || layer instanceof L.Polyline) map.removeLayer(layer);
+      });
+      const pts = (window.__stopsApi?.all() || []).filter((p) => p.lat && p.lng);
+      if (pts.length === 0) return;
+      pts.forEach((p, i) => L.marker([p.lat, p.lng], { icon: numberedIcon(i + 1) }).addTo(map));
+      if (pts.length >= 2) {
+        L.polyline(pts.map((p) => [p.lat, p.lng]), { weight: 4, opacity: 0.85 }).addTo(map);
+        map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lng])).pad(0.25));
+      } else {
+        map.setView([pts[0].lat, pts[0].lng], 14);
+      }
+    };
+    map.on('click', (e) => {
+      window.__stopsApi?.placeAt(e.latlng.lat, e.latlng.lng);
+    });
+    window.addEventListener('stops-changed', refresh);
+    // Prefill inicial (edición): espera a que experience-form.js cargue las filas.
+    setTimeout(refresh, 400);
+    setTimeout(refresh, 1200);
+  }
+
+  function hasPendingStop() {
+    // Hay fila marcada pendiente o con coords en 0 (ver experience-form.js).
+    if (document.querySelector('.stop-pending')) return true;
+    const latInputs = document.querySelectorAll('#stops-list input[name="stopLat"]');
+    for (const input of latInputs) {
+      const lngInput = input.parentElement?.querySelector('input[name="stopLng"]')
+        || input.closest('[data-stop-row]')?.querySelector('input[name="stopLng"]');
+      const la = parseFloat(input.value || '0') || 0;
+      const lo = parseFloat(lngInput?.value || '0') || 0;
+      if (!(la && lo)) return true;
+    }
+    return false;
+  }
+
+  function initPickRoute(el, map) {
+    // Mapa único del form: punto de encuentro + paradas con polyline.
+    const latInput = document.getElementById('meetingLat');
+    const lngInput = document.getElementById('meetingLng');
+    const meetingMarker = L.marker(map.getCenter()).addTo(map);
+    const routeLayer = L.layerGroup().addTo(map);
+
+    const setMeeting = (la, lo, moveView) => {
+      if (!Number.isFinite(la) || !Number.isFinite(lo)) return;
+      meetingMarker.setLatLng([la, lo]);
+      if (latInput) latInput.value = la.toFixed(6);
+      if (lngInput) lngInput.value = lo.toFixed(6);
+      if (moveView) map.setView([la, lo]);
+    };
+
+    const refreshRoute = (fitBounds) => {
+      routeLayer.clearLayers();
+      const pts = (window.__stopsApi?.all() || []).filter((p) => p.lat && p.lng);
+      pts.forEach((p, i) => L.marker([p.lat, p.lng], { icon: numberedIcon(i + 1) }).addTo(routeLayer));
+      if (pts.length >= 2) {
+        L.polyline(pts.map((p) => [p.lat, p.lng]), { weight: 4, opacity: 0.85 }).addTo(routeLayer);
+        if (fitBounds) map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lng])).pad(0.25));
+      }
+    };
+
+    // Estado inicial: en form nuevo el GPS pisa el default (CDMX);
+    // en edición se respeta el punto guardado.
+    const isFresh = el.dataset.fresh === 'true';
+    const initLat = latInput?.value ? parseFloat(latInput.value) : NaN;
+    const initLng = lngInput?.value ? parseFloat(lngInput.value) : NaN;
+    const hasSaved = Number.isFinite(initLat) && Number.isFinite(initLng) && (initLat || initLng);
+    if (hasSaved) setMeeting(initLat, initLng, true);
+    if (isFresh && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setMeeting(pos.coords.latitude, pos.coords.longitude, true),
+        () => {} // sin permiso: queda el default
+      );
+    }
+
+    map.on('click', (e) => {
+      // Si hay parada pendiente/sin ubicar, el click la ubica; si no, mueve el encuentro.
+      if (window.__stopsApi && hasPendingStop()) {
+        window.__stopsApi.placeAt(e.latlng.lat, e.latlng.lng);
+      } else {
+        setMeeting(e.latlng.lat, e.latlng.lng, false);
+      }
+    });
+    window.addEventListener('stops-changed', () => refreshRoute(false));
+    setTimeout(() => refreshRoute(true), 400);
+    setTimeout(() => refreshRoute(true), 1200);
+  }
+
+  document.querySelectorAll('[data-map]').forEach((el) => initMapEl(el));
+  // Tarjetas agregadas por scroll infinito: inicializar sus mini-mapas.
+  window.addEventListener('feed-cards-added', (e) => {
+    const root = e.detail?.list || document;
+    root.querySelectorAll('[data-map]:not([data-map-ready])').forEach((el) => initMapEl(el));
+  });
+
+  function initMapEl(el) {
+    if (el.dataset.mapReady === '1') return;
+    el.dataset.mapReady = '1';
     if (typeof L === 'undefined') {
       fallback(el, 'Mapa no disponible (sin conexión al CDN de Leaflet).');
       return;
     }
     const mode = el.dataset.map;
+
+    if (mode === 'edit-route' || mode === 'view-route' || mode === 'feed-route' || mode === 'pick-route') {
+      let map;
+      try {
+        map = L.map(el, mode === 'feed-route' ? { scrollWheelZoom: false } : {}).setView(
+          [FALLBACK.lat, FALLBACK.lng], 12);
+      } catch (e) {
+        fallback(el, 'No se pudo mostrar el recorrido.');
+        return;
+      }
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 19,
+      }).addTo(map);
+      setTimeout(() => map.invalidateSize(), 200);
+      if (mode === 'pick-route') {
+        initPickRoute(el, map);
+        return;
+      }
+      // En el feed el mapa es lazy: solo se inicializa bien al ser visible.
+      if (mode === 'feed-route') {
+        setTimeout(() => map.invalidateSize(), 600);
+        if ('IntersectionObserver' in window) {
+          new IntersectionObserver((entries, obs) => {
+            entries.forEach((en) => {
+              if (en.isIntersecting) {
+                map.invalidateSize();
+                obs.disconnect();
+              }
+            });
+          }).observe(el);
+        }
+      }
+      if (mode === 'edit-route') {
+        initRouteEdit(el, map);
+        return;
+      }
+      const stops = parseStops(el);
+      if (stops.length === 0) {
+        fallback(el, 'Esta experiencia aún no tiene recorrido marcado.');
+        return;
+      }
+      drawRoute(map, stops);
+      return;
+    }
+
     const lat = num(el.dataset.lat, FALLBACK.lat);
     const lng = num(el.dataset.lng, FALLBACK.lng);
 
@@ -62,5 +259,5 @@
       if (latInput && !latInput.value) latInput.value = lat;
       if (lngInput && !lngInput.value) lngInput.value = lng;
     }
-  });
+  }
 })();

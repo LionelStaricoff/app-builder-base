@@ -39,6 +39,16 @@
       : `/favorites/${dto.id}/add`;
     const heart = dto.favorite ? '❤️' : '🤍';
     const next = dto.nextDate || 'Sin fecha';
+    const currency = dto.currencyCode || 'MXN';
+    const duration = formatDuration(dto.durationMinutes || 60);
+    const stops = Array.isArray(dto.stops) ? dto.stops : [];
+    const routeHtml = stops.length > 0
+      ? `<div class="feed-route">
+           <div class="map-box feed-route-map" data-map="feed-route" style="height:180px"
+                data-stops='${escapeAttr(JSON.stringify(stops))}'></div>
+           <p class="hint">🗺️ ${stops.length} paradas · ${escapeHtml(stops[0].placeName || '')}${stops.length > 1 ? ' → ' + escapeHtml(stops[stops.length - 1].placeName || '') : ''}</p>
+         </div>`
+      : '';
     return `
       <div class="card" id="card-${dto.id}">
         ${gallery}
@@ -51,17 +61,31 @@
             </form>
           </div>
           <p>${escapeHtml(dto.description)}</p>
-          <p class="meta">📍 ${escapeHtml(dto.meetingPointLabel)} · ⏱ ${dto.durationMinutes} min · 📅 ${next} · <strong>$${dto.price} MXN</strong></p>
+          <p class="meta">📍 ${escapeHtml(dto.meetingPointLabel)} · ⏱ ${duration} · 📅 ${next} · <strong>${escapeHtml(currency)} ${dto.price}</strong></p>
+          ${routeHtml}
           <p class="meta"><span class="stars">★</span> ${(dto.ratingAverage ?? 0).toFixed(1)}</p>
           <a class="btn-primary" href="/experiences/${dto.id}">Reservar</a>
         </div>
       </div>`;
   }
 
+  function formatDuration(total) {
+    total = Math.max(1, parseInt(total, 10) || 60);
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h === 0) return `${m} min`;
+    if (m === 0) return `${h} h`;
+    return `${h} h ${m} min`;
+  }
+
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text ?? '';
     return div.innerHTML;
+  }
+
+  function escapeAttr(text) {
+    return String(text).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
   }
 
   async function loadNext() {
@@ -81,6 +105,12 @@
       } else {
         items.forEach((dto) => list.insertAdjacentHTML('beforeend', cardHtml(dto)));
         window.initCarousels?.(list);
+        // Inicializar mini-mapas de recorrido recién agregados.
+        list.querySelectorAll('[data-map="feed-route"]:not([data-map-init])').forEach((el) => {
+          el.dataset.mapInit = '1';
+        });
+        // map.js ya observa [data-map] al cargar; para nodos nuevos disparamos re-scan.
+        window.dispatchEvent(new CustomEvent('feed-cards-added', { detail: { list } }));
         page += 1;
       }
     } catch (e) {

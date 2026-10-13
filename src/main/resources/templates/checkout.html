@@ -9,7 +9,7 @@
         <p class="meta">
             📅 <span th:text="${instance.date} + ' ' + ${instance.startTime}">01/11/2026 10:00</span>
             · Cupos: <span th:text="${attendees}">1</span>
-            · <strong th:text="'$' + ${total} + ' MXN'">$0 MXN</strong>
+            · <strong th:text="${currencyCode} + ' ' + ${total}">MXN 0</strong>
         </p>
         <p class="hint">El pago queda retenido en garantía hasta que la experiencia termine.</p>
 

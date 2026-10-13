@@ -41,11 +41,35 @@
       errorBox.hidden = true;
     }
 
+    var current = [];
+
+    function syncInput() {
+      var dt = new DataTransfer();
+      current.forEach(function (f) { dt.items.add(f); });
+      input.files = dt.files;
+    }
+
+    function move(index, delta) {
+      var next = index + delta;
+      if (next < 0 || next >= current.length) return;
+      var tmp = current[index];
+      current[index] = current[next];
+      current[next] = tmp;
+      syncInput();
+      render(current);
+      // Foco accesible: mover el foco al mismo control re-renderizado.
+      var btns = previews.querySelectorAll('[data-move]');
+      var target = previews.querySelector(`[data-move="${index + delta}-prev"], [data-move="${index + delta}-next"]`);
+      if (target) target.focus();
+    }
+
     function render(files) {
       previews.innerHTML = '';
       Array.prototype.forEach.call(files, function (file, index) {
         var item = document.createElement('div');
         item.className = 'image-picker-item';
+        item.setAttribute('draggable', maxFiles > 1 ? 'true' : 'false');
+        item.dataset.index = String(index);
 
         var img = document.createElement('img');
         img.alt = file.name;
@@ -67,11 +91,72 @@
 
         item.appendChild(img);
         item.appendChild(badge);
+
+        if (maxFiles > 1 && files.length > 1) {
+          var controls = document.createElement('div');
+          controls.className = 'image-picker-controls';
+
+          var prev = document.createElement('button');
+          prev.type = 'button';
+          prev.className = 'btn-secondary image-picker-move';
+          prev.textContent = '←';
+          prev.setAttribute('aria-label', `Mover ${file.name} a la posición ${index}`);
+          prev.dataset.move = `${index}-prev`;
+          prev.disabled = index === 0;
+          prev.addEventListener('click', function (e) { e.stopPropagation(); move(index, -1); });
+
+          var nextBtn = document.createElement('button');
+          nextBtn.type = 'button';
+          nextBtn.className = 'btn-secondary image-picker-move';
+          nextBtn.textContent = '→';
+          nextBtn.setAttribute('aria-label', `Mover ${file.name} a la posición ${index + 2}`);
+          nextBtn.dataset.move = `${index}-next`;
+          nextBtn.disabled = index === files.length - 1;
+          nextBtn.addEventListener('click', function (e) { e.stopPropagation(); move(index, 1); });
+
+          var del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'btn-secondary image-picker-move';
+          del.textContent = '✕';
+          del.setAttribute('aria-label', `Quitar ${file.name}`);
+          del.addEventListener('click', function (e) {
+            e.stopPropagation();
+            current.splice(index, 1);
+            syncInput();
+            render(current);
+          });
+
+          controls.appendChild(prev);
+          controls.appendChild(nextBtn);
+          controls.appendChild(del);
+          item.appendChild(controls);
+
+          // Drag & drop para reordenar (con alternativa de botones arriba por WCAG).
+          item.addEventListener('dragstart', function (e) {
+            e.dataTransfer.setData('text/plain', String(index));
+            item.classList.add('dragging-item');
+          });
+          item.addEventListener('dragend', function () {
+            item.classList.remove('dragging-item');
+          });
+          item.addEventListener('dragover', function (e) { e.preventDefault(); });
+          item.addEventListener('drop', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+            if (Number.isNaN(from) || from === index) return;
+            var moved = current.splice(from, 1)[0];
+            current.splice(index, 0, moved);
+            syncInput();
+            render(current);
+          });
+        }
+
         previews.appendChild(item);
       });
     }
 
-    function setFiles(fileList) {
+    function setFiles(fileList, append) {
       var files = Array.prototype.slice.call(fileList || []);
       clearError();
 
@@ -79,21 +164,22 @@
       if (images.length !== files.length) {
         showError('Solo se permiten imágenes. Se ignoraron archivos que no lo son.');
       }
-      if (images.length > maxFiles) {
-        images.length = maxFiles;
+      var base = append ? current.slice() : [];
+      var merged = base.concat(images);
+      if (merged.length > maxFiles) {
+        merged.length = maxFiles;
         showError(maxFiles === 1
           ? 'Solo se permite 1 imagen: se tomó la primera.'
           : 'Máximo ' + maxFiles + ' imágenes: se tomaron las primeras.');
       }
-      if (images.some(function (f) { return f.size > maxBytes; })) {
+      if (merged.some(function (f) { return f.size > maxBytes; })) {
         showError('La imagen supera los ' + maxLabel + '. Exportala en un tamaño menor (en Mac: Vista previa → Ajustar tamaño).');
       }
 
+      current = merged;
       // DataTransfer para sincronizar el input real con lo filtrado/limitado.
-      var dt = new DataTransfer();
-      images.forEach(function (f) { dt.items.add(f); });
-      input.files = dt.files;
-      render(images);
+      syncInput();
+      render(current);
     }
 
     drop.addEventListener('click', function () { input.click(); });

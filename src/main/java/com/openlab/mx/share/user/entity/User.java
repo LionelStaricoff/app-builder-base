@@ -50,6 +50,13 @@ public class User {
 
     private Double lng;
 
+    /** País seleccionado en el registro (ej. "México"). Opcional para cuentas viejas. */
+    private String country;
+
+    /** Código ISO de moneda (ej. "MXN"). Default MXN si es null. */
+    @Builder.Default
+    private String currencyCode = "MXN";
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

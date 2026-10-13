@@ -1,6 +1,7 @@
 package com.openlab.mx.share.experience.controller;
 
 import com.openlab.mx.share.experience.dto.ExperienceFormRequest;
+import com.openlab.mx.share.experience.dto.ExperienceStopDTO;
 import com.openlab.mx.share.experience.dto.ScheduleEntryRequest;
 import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceImage;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -44,19 +46,28 @@ public class ExperienceController {
     @GetMapping("/experiences/new")
     public String form(Model model) {
         model.addAttribute("experienceForm", emptyForm());
+        model.addAttribute("experienceCurrency", currentUser().getCurrencyCode());
+        model.addAttribute("stops", List.of());
         return "experience/form";
     }
 
     @PostMapping("/experiences")
     public String create(@Valid @ModelAttribute("experienceForm") ExperienceFormRequest request,
                          BindingResult bindingResult,
+                         @RequestParam(required = false) String currencyCode,
+                         @RequestParam(required = false, name = "stopPlace") List<String> stopPlace,
+                         @RequestParam(required = false, name = "stopCity") List<String> stopCity,
+                         @RequestParam(required = false, name = "stopCountry") List<String> stopCountry,
+                         @RequestParam(required = false, name = "stopLat") List<Double> stopLat,
+                         @RequestParam(required = false, name = "stopLng") List<Double> stopLng,
                          Model model,
                          RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
             return "experience/form";
         }
         try {
-            Experience experience = experienceService.create(request, currentUser());
+            Experience experience = experienceService.create(request, currentUser(),
+                    currencyCode, toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
             return "redirect:/experiences/" + experience.getId();
         } catch (DomainException e) {
             model.addAttribute("error", e.getMessage());
@@ -73,6 +84,9 @@ public class ExperienceController {
                 .filter(i -> i.getStatus() == InstanceStatus.SCHEDULED)
                 .toList();
         model.addAttribute("experience", experience);
+        model.addAttribute("experienceCurrency",
+                experience.getCurrencyCode() == null ? "MXN" : experience.getCurrencyCode());
+        model.addAttribute("stops", experienceService.stopsOf(id));
         model.addAttribute("images", images);
         model.addAttribute("instances", instances);
         var usuario = currentUser();
@@ -86,6 +100,9 @@ public class ExperienceController {
         Experience experience = experienceService.getOwned(id, currentUser());
         model.addAttribute("experienceForm", toForm(experience));
         model.addAttribute("experienceId", id);
+        model.addAttribute("experienceCurrency",
+                experience.getCurrencyCode() == null ? "MXN" : experience.getCurrencyCode());
+        model.addAttribute("stops", experienceService.stopsOf(id));
         return "experience/form";
     }
 
@@ -93,6 +110,12 @@ public class ExperienceController {
     public String update(@PathVariable Long id,
                          @Valid @ModelAttribute("experienceForm") ExperienceFormRequest request,
                          BindingResult bindingResult,
+                         @RequestParam(required = false) String currencyCode,
+                         @RequestParam(required = false, name = "stopPlace") List<String> stopPlace,
+                         @RequestParam(required = false, name = "stopCity") List<String> stopCity,
+                         @RequestParam(required = false, name = "stopCountry") List<String> stopCountry,
+                         @RequestParam(required = false, name = "stopLat") List<Double> stopLat,
+                         @RequestParam(required = false, name = "stopLng") List<Double> stopLng,
                          Model model,
                          RedirectAttributes redirectAttributes) {
         model.addAttribute("experienceId", id);
@@ -100,7 +123,8 @@ public class ExperienceController {
             return "experience/form";
         }
         try {
-            experienceService.update(id, request, currentUser());
+            experienceService.update(id, request, currentUser(),
+                    currencyCode, toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
             return "redirect:/experiences/" + id;
         } catch (DomainException e) {
             model.addAttribute("error", e.getMessage());
@@ -168,5 +192,24 @@ public class ExperienceController {
                 .map(s -> new ScheduleEntryRequest(s.getDate(), s.getDayOfWeek(),
                         s.getStartTime(), s.getEndTime(), s.getRangeStart(), s.getRangeEnd()))
                 .toList();
+    }
+
+    /** Convierte las listas paralelas del form en DTOs; tolera forms viejos sin paradas. */
+    private List<ExperienceStopDTO> toStops(List<String> place, List<String> city,
+                                            List<String> country, List<Double> lat, List<Double> lng) {
+        if (place == null || place.isEmpty()) return List.of();
+        List<ExperienceStopDTO> stops = new java.util.ArrayList<>();
+        for (int i = 0; i < place.size(); i++) {
+            String p = place.get(i);
+            if (p == null || p.isBlank()) continue;
+            double la = lat != null && i < lat.size() && lat.get(i) != null ? lat.get(i) : 0;
+            double lo = lng != null && i < lng.size() && lng.get(i) != null ? lng.get(i) : 0;
+            stops.add(new ExperienceStopDTO(i,
+                    p.trim(),
+                    city != null && i < city.size() ? city.get(i) : "",
+                    country != null && i < country.size() ? country.get(i) : "",
+                    la, lo));
+        }
+        return stops;
     }
 }

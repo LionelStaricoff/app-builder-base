@@ -71,7 +71,7 @@ class ReservationFlowTests {
 
         mockMvc.perform(get("/checkout/" + instanceId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("$")));
+                .andExpect(content().string(containsString("MXN")));
 
         mockMvc.perform(post("/checkout/" + instanceId).with(csrf())
                         .param("cardNumber", "123456789012")

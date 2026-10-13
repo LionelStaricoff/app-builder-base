@@ -47,6 +47,8 @@ public class CheckoutController {
         model.addAttribute("instance", instance);
         model.addAttribute("attendees", attendees);
         model.addAttribute("total", total);
+        model.addAttribute("currencyCode", instance.getExperience().getCurrencyCode() == null
+                ? "MXN" : instance.getExperience().getCurrencyCode());
         model.addAttribute("checkoutRequest", new CheckoutRequest("", "", "", ""));
         return "checkout";
     }

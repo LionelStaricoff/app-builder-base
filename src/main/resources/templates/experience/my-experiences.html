@@ -45,7 +45,7 @@
             <span class="chip" th:text="${e.status}">ACTIVE</span>
         </div>
         <p class="meta">
-            <strong th:text="'$' + ${e.price} + ' MXN'">$190 MXN</strong>
+            <strong th:text="${e.currencyCode} + ' ' + ${e.price}">MXN 190</strong>
             · <span th:text="${e.category}">CULTURAL</span>
             · <span th:text="${e.minCapacity} + ' a ' + ${e.maxCapacity}">1 a 4</span>
         </p>

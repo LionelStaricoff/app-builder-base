@@ -24,8 +24,8 @@
                 <span class="stars">★</span>
                 <span th:text="${#numbers.formatDecimal(experience.ratingAverage, 1, 1)}">0.0</span>
                 · <span class="pill" th:text="${experience.category}">Categoria</span>
-                · <span th:text="${experience.durationMinutes} + ' min'">60 min</span>
-                · <strong th:text="'$' + ${experience.price} + ' MXN'">$190 MXN</strong>
+                · ⏱ <span th:text="${experience.durationMinutes >= 60 ? T(java.lang.Math).floorDiv(experience.durationMinutes, 60) + ' h' + (T(java.lang.Math).floorMod(experience.durationMinutes, 60) > 0 ? ' ' + T(java.lang.Math).floorMod(experience.durationMinutes, 60) + ' min' : '') : experience.durationMinutes + ' min'}">2 h 30 min</span>
+                · <strong th:text="${experienceCurrency} + ' ' + ${experience.price}">MXN 190</strong>
             </p>
             <p th:text="${experience.description}">Descripción</p>
             <p>
@@ -33,9 +33,22 @@
                 <span th:text="${experience.minCapacity} + ' a ' + ${experience.maxCapacity}">2 a 8</span>
             </p>
 
-            <div id="detail-map" class="map-box" data-map="view"
-                 th:attr="data-lat=${experience.meetingLat},data-lng=${experience.meetingLng}"></div>
-            <p class="hint">Punto de encuentro: <span th:text="${experience.meetingLat} + ', ' + ${experience.meetingLng}">0, 0</span></p>
+            <h3 th:if="${stops != null and not #lists.isEmpty(stops)}">Recorrido (<span th:text="${#lists.size(stops)}">3</span> paradas)</h3>
+            <div th:if="${stops != null and not #lists.isEmpty(stops)}">
+                <div id="detail-route-map" class="map-box" data-map="view-route" style="height:300px"
+                     th:attr="data-stops=${@jacksonHelper.toJson(stops)}"></div>
+                <ol class="stops-timeline">
+                    <li th:each="s : ${stops}">
+                        <strong th:text="${s.placeName}">Lugar</strong>
+                        <span class="hint" th:text="${s.city} + ' · ' + ${s.country}">Ciudad · País</span>
+                    </li>
+                </ol>
+            </div>
+            <div th:if="${stops == null or #lists.isEmpty(stops)}">
+                <div id="detail-map" class="map-box" data-map="view"
+                     th:attr="data-lat=${experience.meetingLat},data-lng=${experience.meetingLng}"></div>
+                <p class="hint">Punto de encuentro: <span th:text="${experience.meetingLat} + ', ' + ${experience.meetingLng}">0, 0</span></p>
+            </div>
 
             <h3>Próximas fechas</h3>
             <div class="slot-list">

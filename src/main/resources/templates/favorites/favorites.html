@@ -48,7 +48,7 @@
                 </form>
             </div>
             <p class="meta">
-                <strong th:text="'$' + ${dto.price} + ' MXN'">$190 MXN</strong>
+                <strong th:text="${dto.currencyCode} + ' ' + ${dto.price}">MXN 190</strong>
                 · 📅 <span th:text="${dto.nextDate} ?: 'Sin fecha'">2026-12-01</span>
             </p>
         </div>

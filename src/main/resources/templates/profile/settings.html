@@ -21,6 +21,23 @@
         <label>Nombre
             <input name="username" th:value="${user.username}" required>
         </label>
+        <div class="form-grid">
+            <label>País
+                <select name="country" id="settings-country">
+                    <option th:each="c : ${ {'México','Argentina','Colombia','Chile','Perú','Uruguay','España','Estados Unidos','Brasil'} }"
+                            th:value="${c}" th:text="${c}"
+                            th:selected="${user.country == c}">País</option>
+                </select>
+            </label>
+            <label>Moneda
+                <select name="currencyCode" id="settings-currency">
+                    <option th:each="m : ${ {'MXN','ARS','COP','CLP','PEN','UYU','EUR','USD','BRL'} }"
+                            th:value="${m}" th:text="${m}"
+                            th:selected="${user.currencyCode == m}">MXN</option>
+                </select>
+            </label>
+        </div>
+        <p class="hint">Los precios del feed se muestran en esta moneda.</p>
         <label>Avatar (máx 2 MB)</label>
         <div class="image-picker image-picker--avatar" id="avatar-picker" data-max-files="1" data-max-bytes="2097152">
             <input type="file" id="avatar-input" name="avatar" accept="image/*" hidden>
@@ -42,6 +59,18 @@
     </form>
 </main>
 <nav th:replace="~{fragments/layout :: nav('settings')}"></nav>
+<script>
+    (function () {
+        var map = { 'México': 'MXN', 'Argentina': 'ARS', 'Colombia': 'COP', 'Chile': 'CLP', 'Perú': 'PEN', 'Uruguay': 'UYU', 'España': 'EUR', 'Estados Unidos': 'USD', 'Brasil': 'BRL' };
+        var country = document.getElementById('settings-country');
+        var currency = document.getElementById('settings-currency');
+        if (!country || !currency) return;
+        country.addEventListener('change', function () {
+            var sugerida = map[country.value];
+            if (sugerida) currency.value = sugerida;
+        });
+    })();
+</script>
 <script th:src="@{/js/image-picker.js}"></script>
 </body>
 </html>

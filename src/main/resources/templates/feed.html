@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Feed')}"></head>
 <body>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <main class="app-main" id="feed-main">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
@@ -70,10 +71,17 @@
                 <p th:text="${dto.description}">Descripción</p>
                 <p class="meta">
                     📍 <span th:text="${dto.meetingPointLabel}">0, 0</span>
-                    · ⏱ <span th:text="${dto.durationMinutes} + ' min'">60 min</span>
+                    · ⏱ <span th:text="${dto.durationMinutes >= 60 ? T(java.lang.Math).floorDiv(dto.durationMinutes, 60) + ' h' + (T(java.lang.Math).floorMod(dto.durationMinutes, 60) > 0 ? ' ' + T(java.lang.Math).floorMod(dto.durationMinutes, 60) + ' min' : '') : dto.durationMinutes + ' min'}">2 h 30 min</span>
                     · 📅 <span th:text="${dto.nextDate} ?: 'Sin fecha'">2026-12-01</span>
-                    · <strong th:text="'$' + ${dto.price} + ' MXN'">$190 MXN</strong>
+                    · <strong th:text="${dto.currencyCode} + ' ' + ${dto.price}">MXN 190</strong>
                 </p>
+                <div th:if="${dto.stops != null and not #lists.isEmpty(dto.stops)}" class="feed-route">
+                    <div class="map-box feed-route-map" data-map="feed-route" style="height:180px"
+                         th:attr="data-stops=${@jacksonHelper.toJson(dto.stops)}"></div>
+                    <p class="hint">🗺️ <span th:text="${#lists.size(dto.stops)}">3</span> paradas ·
+                        <span th:text="${dto.stops[0].placeName} + (${#lists.size(dto.stops) > 1 ? ' → ' + dto.stops[#lists.size(dto.stops) - 1].placeName : ''}">Inicio → Fin</span>
+                    </p>
+                </div>
                 <p class="meta"><span class="stars">★</span>
                     <span th:text="${#numbers.formatDecimal(dto.ratingAverage, 1, 1)}">0.0</span></p>
                 <a class="btn-primary" th:href="@{/experiences/{id}(id=${dto.id})}">Reservar</a>
@@ -85,6 +93,8 @@
     <div id="feed-loading" class="empty" hidden>Cargando…</div>
 </main>
 <nav th:replace="~{fragments/layout :: nav('feed')}"></nav>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script th:src="@{/js/map.js}"></script>
 <script th:src="@{/js/carousel.js}"></script>
 <script th:src="@{/js/feed-infinite.js}"></script>
 <script th:src="@{/js/feed-location.js}"></script>

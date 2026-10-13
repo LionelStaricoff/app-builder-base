@@ -67,6 +67,10 @@ public class Experience {
     @Column(nullable = false)
     private Double meetingLng;
 
+    /** Moneda en la que el creador fijó el precio (ISO, ej. "MXN"). Null = MXN legacy. */
+    @Builder.Default
+    private String currencyCode = "MXN";
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ExperienceStatus status = ExperienceStatus.ACTIVE;

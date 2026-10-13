@@ -32,6 +32,8 @@ public class UserService {
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))
                 .birthDate(request.birthDate())
+                .country(normalizeCountry(request.country()))
+                .currencyCode(normalizeCurrency(request.currencyCode()))
                 .role(Role.USER)
                 .spPoints(0)
                 .build();
@@ -40,5 +42,17 @@ public class UserService {
 
     private int age(LocalDate birthDate) {
         return Period.between(birthDate, LocalDate.now()).getYears();
+    }
+
+    /** Cuentas viejas o tests sin país: default México para no romper. */
+    public static String normalizeCountry(String country) {
+        return country == null || country.isBlank() ? "México" : country.trim();
+    }
+
+    /** Normaliza a ISO en mayúsculas; default MXN. */
+    public static String normalizeCurrency(String currencyCode) {
+        if (currencyCode == null || currencyCode.isBlank()) return "MXN";
+        String code = currencyCode.trim().toUpperCase();
+        return code.length() == 3 ? code : "MXN";
     }
 }

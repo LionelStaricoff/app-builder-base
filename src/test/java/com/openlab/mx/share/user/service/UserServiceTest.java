@@ -38,7 +38,7 @@ class UserServiceTest {
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
 
         User u = userService.register(new RegisterRequest(
-                "lionel", "lionel@x.com", "Clave1234!", LocalDate.of(1990, 5, 10)));
+                "lionel", "lionel@x.com", "Clave1234!", LocalDate.of(1990, 5, 10), "México", "MXN"));
 
         assertEquals("lionel", u.getUsername());
         assertEquals("hash-bcrypt", u.getPasswordHash());
@@ -49,7 +49,7 @@ class UserServiceTest {
     @Test
     void testRechazaMenorDe18() {
         RegisterRequest menor = new RegisterRequest(
-                "kid", "kid@x.com", "Clave1234!", LocalDate.now().minusYears(10));
+                "kid", "kid@x.com", "Clave1234!", LocalDate.now().minusYears(10), null, null);
 
         assertThrows(MenorDeEdadException.class, () -> userService.register(menor));
     }
@@ -59,6 +59,6 @@ class UserServiceTest {
         when(userRepository.existsByUsername("dup")).thenReturn(true);
 
         assertThrows(DuplicateUsernameException.class, () -> userService.register(
-                new RegisterRequest("dup", "dup@x.com", "Clave1234!", LocalDate.of(1990, 1, 1))));
+                new RegisterRequest("dup", "dup@x.com", "Clave1234!", LocalDate.of(1990, 1, 1), null, null)));
     }
 }

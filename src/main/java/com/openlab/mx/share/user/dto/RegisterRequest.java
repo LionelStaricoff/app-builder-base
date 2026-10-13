@@ -11,6 +11,8 @@ public record RegisterRequest(
         @NotBlank String username,
         @Email @NotBlank String email,
         @NotBlank @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres") String password,
-        @NotNull LocalDate birthDate
+        @NotNull LocalDate birthDate,
+        String country,
+        String currencyCode
 ) {
 }

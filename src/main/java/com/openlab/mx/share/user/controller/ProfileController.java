@@ -39,6 +39,8 @@ public class ProfileController {
 
     @PostMapping("/settings/update")
     public String update(@RequestParam String username,
+                         @RequestParam(required = false) String country,
+                         @RequestParam(required = false) String currencyCode,
                          @RequestParam(required = false) MultipartFile avatar,
                          RedirectAttributes redirectAttributes) throws IOException {
         User user = currentUser.require();
@@ -61,6 +63,24 @@ public class ProfileController {
                 return "redirect:/settings";
             }
             user.setAvatarBase64(Base64.getEncoder().encodeToString(avatar.getBytes()));
+            userRepository.save(user);
+        }
+
+        boolean locationChanged = false;
+        if (country != null && !country.isBlank()
+                && !country.trim().equalsIgnoreCase(
+                        user.getCountry() == null ? "" : user.getCountry())) {
+            user.setCountry(country.trim());
+            locationChanged = true;
+        }
+        String normalizedCurrency = currencyCode == null || currencyCode.isBlank()
+                ? null
+                : com.openlab.mx.share.user.service.UserService.normalizeCurrency(currencyCode);
+        if (normalizedCurrency != null && !normalizedCurrency.equals(user.getCurrencyCode())) {
+            user.setCurrencyCode(normalizedCurrency);
+            locationChanged = true;
+        }
+        if (locationChanged) {
             userRepository.save(user);
         }
 

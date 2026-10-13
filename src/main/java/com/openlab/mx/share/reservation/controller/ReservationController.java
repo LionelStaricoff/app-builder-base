@@ -87,6 +87,8 @@ public class ReservationController {
                     .multiply(java.math.BigDecimal.valueOf(reservation.getAttendees()));
             model.addAttribute("monto", monto);
             model.addAttribute("payout", monto.subtract(monto.multiply(commissionRate)));
+            model.addAttribute("currencyCode", experience.getCurrencyCode() == null
+                    ? "MXN" : experience.getCurrencyCode());
             model.addAttribute("esCreador",
                     user.getId().equals(experience.getCreator().getId()));
         }

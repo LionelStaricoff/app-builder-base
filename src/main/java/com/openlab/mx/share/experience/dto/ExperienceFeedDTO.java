@@ -7,6 +7,8 @@ import java.util.List;
 /**
  * Proyección del feed: todas las imágenes en orden para el carousel.
  * coverBase64 se mantiene (primera imagen o null) por compatibilidad.
+ * currencyCode y stops son aditivos: los tests viejos que leen los
+ * campos originales siguen pasando.
  */
 public record ExperienceFeedDTO(
         Long id,
@@ -19,6 +21,8 @@ public record ExperienceFeedDTO(
         LocalDate nextDate,
         BigDecimal price,
         double ratingAverage,
-        boolean favorite
+        boolean favorite,
+        String currencyCode,
+        List<ExperienceStopDTO> stops
 ) {
 }

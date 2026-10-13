@@ -529,3 +529,89 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
   background: #eee;
   flex: 1;
 }
+
+/* Form grid de a 2 (duración/cupo/precio/categoría) */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+  align-items: start;
+}
+.form-grid-full { grid-column: 1 / -1; }
+.duration-row { display: flex; gap: 0.6rem; }
+.duration-field { flex: 1; margin: 0; }
+@media (max-width: 480px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
+/* Reorden de imágenes accesible */
+.image-picker-controls {
+  position: absolute;
+  top: 0.3rem;
+  left: 0.3rem;
+  right: 0.3rem;
+  display: flex;
+  gap: 0.25rem;
+}
+.image-picker-move {
+  padding: 0.15rem 0.45rem;
+  font-size: 0.8rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+}
+.image-picker-move:disabled { opacity: 0.4; }
+.image-picker-item.dragging-item { outline: 2px solid var(--color-primary); }
+
+/* Paradas del recorrido */
+.stop-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  border: 1.5px solid #eee;
+  border-radius: 12px;
+  padding: 0.7rem;
+  margin-top: 0.6rem;
+  background: #fff;
+}
+.stop-row.stop-pending { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.12); }
+.stop-number {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stop-fields { flex: 1; min-width: 0; }
+.stop-fields label { margin: 0.4rem 0; }
+.stop-actions { display: flex; flex-direction: column; gap: 0.3rem; }
+.stop-actions .btn-secondary { padding: 0.3rem 0.6rem; }
+.stop-coords { margin-top: 0.3rem; }
+
+/* Timeline de paradas en detalle */
+.stops-timeline { margin: 0.6rem 0 0; padding-left: 1.4rem; }
+.stops-timeline li { margin-bottom: 0.4rem; }
+.stops-timeline li::marker { color: var(--color-primary); font-weight: 700; }
+
+/* Números del recorrido en Leaflet */
+.route-number {
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+.route-number span { line-height: 1; }
+
+/* Mini-mapa del feed */
+.feed-route { margin-top: 0.6rem; }
+.feed-route-map { height: 180px; }

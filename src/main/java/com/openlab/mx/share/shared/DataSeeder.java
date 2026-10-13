@@ -39,6 +39,8 @@ public class DataSeeder implements CommandLineRunner {
                 .city("CDMX")
                 .lat(19.4326)
                 .lng(-99.1332)
+                .country("México")
+                .currencyCode("MXN")
                 .role(Role.CREATOR)
                 .spPoints(0)
                 .build());
@@ -51,6 +53,8 @@ public class DataSeeder implements CommandLineRunner {
                 .city("CDMX")
                 .lat(19.4326)
                 .lng(-99.1332)
+                .country("México")
+                .currencyCode("MXN")
                 .role(Role.USER)
                 .spPoints(0)
                 .build());

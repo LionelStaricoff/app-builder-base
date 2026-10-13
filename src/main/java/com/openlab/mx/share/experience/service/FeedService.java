@@ -1,6 +1,7 @@
 package com.openlab.mx.share.experience.service;
 
 import com.openlab.mx.share.experience.dto.ExperienceFeedDTO;
+import com.openlab.mx.share.experience.dto.ExperienceStopDTO;
 import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.entity.ExperienceStatus;
@@ -8,6 +9,7 @@ import com.openlab.mx.share.experience.entity.InstanceStatus;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
+import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.favorite.repository.FavoriteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,6 +36,7 @@ public class FeedService {
 
     private final ExperienceRepository experienceRepository;
     private final ExperienceImageRepository imageRepository;
+    private final ExperienceStopRepository stopRepository;
     private final ExperienceInstanceRepository instanceRepository;
     private final FavoriteRepository favoriteRepository;
 
@@ -122,6 +125,19 @@ public class FeedService {
                 && favoriteRepository.existsByExperienceIdAndUserId(experience.getId(), userId);
         String label = String.format(Locale.US, "%.4f, %.4f",
                 experience.getMeetingLat(), experience.getMeetingLng());
+        List<ExperienceStopDTO> stops = List.of();
+        try {
+            stops = stopRepository.findByExperienceIdOrderByPositionAscIdAsc(experience.getId()).stream()
+                    .map(s -> new ExperienceStopDTO(s.getPosition(), s.getPlaceName(),
+                            s.getCity(), s.getCountry(), s.getLat(), s.getLng()))
+                    .toList();
+            if (!stops.isEmpty()) {
+                var first = stops.get(0);
+                label = first.placeName() + " · " + first.city();
+            }
+        } catch (Exception ignored) {
+            // Tabla aún no creada en H2 viejo (ddl-auto=update la crea al arrancar).
+        }
         return new ExperienceFeedDTO(
                 experience.getId(),
                 experience.getName(),
@@ -133,7 +149,9 @@ public class FeedService {
                 nextDate,
                 experience.getPrice(),
                 experience.getRatingAverage(),
-                favorite
+                favorite,
+                experience.getCurrencyCode() == null ? "MXN" : experience.getCurrencyCode(),
+                stops
         );
     }
 }
