@@ -21,9 +21,10 @@
             <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Error</span>
 
             <label>Imágenes (1 a 5, la primera es la tapa)</label>
-            <div th:if="${existingImages != null and not #lists.isEmpty(existingImages)}" id="existing-images" class="existing-images">
-                <figure class="existing-image" th:each="img : ${existingImages}" th:attr="data-image-id=${img.id}">
+            <div th:if="${existingImages != null and not #lists.isEmpty(existingImages)}" id="existing-images" class="image-picker-previews">
+                <figure class="image-picker-item existing-image" th:each="img, st : ${existingImages}" th:attr="data-image-id=${img.id}">
                     <img th:src="'data:image/png;base64,' + ${img.data}" alt="Imagen guardada" loading="lazy">
+                    <span class="image-picker-badge" th:text="${st.first ? 'Tapa' : st.count}">Tapa</span>
                     <button type="button" class="img-remove" th:attr="data-image-id=${img.id}" aria-label="Eliminar esta imagen">
                         <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
                             <circle cx="8" cy="8" r="8" fill="#dc2626"/>
