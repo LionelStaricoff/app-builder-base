@@ -49,6 +49,10 @@ class RoutePersistenceReproTests {
     private ExperienceStopRepository stopRepository;
     @Autowired
     private ExperienceInstanceRepository instanceRepository;
+    @Autowired
+    private com.openlab.mx.share.experience.service.FeedService feedService;
+    @Autowired
+    private com.openlab.mx.share.experience.repository.ExperienceImageRepository imageRepository;
 
     private String fechaFutura() {
         return LocalDate.now().plusDays(30).toString();
@@ -98,6 +102,33 @@ class RoutePersistenceReproTests {
                 .andExpect(content().string(containsString("Recorrido")))
                 .andExpect(content().string(containsString("Mirador del Cerro")))
                 .andExpect(content().string(containsString("Playa Escondida")));
+
+        // El feed (página server + API del scroll infinito) muestra recorrido y fecha.
+        var dto = feedService.dtoFor(
+                experienceService.get(id),
+                userRepository.findByUsername("demo_creator").orElseThrow().getId());
+        assertEquals(2, dto.stops().size(), "el DTO del feed lleva las 2 paradas");
+        org.junit.jupiter.api.Assertions.assertNotNull(dto.nextDate(), "el DTO del feed lleva próxima fecha");
+        org.junit.jupiter.api.Assertions.assertTrue(dto.stopsJson() != null && dto.stopsJson().contains("Mirador"),
+                "el DTO del feed lleva el JSON del recorrido");
+
+        // La API del scroll infinito expone paradas y fecha en JSON.
+        String nombre = dto.name();
+        boolean encontrado = false;
+        for (int page = 0; page < 10 && !encontrado; page++) {
+            MvcResult api = mockMvc.perform(get("/feed/api").param("page", String.valueOf(page)))
+                    .andExpect(status().isOk())
+                    .andReturn();
+            String json = api.getResponse().getContentAsString();
+            if (json.contains(nombre)) {
+                encontrado = true;
+                org.junit.jupiter.api.Assertions.assertTrue(json.contains("Mirador del Cerro"),
+                        "el JSON del feed lleva las paradas");
+                org.junit.jupiter.api.Assertions.assertTrue(json.contains(dto.nextDate().toString()),
+                        "el JSON del feed lleva la próxima fecha");
+            }
+        }
+        org.junit.jupiter.api.Assertions.assertTrue(encontrado, "la experiencia aparece en el feed");
     }
 
     @Test
@@ -120,6 +151,140 @@ class RoutePersistenceReproTests {
                 .andExpect(content().string(containsString("19.4326")))
                 .andExpect(content().string(containsString("14:30")))
                 .andExpect(content().string(containsString("16:45")));
+    }
+
+    @Test
+    @WithMockUser("demo_creator")
+    void semanalSabadoDomingoGeneraInstancias() throws Exception {
+        var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+        // Próximo sábado y domingo dentro del rango.
+        java.time.LocalDate sabado = LocalDate.now().plusDays(1);
+        while (sabado.getDayOfWeek() != java.time.DayOfWeek.SATURDAY) sabado = sabado.plusDays(1);
+        java.time.LocalDate domingo = sabado.plusDays(1);
+
+        MvcResult result = mockMvc.perform(multipart("/experiences")
+                        .file(image)
+                        .param("name", "Repro semanal " + UUID.randomUUID())
+                        .param("description", "Descripción de prueba")
+                        .param("durationMinutes", "600")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "10")
+                        .param("price", "300.00")
+                        .param("currencyCode", "MXN")
+                        .param("category", "CULTURAL")
+                        .param("recurrenceType", "WEEKLY")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].dayOfWeek", "SATURDAY")
+                        .param("schedules[0].startTime", "08:00")
+                        .param("schedules[0].endTime", "18:00")
+                        .param("schedules[0].rangeStart", sabado.toString())
+                        .param("schedules[0].rangeEnd", domingo.plusWeeks(2).toString())
+                        .param("schedules[1].dayOfWeek", "SUNDAY")
+                        .param("schedules[1].startTime", "08:00")
+                        .param("schedules[1].endTime", "18:00")
+                        .param("schedules[1].rangeStart", sabado.toString())
+                        .param("schedules[1].rangeEnd", domingo.plusWeeks(2).toString())
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/experiences/*"))
+                .andReturn();
+
+        Long id = Long.valueOf(result.getResponse().getRedirectedUrl().replace("/experiences/", ""));
+        var instancias = instanceRepository.findByExperienceIdOrderByDateAsc(id);
+        assertFalse(instancias.isEmpty(), "el semanal sáb+dom tiene que generar instancias futuras");
+        org.junit.jupiter.api.Assertions.assertTrue(
+                instancias.stream().anyMatch(i -> i.getDate().getDayOfWeek() == java.time.DayOfWeek.SATURDAY),
+                "tiene que haber instancia un sábado");
+
+        mockMvc.perform(get("/experiences/" + id))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Próximas fechas")));
+    }
+
+    @Test
+    @WithMockUser("demo_creator")
+    void editarSinImagenesNuevasConservaLasViejas() throws Exception {
+        var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+        Experience experience = experienceService.create(new ExperienceFormRequest(
+                        "Repro img " + UUID.randomUUID(), "Desc", 120, 2, 8, BigDecimal.valueOf(190),
+                        ExperienceCategory.CULTURAL, RecurrenceType.UNIQUE,
+                        19.4326, -99.1332,
+                        List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(30), null,
+                                LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
+                        List.of(image)),
+                userRepository.findByUsername("demo_creator").orElseThrow());
+        Long id = experience.getId();
+        int antes = imageRepository.findByExperienceIdOrderByIdAsc(id).size();
+
+        mockMvc.perform(multipart("/experiences/" + id)
+                        .param("name", experience.getName())
+                        .param("description", "Desc editada")
+                        .param("durationMinutes", "120")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "8")
+                        .param("price", "190.00")
+                        .param("currencyCode", "MXN")
+                        .param("category", "CULTURAL")
+                        .param("recurrenceType", "UNIQUE")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].date", LocalDate.now().plusDays(30).toString())
+                        .param("schedules[0].startTime", "10:00")
+                        .param("schedules[0].endTime", "12:00")
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        assertEquals(antes, imageRepository.findByExperienceIdOrderByIdAsc(id).size(),
+                "editar sin subir imágenes nuevas conserva las existentes");
+    }
+
+    @Test
+    @WithMockUser("demo_creator")
+    void editarPuedeEliminarUnaImagenExistente() throws Exception {
+        var img1 = new MockMultipartFile("images", "a.png", "image/png", "aaa".getBytes());
+        var img2 = new MockMultipartFile("images", "b.png", "image/png", "bbb".getBytes());
+        Experience experience = experienceService.create(new ExperienceFormRequest(
+                        "Repro ximg " + UUID.randomUUID(), "Desc", 120, 2, 8, BigDecimal.valueOf(190),
+                        ExperienceCategory.CULTURAL, RecurrenceType.UNIQUE,
+                        19.4326, -99.1332,
+                        List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(30), null,
+                                LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
+                        List.of(img1, img2)),
+                userRepository.findByUsername("demo_creator").orElseThrow());
+        Long id = experience.getId();
+        var guardadas = imageRepository.findByExperienceIdOrderByIdAsc(id);
+        assertEquals(2, guardadas.size());
+
+        // El form de edición muestra las existentes con botón de borrado.
+        mockMvc.perform(get("/experiences/" + id + "/edit"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("existing-images")))
+                .andExpect(content().string(containsString("data-image-id=\"" + guardadas.get(0).getId() + "\"")));
+
+        // Guardar marcando la primera para borrar, sin subir nuevas.
+        mockMvc.perform(multipart("/experiences/" + id)
+                        .param("name", experience.getName())
+                        .param("description", "Desc")
+                        .param("durationMinutes", "120")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "8")
+                        .param("price", "190.00")
+                        .param("currencyCode", "MXN")
+                        .param("category", "CULTURAL")
+                        .param("recurrenceType", "UNIQUE")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].date", LocalDate.now().plusDays(30).toString())
+                        .param("schedules[0].startTime", "10:00")
+                        .param("schedules[0].endTime", "12:00")
+                        .param("removeImageIds", String.valueOf(guardadas.get(0).getId()))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection());
+
+        var restantes = imageRepository.findByExperienceIdOrderByIdAsc(id);
+        assertEquals(1, restantes.size(), "solo se borra la marcada");
+        assertEquals(guardadas.get(1).getId(), restantes.get(0).getId());
     }
 
     @Test

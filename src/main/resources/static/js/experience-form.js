@@ -61,6 +61,31 @@
   minsInput?.addEventListener('input', syncHiddenFromInputs);
   syncDurationFromHidden();
 
+  // ---- Borrado selectivo de imágenes existentes (solo edición) ----
+  const existingBox = document.getElementById('existing-images');
+  if (existingBox) {
+    const removedIds = [];
+    existingBox.querySelectorAll('.img-remove').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const figure = btn.closest('.existing-image');
+        const id = btn.dataset.imageId;
+        if (id && !removedIds.includes(id)) removedIds.push(id);
+        figure?.classList.add('img-removed');
+        btn.disabled = true;
+        let hidden = document.getElementById('remove-image-ids');
+        if (!hidden) {
+          const form = document.getElementById('experience-form') || document.querySelector('form');
+          hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = 'removeImageIds';
+          hidden.id = 'remove-image-ids';
+          form?.appendChild(hidden);
+        }
+        hidden.value = removedIds.join(',');
+      });
+    });
+  }
+
   // ---- Paradas del recorrido ----
   const stopsList = document.getElementById('stops-list');
   const addStopBtn = document.getElementById('add-stop');

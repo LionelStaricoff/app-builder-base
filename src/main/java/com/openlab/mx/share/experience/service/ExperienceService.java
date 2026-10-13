@@ -89,6 +89,23 @@ public class ExperienceService {
     }
 
     /**
+     * Borra imágenes existentes marcadas en edición. Solo las de esta
+     * experiencia (los ids ajenos se ignoran: anti-IDOR).
+     */
+    @Transactional
+    public void removeImages(Long id, User editor, List<Long> imageIds) {
+        Experience experience = owned(id, editor);
+        if (imageIds == null || imageIds.isEmpty()) return;
+        List<ExperienceImage> propias = imageRepository.findByExperienceIdOrderByIdAsc(
+                experience.getId());
+        List<Long> borrar = propias.stream()
+                .map(ExperienceImage::getId)
+                .filter(imageIds::contains)
+                .toList();
+        if (!borrar.isEmpty()) imageRepository.deleteAllById(borrar);
+    }
+
+    /**
      * Borrado lógico: la experiencia pasa a CANCELLED y desaparece del feed
      * (spec §4, estado ACTIVE|CANCELLED; preserva reservas e historial).
      */

@@ -111,6 +111,7 @@ public class ExperienceController {
         model.addAttribute("experienceCurrency",
                 experience.getCurrencyCode() == null ? "MXN" : experience.getCurrencyCode());
         model.addAttribute("stops", experienceService.stopsOf(id));
+        model.addAttribute("existingImages", imageRepository.findByExperienceIdOrderByIdAsc(id));
         return "experience/form";
     }
 
@@ -122,10 +123,11 @@ public class ExperienceController {
                          @RequestParam(required = false, name = "stopPlace") List<String> stopPlace,
                          @RequestParam(required = false, name = "stopCity") List<String> stopCity,
                          @RequestParam(required = false, name = "stopCountry") List<String> stopCountry,
-                         @RequestParam(required = false, name = "stopLat") List<Double> stopLat,
-                         @RequestParam(required = false, name = "stopLng") List<Double> stopLng,
-                         Model model,
-                         RedirectAttributes redirectAttributes) {
+                          @RequestParam(required = false, name = "stopLat") List<Double> stopLat,
+                          @RequestParam(required = false, name = "stopLng") List<Double> stopLng,
+                          @RequestParam(required = false, name = "removeImageIds") List<Long> removeImageIds,
+                          Model model,
+                          RedirectAttributes redirectAttributes) {
         model.addAttribute("experienceId", id);
         if (bindingResult.hasErrors()) {
             repopulateForm(model, currencyCode,
@@ -135,6 +137,10 @@ public class ExperienceController {
         try {
             experienceService.update(id, request, currentUser(),
                     currencyCode, toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
+            // Sin imágenes nuevas rige borrado selectivo; con nuevas ya hubo reemplazo total.
+            if (request.images() == null || request.images().isEmpty()) {
+                experienceService.removeImages(id, currentUser(), removeImageIds);
+            }
             return "redirect:/experiences/" + id;
         } catch (DomainException e) {
             model.addAttribute("error", e.getMessage());

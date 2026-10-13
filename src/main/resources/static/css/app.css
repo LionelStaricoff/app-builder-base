@@ -597,6 +597,20 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 .stops-timeline li { margin-bottom: 0.4rem; }
 .stops-timeline li::marker { color: var(--color-primary); font-weight: 700; }
 
+/* Imágenes existentes en edición, con botón de borrado */
+.existing-images { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.8rem; }
+.existing-images .hint { flex-basis: 100%; }
+.existing-image { position: relative; margin: 0; width: 96px; }
+.existing-image img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; display: block; }
+.img-remove {
+  position: absolute; top: -8px; right: -8px;
+  width: 26px; height: 26px; padding: 0;
+  background: transparent; border: none; cursor: pointer; line-height: 0;
+}
+.img-remove svg { display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+.img-remove:disabled { cursor: default; opacity: 0.4; }
+.existing-image.img-removed img { opacity: 0.25; filter: grayscale(1); }
+
 /* Mini-mapa del feed */
 .feed-route { margin-top: 0.6rem; }
 .feed-route-map { height: 180px; }
