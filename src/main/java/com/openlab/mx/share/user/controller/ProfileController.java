@@ -61,7 +61,9 @@ public class ProfileController {
                 redirectAttributes.addFlashAttribute("error", "El avatar no puede superar 5 MB");
                 return "redirect:/settings";
             }
-            nuevoAvatarBase64 = Base64.getEncoder().encodeToString(avatar.getBytes());
+            byte[] normalized =
+                    com.openlab.mx.share.user.service.AvatarImage.normalize(avatar.getBytes());
+            nuevoAvatarBase64 = Base64.getEncoder().encodeToString(normalized);
             avatarChanged = true;
         }
 

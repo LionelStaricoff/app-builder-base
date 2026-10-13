@@ -114,4 +114,49 @@ class ExperienceServiceTest {
         assertThrows(NotOwnerException.class,
                 () -> experienceService.delete(3L, user(2L)));
     }
+
+    /**
+     * Compresión de fotos de experiencias: una foto real grande se guarda
+     * redimensionada (máx 1600px) y en JPEG, para no inflar la BD ni el feed.
+     */
+    @Test
+    void testCreateNormalizaFotoGrandeAJpeg1600() throws Exception {
+        when(experienceRepository.save(any(Experience.class))).thenAnswer(inv -> {
+            Experience e = inv.getArgument(0);
+            e.setId(11L);
+            return e;
+        });
+        when(imageRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(instanceRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(generationService.generateFor(any(), anyList(), any())).thenReturn(List.of());
+
+        java.awt.image.BufferedImage foto = new java.awt.image.BufferedImage(
+                2000, 1500, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < 1500; y++) {
+            for (int x = 0; x < 2000; x++) {
+                foto.setRGB(x, y, ((x * 255 / 2000) << 16) | ((y * 255 / 1500) << 8) | 128);
+            }
+        }
+        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(foto, "png", bos);
+        byte[] png = bos.toByteArray();
+
+        var img = new MockMultipartFile("images", "grande.png", "image/png", png);
+        experienceService.create(request(List.of(img)), user(1L));
+
+        ArgumentCaptor<List<ExperienceImage>> captor = ArgumentCaptor.forClass(List.class);
+        verify(imageRepository).saveAll(captor.capture());
+        List<ExperienceImage> saved = captor.getValue();
+        assertEquals(1, saved.size());
+        byte[] stored = java.util.Base64.getDecoder().decode(saved.get(0).getData());
+        // Magia JPEG: FF D8 FF.
+        assertEquals((byte) 0xFF, stored[0], "la foto debería guardarse en JPEG");
+        assertEquals((byte) 0xD8, stored[1], "la foto debería guardarse en JPEG");
+        java.awt.image.BufferedImage storedImg = javax.imageio.ImageIO.read(
+                new java.io.ByteArrayInputStream(stored));
+        assertNotNull(storedImg, "la foto debe seguir siendo una imagen legible");
+        assertTrue(Math.max(storedImg.getWidth(), storedImg.getHeight()) <= 1600,
+                "la foto debería estar redimensionada a máx 1600px");
+    }
 }

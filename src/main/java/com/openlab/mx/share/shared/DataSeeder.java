@@ -17,7 +17,7 @@ public class DataSeeder implements CommandLineRunner {
 
     static final String DEMO_PASSWORD = "Clave1234!";
     private static final String AVATAR_1PX =
-            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;

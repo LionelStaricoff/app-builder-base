@@ -8,7 +8,7 @@
 
     <div class="card" style="padding:1rem;text-align:center">
         <img th:if="${user.avatarBase64 != null}" alt="Avatar"
-             th:src="'data:image/png;base64,' + ${user.avatarBase64}"
+             th:src="'data:image/jpeg;base64,' + ${user.avatarBase64}"
              class="avatar-ring"
              style="width:88px;height:88px;border-radius:50%;object-fit:cover">
         <p><strong th:text="${user.username}">usuario</strong></p>

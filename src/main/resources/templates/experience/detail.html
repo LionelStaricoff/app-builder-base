@@ -8,7 +8,7 @@
         <div class="carousel" data-carousel th:if="${not #lists.isEmpty(images)}">
             <div class="carousel-track" data-carousel-track>
                 <figure class="carousel-slide" th:each="img : ${images}">
-                    <img th:src="'data:image/png;base64,' + ${img.data}"
+                    <img th:src="'data:image/jpeg;base64,' + ${img.data}"
                          th:alt="${experience.name}" loading="lazy">
                 </figure>
             </div>

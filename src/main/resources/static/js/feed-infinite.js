@@ -23,7 +23,7 @@
     const slides = images.map((b64) => `
       <figure class="carousel-slide">
         <a href="/experiences/${dto.id}">
-          <img src="data:image/png;base64,${b64}" alt="" loading="lazy">
+          <img src="data:image/jpeg;base64,${b64}" alt="" loading="lazy">
         </a>
       </figure>`).join('');
     const gallery = images.length > 0
@@ -42,7 +42,7 @@
     const creator = dto.creatorName
       ? `<div class="card-creator">
            ${dto.creatorAvatar
-             ? `<img class="card-creator-avatar" src="data:image/png;base64,${escapeAttr(dto.creatorAvatar)}" alt="" loading="lazy">`
+              ? `<img class="card-creator-avatar" src="data:image/jpeg;base64,${escapeAttr(dto.creatorAvatar)}" alt="" loading="lazy">`
              : '<span class="card-creator-fallback" aria-hidden="true">👤</span>'}
            <span class="card-creator-name">${escapeHtml(dto.creatorName)}</span>
            <span class="card-creator-tag">· armó este viaje</span>

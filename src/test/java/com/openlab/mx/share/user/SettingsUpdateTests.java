@@ -188,4 +188,56 @@ class SettingsUpdateTests {
                 .andExpect(redirectedUrl("/settings"))
                 .andExpect(flash().attribute("ok", "Sin cambios para guardar"));
     }
+
+    /**
+     * Compresión del avatar: una foto real grande se guarda redimensionada
+     * (máx 512px) y en JPEG, para no inflar la BD ni el feed.
+     */
+    @Test
+    void avatarGrandeSeGuardaRedimensionadoAJpeg() throws Exception {
+        String original = crearUsuario();
+        java.awt.image.BufferedImage foto = new java.awt.image.BufferedImage(
+                800, 600, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.util.Random rnd = new java.util.Random(42);
+        for (int y = 0; y < 600; y++) {
+            for (int x = 0; x < 800; x++) {
+                foto.setRGB(x, y, rnd.nextInt(0x1000000));
+            }
+        }
+        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+        javax.imageio.ImageIO.write(foto, "png", bos);
+        byte[] png = bos.toByteArray();
+        org.junit.jupiter.api.Assertions.assertTrue(png.length < 5 * 1024 * 1024,
+                "la foto de prueba debe pasar el límite de subida");
+
+        MockMultipartFile avatar = new MockMultipartFile(
+                "avatar", "foto.png", "image/png", png);
+        mockMvc.perform(multipart("/settings/update").file(avatar)
+                        .param("username", original)
+                        .param("country", "México")
+                        .param("currencyCode", "MXN")
+                        .with(SecurityMockMvcRequestPostProcessors.user(original))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/settings"))
+                .andExpect(flash().attribute("ok", "Perfil actualizado"));
+
+        User guardado = userRepository.findByUsername(original).orElseThrow(
+                () -> new AssertionError("el usuario debería seguir existiendo"));
+        byte[] stored = java.util.Base64.getDecoder().decode(guardado.getAvatarBase64());
+        // Magia JPEG: FF D8 FF.
+        org.junit.jupiter.api.Assertions.assertEquals((byte) 0xFF, stored[0],
+                "el avatar debería guardarse en JPEG");
+        org.junit.jupiter.api.Assertions.assertEquals((byte) 0xD8, stored[1],
+                "el avatar debería guardarse en JPEG");
+        java.awt.image.BufferedImage storedImg = javax.imageio.ImageIO.read(
+                new java.io.ByteArrayInputStream(stored));
+        org.junit.jupiter.api.Assertions.assertNotNull(storedImg,
+                "el avatar debe seguir siendo una imagen legible");
+        org.junit.jupiter.api.Assertions.assertTrue(
+                Math.max(storedImg.getWidth(), storedImg.getHeight()) <= 512,
+                "el avatar debería estar redimensionado a máx 512px");
+        org.junit.jupiter.api.Assertions.assertTrue(stored.length < png.length,
+                "el avatar comprimido debería pesar menos que el original");
+    }
 }

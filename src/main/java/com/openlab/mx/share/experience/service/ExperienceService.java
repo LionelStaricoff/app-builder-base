@@ -33,6 +33,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExperienceService {
 
+    /** Lado mayor máximo de las fotos guardadas (se normalizan a JPEG). */
+    private static final int MAX_IMAGE_DIMENSION = 1600;
+
     private final ExperienceRepository experienceRepository;
     private final ExperienceImageRepository imageRepository;
     private final ExperienceScheduleRepository scheduleRepository;
@@ -256,9 +259,11 @@ public class ExperienceService {
         List<ExperienceImage> images = new ArrayList<>();
         for (int i = 0; i < files.size(); i++) {
             try {
+                byte[] normalized = com.openlab.mx.share.shared.image.ImageNormalizer.normalize(
+                        files.get(i).getBytes(), MAX_IMAGE_DIMENSION);
                 images.add(ExperienceImage.builder()
                         .experience(experience)
-                        .data(Base64.getEncoder().encodeToString(files.get(i).getBytes()))
+                        .data(Base64.getEncoder().encodeToString(normalized))
                         .position(i)
                         .build());
             } catch (IOException e) {

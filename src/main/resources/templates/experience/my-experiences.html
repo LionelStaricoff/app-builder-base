@@ -29,7 +29,7 @@
             <div class="carousel-track" data-carousel-track>
                 <figure class="carousel-slide" th:each="imgData : ${covers[e.id]}">
                     <a th:href="@{/experiences/{id}(id=${e.id})}">
-                        <img th:src="'data:image/png;base64,' + ${imgData}"
+                        <img th:src="'data:image/jpeg;base64,' + ${imgData}"
                              th:alt="${e.name}" loading="lazy">
                     </a>
                 </figure>
