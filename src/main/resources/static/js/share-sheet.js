@@ -1,7 +1,9 @@
 // Hoja "Compartir viaje" con TODAS las redes (no una más: todas adentro).
 // El botón [data-share-experience] pide /share/{id}/meta (ShareController) y
 // abre la hoja: WhatsApp, Facebook, X, Telegram, LinkedIn, Pinterest, Reddit,
-// Email y Copiar enlace. En móvil con navigator.share usa el menú nativo.
+// Email y Copiar enlace. Todos los enlaces llevan SOLO la URL, igual que
+// "Copiar enlace" (decisión de UX: nada de título pegado a la URL).
+// En móvil con navigator.share usa el menú nativo (título y URL por separado).
 // Accesible: role=dialog + aria-modal, Esc y clic afuera cierran, el foco
 // vuelve al botón que abrió.
 (function () {
@@ -17,17 +19,15 @@
 
   function buildSheet(meta) {
     var url = encodeURIComponent(meta.url);
-    var title = encodeURIComponent(meta.title || 'Shared');
-    var text = encodeURIComponent((meta.title || 'Shared') + ' — ' + meta.url);
     var opciones = [
-      { label: 'WhatsApp', icon: '💬', href: 'https://wa.me/?text=' + text },
+      { label: 'WhatsApp', icon: '💬', href: 'https://wa.me/?text=' + url },
       { label: 'Facebook', icon: '📘', href: 'https://www.facebook.com/sharer/sharer.php?u=' + url },
-      { label: 'X (Twitter)', icon: '𝕏', href: 'https://twitter.com/intent/tweet?text=' + text },
-      { label: 'Telegram', icon: '✈️', href: 'https://t.me/share/url?url=' + url + '&text=' + title },
+      { label: 'X (Twitter)', icon: '𝕏', href: 'https://twitter.com/intent/tweet?text=' + url },
+      { label: 'Telegram', icon: '✈️', href: 'https://t.me/share/url?url=' + url },
       { label: 'LinkedIn', icon: '💼', href: 'https://www.linkedin.com/sharing/share-offsite/?url=' + url },
-      { label: 'Pinterest', icon: '📌', href: 'https://pinterest.com/pin/create/button/?url=' + url + '&description=' + title },
-      { label: 'Reddit', icon: '🟠', href: 'https://www.reddit.com/submit?url=' + url + '&title=' + title },
-      { label: 'Email', icon: '✉️', href: 'mailto:?subject=' + title + '&body=' + text }
+      { label: 'Pinterest', icon: '📌', href: 'https://pinterest.com/pin/create/button/?url=' + url },
+      { label: 'Reddit', icon: '🟠', href: 'https://www.reddit.com/submit?url=' + url },
+      { label: 'Email', icon: '✉️', href: 'mailto:?body=' + url }
     ];
 
     var overlay = document.createElement('div');
@@ -129,7 +129,8 @@
       .then(function (meta) {
         var tactil = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
         if (tactil && navigator.share) {
-          navigator.share({ title: meta.title, text: meta.title, url: meta.url }).catch(function () {});
+          // Nativo: título y URL por separado (jamás "título — url" pegado).
+          navigator.share({ title: meta.title, url: meta.url }).catch(function () {});
           return;
         }
         open(trigger, meta);
