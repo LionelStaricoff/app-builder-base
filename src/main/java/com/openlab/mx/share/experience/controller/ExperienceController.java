@@ -11,6 +11,7 @@ import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
+import com.openlab.mx.share.shared.JacksonHelper;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
@@ -42,6 +43,7 @@ public class ExperienceController {
     private final ExperienceImageRepository imageRepository;
     private final ExperienceInstanceRepository instanceRepository;
     private final com.openlab.mx.share.experience.repository.ExperienceScheduleRepository scheduleRepository;
+    private final JacksonHelper jacksonHelper;
 
     @GetMapping("/experiences/new")
     public String form(Model model) {
@@ -63,6 +65,8 @@ public class ExperienceController {
                          Model model,
                          RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
+            repopulateForm(model, currencyCode,
+                    toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
             return "experience/form";
         }
         try {
@@ -71,6 +75,8 @@ public class ExperienceController {
             return "redirect:/experiences/" + experience.getId();
         } catch (DomainException e) {
             model.addAttribute("error", e.getMessage());
+            repopulateForm(model, currencyCode,
+                    toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
             return "experience/form";
         }
     }
@@ -86,7 +92,9 @@ public class ExperienceController {
         model.addAttribute("experience", experience);
         model.addAttribute("experienceCurrency",
                 experience.getCurrencyCode() == null ? "MXN" : experience.getCurrencyCode());
-        model.addAttribute("stops", experienceService.stopsOf(id));
+        var stops = experienceService.stopsOf(id);
+        model.addAttribute("stops", stops);
+        model.addAttribute("stopsJson", jacksonHelper.toJson(stops));
         model.addAttribute("images", images);
         model.addAttribute("instances", instances);
         var usuario = currentUser();
@@ -120,6 +128,8 @@ public class ExperienceController {
                          RedirectAttributes redirectAttributes) {
         model.addAttribute("experienceId", id);
         if (bindingResult.hasErrors()) {
+            repopulateForm(model, currencyCode,
+                    toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
             return "experience/form";
         }
         try {
@@ -128,6 +138,8 @@ public class ExperienceController {
             return "redirect:/experiences/" + id;
         } catch (DomainException e) {
             model.addAttribute("error", e.getMessage());
+            repopulateForm(model, currencyCode,
+                    toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
             return "experience/form";
         }
     }
@@ -192,6 +204,12 @@ public class ExperienceController {
                 .map(s -> new ScheduleEntryRequest(s.getDate(), s.getDayOfWeek(),
                         s.getStartTime(), s.getEndTime(), s.getRangeStart(), s.getRangeEnd()))
                 .toList();
+    }
+
+    /** Re-display tras error: conserva paradas y moneda para no borrar lo cargado. */
+    private void repopulateForm(Model model, String currencyCode, List<ExperienceStopDTO> stops) {
+        model.addAttribute("stops", stops);
+        model.addAttribute("experienceCurrency", currencyCode);
     }
 
     /** Convierte las listas paralelas del form en DTOs; tolera forms viejos sin paradas. */

@@ -93,10 +93,12 @@
                            th:value="${experienceForm.schedules != null ? (!#lists.isEmpty(experienceForm.schedules) ? experienceForm.schedules[0].date : '') : ''}">
                 </label>
                 <label>Hora inicio
-                    <input type="time" name="schedules[0].startTime" value="10:00">
+                    <input type="time" name="schedules[0].startTime" value="10:00"
+                           th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].startTime != null ? experienceForm.schedules[0].startTime : '10:00'}">
                 </label>
                 <label>Hora fin
-                    <input type="time" name="schedules[0].endTime" value="12:00">
+                    <input type="time" name="schedules[0].endTime" value="12:00"
+                           th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].endTime != null ? experienceForm.schedules[0].endTime : '12:00'}">
                 </label>
             </div>
 
@@ -105,12 +107,27 @@
                     <div class="weekly-row">
                         <select name="schedules[0].dayOfWeek">
                             <option th:each="d : ${T(java.time.DayOfWeek).values()}" th:value="${d}"
-                                    th:text="${d}">Lunes</option>
+                                    th:text="${d}"
+                                    th:selected="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].dayOfWeek == d}">Lunes</option>
                         </select>
-                        <input type="time" name="schedules[0].startTime" value="18:00">
-                        <input type="time" name="schedules[0].endTime" value="20:00">
-                        <input type="date" name="schedules[0].rangeStart">
-                        <input type="date" name="schedules[0].rangeEnd">
+                        <input type="time" name="schedules[0].startTime" value="18:00"
+                               th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].startTime != null ? experienceForm.schedules[0].startTime : '18:00'}">
+                        <input type="time" name="schedules[0].endTime" value="20:00"
+                               th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].endTime != null ? experienceForm.schedules[0].endTime : '20:00'}">
+                        <input type="date" name="schedules[0].rangeStart"
+                               th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) ? experienceForm.schedules[0].rangeStart : ''}">
+                        <input type="date" name="schedules[0].rangeEnd"
+                               th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) ? experienceForm.schedules[0].rangeEnd : ''}">
+                    </div>
+                    <div class="weekly-row" th:each="ws, stat : ${experienceForm.schedules}" th:if="${stat.index > 0}">
+                        <select th:name="'schedules[' + ${stat.index} + '].dayOfWeek'">
+                            <option th:each="d : ${T(java.time.DayOfWeek).values()}" th:value="${d}"
+                                    th:text="${d}" th:selected="${ws.dayOfWeek == d}">Lunes</option>
+                        </select>
+                        <input type="time" th:name="'schedules[' + ${stat.index} + '].startTime'" th:value="${ws.startTime}">
+                        <input type="time" th:name="'schedules[' + ${stat.index} + '].endTime'" th:value="${ws.endTime}">
+                        <input type="date" th:name="'schedules[' + ${stat.index} + '].rangeStart'" th:value="${ws.rangeStart}">
+                        <input type="date" th:name="'schedules[' + ${stat.index} + '].rangeEnd'" th:value="${ws.rangeEnd}">
                     </div>
                 </div>
                 <button type="button" id="add-weekly-row" class="btn-secondary">+ Agregar día</button>

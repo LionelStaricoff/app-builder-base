@@ -11,7 +11,9 @@ import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
+import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.favorite.repository.FavoriteRepository;
+import com.openlab.mx.share.shared.JacksonHelper;
 import com.openlab.mx.share.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +43,10 @@ class FeedServiceTest {
     private ExperienceInstanceRepository instanceRepository;
     @Mock
     private FavoriteRepository favoriteRepository;
+    @Mock
+    private ExperienceStopRepository stopRepository;
+    @Mock
+    private JacksonHelper jacksonHelper;
 
     @InjectMocks
     private FeedService feedService;

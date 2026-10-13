@@ -11,6 +11,7 @@ import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.favorite.repository.FavoriteRepository;
+import com.openlab.mx.share.shared.JacksonHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -39,6 +40,7 @@ public class FeedService {
     private final ExperienceStopRepository stopRepository;
     private final ExperienceInstanceRepository instanceRepository;
     private final FavoriteRepository favoriteRepository;
+    private final JacksonHelper jacksonHelper;
 
     public Page<ExperienceFeedDTO> page(Long userId, String userCity, Double lat, Double lng,
                                         ExperienceCategory category, int pageNumber) {
@@ -151,7 +153,8 @@ public class FeedService {
                 experience.getRatingAverage(),
                 favorite,
                 experience.getCurrencyCode() == null ? "MXN" : experience.getCurrencyCode(),
-                stops
+                stops,
+                jacksonHelper.toJson(stops)
         );
     }
 }

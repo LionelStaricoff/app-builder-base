@@ -23,6 +23,7 @@ public record ExperienceFeedDTO(
         double ratingAverage,
         boolean favorite,
         String currencyCode,
-        List<ExperienceStopDTO> stops
+        List<ExperienceStopDTO> stops,
+        String stopsJson
 ) {
 }

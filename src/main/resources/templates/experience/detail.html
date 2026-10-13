@@ -36,7 +36,7 @@
             <h3 th:if="${stops != null and not #lists.isEmpty(stops)}">Recorrido (<span th:text="${#lists.size(stops)}">3</span> paradas)</h3>
             <div th:if="${stops != null and not #lists.isEmpty(stops)}">
                 <div id="detail-route-map" class="map-box" data-map="view-route" style="height:300px"
-                     th:attr="data-stops=${@jacksonHelper.toJson(stops)}"></div>
+                     th:attr="data-stops=${stopsJson}"></div>
                 <ol class="stops-timeline">
                     <li th:each="s : ${stops}">
                         <strong th:text="${s.placeName}">Lugar</strong>
