@@ -1,6 +1,7 @@
 package com.openlab.mx.share.experience.service;
 
 import com.openlab.mx.share.experience.dto.ExperienceFeedDTO;
+import com.openlab.mx.share.experience.dto.FirstStopCountry;
 import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.entity.ExperienceImage;
@@ -14,6 +15,7 @@ import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.favorite.repository.FavoriteRepository;
 import com.openlab.mx.share.shared.JacksonHelper;
+import com.openlab.mx.share.shared.location.GeocodingService;
 import com.openlab.mx.share.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +31,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,6 +50,8 @@ class FeedServiceTest {
     private ExperienceStopRepository stopRepository;
     @Mock
     private JacksonHelper jacksonHelper;
+    @Mock
+    private GeocodingService geocodingService;
 
     @InjectMocks
     private FeedService feedService;
@@ -94,7 +99,7 @@ class FeedServiceTest {
         stubNextDate(c, LocalDate.of(2026, 12, 3));
         stubCover(a, "tapa-a");
 
-        var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, 0);
+        var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, null, 0);
 
         assertEquals(1, page.getSize(), "pageSize debe ser 1 (estilo Instagram)");
         assertEquals(1, page.getContent().size());
@@ -116,8 +121,8 @@ class FeedServiceTest {
         stubCover(otherCityNear, "x");
         stubCover(myCityFar, "y");
 
-        var first = feedService.page(null, "CDMX", 19.4326, -99.1332, null, 0);
-        var second = feedService.page(null, "CDMX", 19.4326, -99.1332, null, 1);
+        var first = feedService.page(null, "CDMX", 19.4326, -99.1332, null, null, 0);
+        var second = feedService.page(null, "CDMX", 19.4326, -99.1332, null, null, 1);
 
         assertEquals("Lejos Mi Ciudad", first.getContent().get(0).name(),
                 "la ciudad actual va primero aunque este mas lejos");
@@ -126,7 +131,7 @@ class FeedServiceTest {
 
     @Test
     void testFiltraPorCategoria() {
-        feedService.page(null, "CDMX", 19.4, -99.1, ExperienceCategory.DEPORTIVA, 0);
+        feedService.page(null, "CDMX", 19.4, -99.1, ExperienceCategory.DEPORTIVA, null, 0);
 
         verify(experienceRepository).findByStatusAndCategory(ExperienceStatus.ACTIVE,
                 ExperienceCategory.DEPORTIVA);
@@ -139,7 +144,7 @@ class FeedServiceTest {
         when(experienceRepository.findByStatus(ExperienceStatus.ACTIVE)).thenReturn(List.of(a));
         stubNextDate(a, LocalDate.of(2026, 12, 1));
 
-        var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, 99);
+        var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, null, 99);
 
         assertTrue(page.isEmpty());
         assertEquals(1, page.getTotalElements());
@@ -154,7 +159,7 @@ class FeedServiceTest {
                 ExperienceImage.builder().experience(a).data("FOTO-1").position(0).build(),
                 ExperienceImage.builder().experience(a).data("FOTO-2").position(1).build()));
 
-        var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, 0);
+        var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, null, 0);
 
         ExperienceFeedDTO dto = page.getContent().get(0);
         assertEquals(List.of("FOTO-1", "FOTO-2"), dto.images());
@@ -162,5 +167,105 @@ class FeedServiceTest {
         verify(imageRepository).findByExperienceIdOrderByIdAsc(1L);
         assertEquals("19.4300, -99.1300", dto.meetingPointLabel());
         assertNotNull(dto.nextDate());
+    }
+
+    @Test
+    void testDtoIncluyeAlCreadorConAvatar() {
+        User creador = User.builder().id(99L).username("viajero")
+                .avatarBase64("AVATAR-BASE64").city("CDMX").build();
+        Experience a = Experience.builder()
+                .id(5L).name("Paseo").creator(creador).description("desc").durationMinutes(60)
+                .minCapacity(2).maxCapacity(8).price(BigDecimal.valueOf(190))
+                .category(ExperienceCategory.CULTURAL).recurrenceType(RecurrenceType.UNIQUE)
+                .meetingLat(19.43).meetingLng(-99.13).status(ExperienceStatus.ACTIVE)
+                .build();
+        when(experienceRepository.findByStatus(ExperienceStatus.ACTIVE)).thenReturn(List.of(a));
+        stubNextDate(a, LocalDate.of(2026, 12, 1));
+        stubCover(a, "tapa");
+
+        var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, null, 0);
+        var dto = page.getContent().get(0);
+
+        assertEquals("viajero", dto.creatorName(), "la card debe mostrar quién armó el viaje");
+        assertEquals("AVATAR-BASE64", dto.creatorAvatar(), "y su foto de perfil");
+    }
+
+    // ---------- Buscador de países ----------
+
+    @Test
+    void testFiltraPorPaisDePrimeraParada() {
+        Experience mx = experience(1L, "Viaje México", "CDMX", 19.43, -99.13, ExperienceCategory.CULTURAL);
+        Experience pe = experience(2L, "Viaje Perú", "Otra", -12.0, -77.0, ExperienceCategory.CULTURAL);
+        when(experienceRepository.findByStatus(ExperienceStatus.ACTIVE)).thenReturn(List.of(mx, pe));
+        when(stopRepository.findFirstStopCountries(ExperienceStatus.ACTIVE)).thenReturn(List.of(
+                new FirstStopCountry(1L, "México"), new FirstStopCountry(2L, "Perú")));
+        stubNextDate(pe, LocalDate.of(2026, 12, 2));
+        stubCover(pe, "tapa-pe");
+
+        var page = feedService.page(null, "Otra", 0.0, 0.0, null, "Perú", 0);
+
+        assertEquals(1, page.getTotalElements(), "solo deben quedar las experiencias de Perú");
+        assertEquals("Viaje Perú", page.getContent().get(0).name());
+    }
+
+    @Test
+    void testFiltroPaisIgnoraMayusculas() {
+        Experience mx = experience(1L, "Viaje México", "CDMX", 19.43, -99.13, ExperienceCategory.CULTURAL);
+        Experience pe = experience(2L, "Viaje Perú", "Otra", -12.0, -77.0, ExperienceCategory.CULTURAL);
+        when(experienceRepository.findByStatus(ExperienceStatus.ACTIVE)).thenReturn(List.of(mx, pe));
+        when(stopRepository.findFirstStopCountries(ExperienceStatus.ACTIVE)).thenReturn(List.of(
+                new FirstStopCountry(1L, "México"), new FirstStopCountry(2L, "Perú")));
+        stubNextDate(pe, LocalDate.of(2026, 12, 2));
+        stubCover(pe, "tapa-pe");
+
+        var page = feedService.page(null, "Otra", 0.0, 0.0, null, "perú", 0);
+
+        assertEquals(1, page.getTotalElements(), "el filtro no debe distinguir mayúsculas");
+        assertEquals("Viaje Perú", page.getContent().get(0).name());
+    }
+
+    @Test
+    void testPaisSinParadasSeGeocodificaYSeCachea() {
+        Experience pe = experience(7L, "Sin paradas", "Otra", -12.0, -77.0, ExperienceCategory.CULTURAL);
+        when(experienceRepository.findByStatus(ExperienceStatus.ACTIVE)).thenReturn(List.of(pe));
+        when(stopRepository.findFirstStopCountries(ExperienceStatus.ACTIVE)).thenReturn(List.of());
+        when(geocodingService.resolve(-12.0, -77.0))
+                .thenReturn(new GeocodingService.Place("Lima", "Perú"));
+        stubNextDate(pe, LocalDate.of(2026, 12, 2));
+        stubCover(pe, "tapa-pe");
+
+        var unaVez = feedService.page(null, "Otra", 0.0, 0.0, null, "Perú", 0);
+        var otraVez = feedService.page(null, "Otra", 0.0, 0.0, null, "Perú", 0);
+
+        assertEquals(1, unaVez.getTotalElements());
+        assertEquals(1, otraVez.getTotalElements());
+        verify(geocodingService, times(1)).resolve(-12.0, -77.0);
+    }
+
+    @Test
+    void testFiltroPaisExcluyeLoNoGeocodificable() {
+        Experience pe = experience(8L, "No se geocodifica", "Otra", -12.0, -77.0, ExperienceCategory.CULTURAL);
+        when(experienceRepository.findByStatus(ExperienceStatus.ACTIVE)).thenReturn(List.of(pe));
+        when(stopRepository.findFirstStopCountries(ExperienceStatus.ACTIVE)).thenReturn(List.of());
+        when(geocodingService.resolve(-12.0, -77.0)).thenReturn(null);
+
+        var page = feedService.page(null, "Otra", 0.0, 0.0, null, "Perú", 0);
+
+        assertTrue(page.isEmpty(), "sin país determinable no debe matchear el filtro");
+    }
+
+    @Test
+    void testCountryOptionsDevuelvePaisesSinDuplicadosNiPlaceholders() {
+        when(stopRepository.findFirstStopCountries(ExperienceStatus.ACTIVE)).thenReturn(List.of(
+                new FirstStopCountry(1L, "Perú"),
+                new FirstStopCountry(2L, "México"),
+                new FirstStopCountry(3L, "perú"),
+                new FirstStopCountry(4L, "—"),
+                new FirstStopCountry(5L, " ")));
+
+        var opciones = feedService.countryOptions();
+
+        assertEquals(List.of("México", "Perú"), opciones,
+                "sin duplicados por casing y sin el placeholder —");
     }
 }

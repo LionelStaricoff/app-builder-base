@@ -28,6 +28,7 @@ public class FeedController {
     @GetMapping("/feed")
     public String feed(@RequestParam(required = false) ExperienceCategory category,
                        @RequestParam(required = false) String city,
+                       @RequestParam(required = false) String country,
                        Model model) {
         User user = currentUser.get();
         // Búsqueda manual de otra ciudad pisa la ciudad del perfil.
@@ -37,10 +38,12 @@ public class FeedController {
                 effectiveCity,
                 user != null ? user.getLat() : null,
                 user != null ? user.getLng() : null,
-                category, 0);
+                category, country, 0);
         model.addAttribute("feedPage", feedPage);
         model.addAttribute("categories", ExperienceCategory.values());
         model.addAttribute("selectedCategory", category);
+        model.addAttribute("selectedCountry", country);
+        model.addAttribute("countries", feedService.countryOptions());
         model.addAttribute("searchedCity", effectiveCity);
         model.addAttribute("savedCity", user != null ? user.getCity() : null);
         return "feed";
@@ -50,6 +53,7 @@ public class FeedController {
     @ResponseBody
     public Page<ExperienceFeedDTO> feedApi(@RequestParam(defaultValue = "0") int page,
                                            @RequestParam(required = false) ExperienceCategory category,
+                                           @RequestParam(required = false) String country,
                                            @RequestParam(required = false) Double lat,
                                            @RequestParam(required = false) Double lng) {
         User user = currentUser.get();
@@ -58,6 +62,6 @@ public class FeedController {
                 user != null ? user.getCity() : null,
                 lat != null ? lat : (user != null ? user.getLat() : null),
                 lng != null ? lng : (user != null ? user.getLng() : null),
-                category, page);
+                category, country, page);
     }
 }

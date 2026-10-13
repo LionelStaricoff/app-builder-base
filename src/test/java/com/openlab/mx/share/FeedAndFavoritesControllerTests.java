@@ -6,6 +6,8 @@ import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.entity.ExperienceStatus;
 import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
+import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
+import com.openlab.mx.share.experience.entity.ExperienceStop;
 import com.openlab.mx.share.experience.service.ExperienceService;
 import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
@@ -47,6 +49,9 @@ class FeedAndFavoritesControllerTests {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ExperienceStopRepository stopRepository;
+
     private User creator() {
         return userRepository.findByUsername("demo_creator").orElseThrow();
     }
@@ -71,6 +76,22 @@ class FeedAndFavoritesControllerTests {
         var activas = experienceRepository.findByStatusAndCategory(ExperienceStatus.ACTIVE, category);
         activas.forEach(e -> e.setStatus(ExperienceStatus.CANCELLED));
         experienceRepository.saveAll(activas);
+    }
+
+    /** Cancela TODAS las activas: el filtro por país geocodifica paradas faltantes (red). */
+    private void vaciarTodo() {
+        var activas = experienceRepository.findByStatus(ExperienceStatus.ACTIVE);
+        activas.forEach(e -> e.setStatus(ExperienceStatus.CANCELLED));
+        experienceRepository.saveAll(activas);
+    }
+
+    private void agregarPrimeraParada(Long expId, String place, String city, String country,
+                                      double lat, double lng) {
+        var exp = experienceRepository.findById(expId).orElseThrow();
+        stopRepository.save(ExperienceStop.builder()
+                .experience(exp).position(0).placeName(place).city(city).country(country)
+                .lat(lat).lng(lng)
+                .build());
     }
 
     // ---------- Feed ----------
@@ -127,6 +148,51 @@ class FeedAndFavoritesControllerTests {
         mockMvc.perform(get("/feed/api").param("page", "999"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty());
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void feedMuestraElLoaderSvgDeMasTarjetas() throws Exception {
+        mockMvc.perform(get("/feed"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("feed-loading")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("loader-svg")));
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void feedBuscadorDePaisSeRenderiza() throws Exception {
+        mockMvc.perform(get("/feed"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("country-filter-input")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("country-options")));
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void feedFiltraPorPaisDePrimeraParada() throws Exception {
+        vaciarTodo();
+        String peruano = "Perú Exp " + UUID.randomUUID();
+        String mexicano = "México Exp " + UUID.randomUUID();
+        Long per = createExperience(peruano, ExperienceCategory.CULTURAL);
+        Long mex = createExperience(mexicano, ExperienceCategory.CULTURAL);
+        agregarPrimeraParada(per, "Mirador", "Lima", "Perú", -12.0, -77.0);
+        agregarPrimeraParada(mex, "Zócalo", "CDMX", "México", 19.43, -99.13);
+
+        mockMvc.perform(get("/feed").param("country", "Perú"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(peruano)))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(mexicano))));
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void feedApiAceptaElFiltroDePais() throws Exception {
+        vaciarTodo(); // sin activas sin paradas: el fallback no debe geocodificar en tests
+        mockMvc.perform(get("/feed/api").param("page", "0").param("country", "Argentina"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     // ---------- Favoritos ----------

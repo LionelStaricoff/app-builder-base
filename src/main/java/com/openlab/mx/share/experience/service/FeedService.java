@@ -2,6 +2,7 @@ package com.openlab.mx.share.experience.service;
 
 import com.openlab.mx.share.experience.dto.ExperienceFeedDTO;
 import com.openlab.mx.share.experience.dto.ExperienceStopDTO;
+import com.openlab.mx.share.experience.dto.FirstStopCountry;
 import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.entity.ExperienceStatus;
@@ -12,6 +13,7 @@ import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.favorite.repository.FavoriteRepository;
 import com.openlab.mx.share.shared.JacksonHelper;
+import com.openlab.mx.share.shared.location.GeocodingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -20,8 +22,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Feed con scroll infinito: pageSize = 1, orden ciudad actual → cercanía
@@ -33,6 +39,9 @@ public class FeedService {
 
     public static final int PAGE_SIZE = 1;
 
+    /** País vacío en las paradas se guarda como "—" (ver ExperienceService.saveStops). */
+    private static final String PLACEHOLDER = "—";
+
     private record Entry(Experience experience, LocalDate nextDate) {}
 
     private final ExperienceRepository experienceRepository;
@@ -41,12 +50,27 @@ public class FeedService {
     private final ExperienceInstanceRepository instanceRepository;
     private final FavoriteRepository favoriteRepository;
     private final JacksonHelper jacksonHelper;
+    private final GeocodingService geocodingService;
+
+    /**
+     * País geocodificado del punto de reunión por experiencia ("" = sin dato).
+     * Cache en memoria: el filtro solo geocodifica una vez por experiencia y
+     * no repite llamadas a Nominatim en cada página del scroll infinito.
+     */
+    private final Map<Long, String> geocodedCountryCache = new ConcurrentHashMap<>();
 
     public Page<ExperienceFeedDTO> page(Long userId, String userCity, Double lat, Double lng,
-                                        ExperienceCategory category, int pageNumber) {
+                                        ExperienceCategory category, String country, int pageNumber) {
         List<Experience> experiences = category != null
                 ? experienceRepository.findByStatusAndCategory(ExperienceStatus.ACTIVE, category)
                 : experienceRepository.findByStatus(ExperienceStatus.ACTIVE);
+        if (country != null && !country.isBlank()) {
+            String wanted = country.trim();
+            Map<Long, String> byExperience = firstStopCountriesById();
+            experiences = experiences.stream()
+                    .filter(e -> wanted.equalsIgnoreCase(countryOf(e, byExperience)))
+                    .toList();
+        }
 
         LocalDate today = LocalDate.now();
         List<Entry> entries = experiences.stream()
@@ -72,6 +96,55 @@ public class FeedService {
                 .comparingInt((Entry entry) -> bucket(entry.experience(), userCity))
                 .thenComparingDouble(entry -> distance(lat, lng, entry.experience()))
                 .thenComparing(Entry::nextDate, Comparator.nullsLast(Comparator.naturalOrder()));
+    }
+
+    /**
+     * Sugerencias del buscador de países del feed: países distintos de la
+     * primera parada de las experiencias activas, sin repetidos por casing.
+     */
+    public List<String> countryOptions() {
+        Map<String, String> porClave = new LinkedHashMap<>(); // minúscula → primer spelling visto
+        for (FirstStopCountry row : stopRepository.findFirstStopCountries(ExperienceStatus.ACTIVE)) {
+            String c = row.country() == null ? "" : row.country().trim();
+            if (c.isBlank() || PLACEHOLDER.equals(c)) continue;
+            porClave.putIfAbsent(c.toLowerCase(Locale.ROOT), c);
+        }
+        return porClave.values().stream()
+                .sorted(Comparator.comparing(c -> c.toLowerCase(Locale.ROOT)))
+                .toList();
+    }
+
+    /** Mapa experiencia → país de la primera parada, en una sola query. */
+    private Map<Long, String> firstStopCountriesById() {
+        Map<Long, String> byExperience = new HashMap<>();
+        for (FirstStopCountry row : stopRepository.findFirstStopCountries(ExperienceStatus.ACTIVE)) {
+            if (row.experienceId() != null && row.country() != null) {
+                byExperience.put(row.experienceId(), row.country().trim());
+            }
+        }
+        return byExperience;
+    }
+
+    /**
+     * País de una experiencia para el filtro: la primera parada manda; si no
+     * tiene, se reverse-geocodifica el punto de reunión (best effort, cacheado).
+     */
+    private String countryOf(Experience experience, Map<Long, String> byExperience) {
+        String c = byExperience.get(experience.getId());
+        if (c != null && !c.isBlank() && !PLACEHOLDER.equals(c)) {
+            return c;
+        }
+        if (experience.getMeetingLat() == null || experience.getMeetingLng() == null) {
+            return "";
+        }
+        return geocodedCountryCache.computeIfAbsent(experience.getId(), id -> {
+            GeocodingService.Place place = geocodingService.resolve(
+                    experience.getMeetingLat(), experience.getMeetingLng());
+            if (place == null || place.country() == null || place.country().isBlank()) {
+                return "";
+            }
+            return place.country().trim();
+        });
     }
 
     /** Referencia a experiencia para otras capas (favoritos, etc.). */
@@ -154,7 +227,9 @@ public class FeedService {
                 favorite,
                 experience.getCurrencyCode() == null ? "MXN" : experience.getCurrencyCode(),
                 stops,
-                jacksonHelper.toJson(stops)
+                jacksonHelper.toJson(stops),
+                experience.getCreator() == null ? null : experience.getCreator().getUsername(),
+                experience.getCreator() == null ? null : experience.getCreator().getAvatarBase64()
         );
     }
 }

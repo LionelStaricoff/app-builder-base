@@ -444,7 +444,8 @@ class RoutePersistenceReproTests {
         var dto = new com.openlab.mx.share.experience.dto.ExperienceFeedDTO(
                 999L, "Ruta test", "Desc", "QUJD", List.of("QUJD"), "Mirador del Cerro · —",
                 150, LocalDate.now().plusDays(7), BigDecimal.valueOf(250), 4.5, false,
-                "MXN", paradas, "[{\"placeName\":\"Mirador del Cerro\"}]");
+                "MXN", paradas, "[{\"placeName\":\"Mirador del Cerro\"}]",
+                "creador-demo", null);
         var variables = new java.util.HashMap<String, Object>();
         variables.put("feedPage",
                 new org.springframework.data.domain.PageImpl<>(List.of(dto)));

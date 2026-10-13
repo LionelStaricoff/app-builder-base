@@ -32,6 +32,22 @@
            th:href="@{/feed(category=${c})}" th:text="${c}">Categoria</a>
     </div>
 
+    <form class="country-filter" method="get" th:action="@{/feed}">
+        <input type="hidden" name="category" th:if="${selectedCategory != null}"
+               th:value="${selectedCategory}">
+        <label class="country-filter-label" for="country-filter-input">🌎 País</label>
+        <input class="country-filter-input" list="country-options" id="country-filter-input"
+               name="country" th:value="${selectedCountry}"
+               placeholder="Buscar país…" aria-label="Filtrar experiencias por país"
+               autocomplete="country-name" onchange="this.form.submit()">
+        <datalist id="country-options">
+            <option th:each="c : ${countries}" th:value="${c}"></option>
+        </datalist>
+        <button type="submit" class="btn-secondary">Filtrar</button>
+        <a class="chip" th:if="${selectedCountry != null and !#strings.isEmpty(selectedCountry)}"
+           th:href="@{/feed(category=${selectedCategory})}" title="Quitar filtro de país">✕ Limpiar</a>
+    </form>
+
     <div class="empty-illustration" th:if="${feedPage.empty}">
         <img th:src="@{/img/empty-feed.svg}" alt="Sin experiencias">
         <p><strong>Todavía no hay experiencias por acá</strong></p>
@@ -59,14 +75,28 @@
             <img class="cover" th:if="${(dto.images == null or #lists.isEmpty(dto.images)) and dto.coverBase64 != null}"
                  th:src="'data:image/png;base64,' + ${dto.coverBase64}" th:alt="${dto.name}">
             <div style="padding:1rem">
+                <div class="card-creator" th:if="${dto.creatorName != null}">
+                    <img class="card-creator-avatar"
+                         th:if="${dto.creatorAvatar != null and !#strings.isEmpty(dto.creatorAvatar)}"
+                         th:src="'data:image/png;base64,' + ${dto.creatorAvatar}" alt="" loading="lazy">
+                    <span class="card-creator-fallback" aria-hidden="true"
+                          th:if="${dto.creatorAvatar == null or #strings.isEmpty(dto.creatorAvatar)}">👤</span>
+                    <span class="card-creator-name" th:text="${dto.creatorName}">Creador</span>
+                    <span class="card-creator-tag">· armó este viaje</span>
+                </div>
                 <div class="card-head">
                     <h3><a th:href="@{/experiences/{id}(id=${dto.id})}" th:text="${dto.name}">Nombre</a></h3>
+                    <span class="card-head-actions">
+                    <button type="button" class="heart share-btn" title="Compartir viaje"
+                            aria-label="Compartir viaje"
+                            th:attr="data-share-experience=${dto.id}">📤</button>
                     <form th:action="${dto.favorite}
                             ? @{/favorites/{id}/remove(id=${dto.id})}
                             : @{/favorites/{id}/add(id=${dto.id})}" method="post" class="heart">
                         <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                         <button type="submit" th:text="${dto.favorite} ? '❤️' : '🤍'">❤️</button>
                     </form>
+                    </span>
                 </div>
                 <p th:text="${dto.description}">Descripción</p>
                 <p class="meta">
@@ -90,7 +120,9 @@
     </div>
 
     <div id="feed-sentinel" style="height:1px"></div>
-    <div id="feed-loading" class="empty" hidden>Cargando…</div>
+    <div id="feed-loading" class="empty" hidden>
+        <span th:replace="~{fragments/loader :: spinner('Cargando más experiencias…')}">Cargando…</span>
+    </div>
 </main>
 <nav th:replace="~{fragments/layout :: nav('feed')}"></nav>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

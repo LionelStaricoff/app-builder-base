@@ -11,6 +11,7 @@
   const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
   const params = new URLSearchParams(window.location.search);
   const category = params.get('category');
+  const country = params.get('country');
   let page = 1;
   let loading_page = false;
   let done = false;
@@ -38,6 +39,15 @@
       ? `/favorites/${dto.id}/remove`
       : `/favorites/${dto.id}/add`;
     const heart = dto.favorite ? '❤️' : '🤍';
+    const creator = dto.creatorName
+      ? `<div class="card-creator">
+           ${dto.creatorAvatar
+             ? `<img class="card-creator-avatar" src="data:image/png;base64,${escapeAttr(dto.creatorAvatar)}" alt="" loading="lazy">`
+             : '<span class="card-creator-fallback" aria-hidden="true">👤</span>'}
+           <span class="card-creator-name">${escapeHtml(dto.creatorName)}</span>
+           <span class="card-creator-tag">· armó este viaje</span>
+         </div>`
+      : '';
     const next = dto.nextDate || 'Sin fecha';
     const currency = dto.currencyCode || 'MXN';
     const duration = formatDuration(dto.durationMinutes || 60);
@@ -53,12 +63,17 @@
       <div class="card" id="card-${dto.id}">
         ${gallery}
         <div style="padding:1rem">
+          ${creator}
           <div class="card-head">
             <h3><a href="/experiences/${dto.id}">${escapeHtml(dto.name)}</a></h3>
+            <span class="card-head-actions">
+            <button type="button" class="heart share-btn" title="Compartir viaje"
+                    aria-label="Compartir viaje" data-share-experience="${dto.id}">📤</button>
             <form class="heart" action="${heartAction}" method="post">
               <input type="hidden" name="_csrf" value="${csrfToken || ''}">
               <button type="submit">${heart}</button>
             </form>
+            </span>
           </div>
           <p>${escapeHtml(dto.description)}</p>
           <p class="meta">📍 ${escapeHtml(dto.meetingPointLabel)} · ⏱ ${duration} · 📅 ${next} · <strong>${escapeHtml(currency)} ${dto.price}</strong></p>
@@ -95,6 +110,7 @@
     try {
       const query = new URLSearchParams({ page: String(page) });
       if (category) query.set('category', category);
+      if (country) query.set('country', country);
       const res = await fetch(`/feed/api?${query}`, {
         headers: { Accept: 'application/json' },
       });

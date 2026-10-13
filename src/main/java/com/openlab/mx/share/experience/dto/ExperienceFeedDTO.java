@@ -24,6 +24,9 @@ public record ExperienceFeedDTO(
         boolean favorite,
         String currencyCode,
         List<ExperienceStopDTO> stops,
-        String stopsJson
+        String stopsJson,
+        /** Quién armó el viaje: nombre de usuario + avatar base64 (nullable en cuentas viejas). */
+        String creatorName,
+        String creatorAvatar
 ) {
 }

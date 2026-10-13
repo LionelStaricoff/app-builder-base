@@ -1,0 +1,45 @@
+// Loader global de la app (ver fragments/loader.html y .loader en app.css).
+// - SharedLoader.show(container) / hide(): overlay inline para cargas a demanda.
+// - Guard automático: todo form que se envía deshabilita sus botones y les
+//   pone el spinner con la etiqueta original + "…". Opt-out: data-no-loading.
+(function () {
+  var SVG =
+    '<svg class="loader-svg loader-svg--inline" viewBox="0 0 48 48" width="16" height="16"' +
+    ' aria-hidden="true" focusable="false">' +
+    '<circle class="loader-track" cx="24" cy="24" r="18" fill="none" stroke-width="5"></circle>' +
+    '<circle class="loader-head" cx="24" cy="24" r="18" fill="none" stroke-width="5"' +
+    ' stroke-linecap="round" stroke-dasharray="28 85"></circle>' +
+    '</svg>';
+
+  function show(container, label) {
+    var el = document.createElement('span');
+    el.className = 'loader';
+    el.setAttribute('role', 'status');
+    el.setAttribute('aria-live', 'polite');
+    el.innerHTML =
+      SVG + '<span class="loader-label">' + (label || 'Cargando…') + '</span>';
+    (container || document.body).appendChild(el);
+    return el;
+  }
+
+  function hide(el) {
+    if (el && el.parentNode) el.parentNode.removeChild(el);
+  }
+
+  window.SharedLoader = { show: show, hide: hide };
+
+  // Estado "Guardando…" al enviar cualquier form (viajes creados, reservas, config…).
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    if (form.dataset.noLoading === 'true') return;
+    var buttons = form.querySelectorAll('button[type="submit"], button:not([type])');
+    Array.prototype.forEach.call(buttons, function (b) {
+      if (b.disabled) return;
+      b.disabled = true;
+      b.classList.add('is-loading');
+      var texto = (b.textContent || 'Enviar').replace(/…+$/, '');
+      b.innerHTML = SVG + ' ' + texto + '…';
+    });
+  });
+})();
