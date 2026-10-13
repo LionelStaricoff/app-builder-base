@@ -53,6 +53,8 @@ class RoutePersistenceReproTests {
     private com.openlab.mx.share.experience.service.FeedService feedService;
     @Autowired
     private com.openlab.mx.share.experience.repository.ExperienceImageRepository imageRepository;
+    @Autowired
+    private org.thymeleaf.spring6.SpringTemplateEngine templateEngine;
 
     private String fechaFutura() {
         return LocalDate.now().plusDays(30).toString();
@@ -285,6 +287,40 @@ class RoutePersistenceReproTests {
         var restantes = imageRepository.findByExperienceIdOrderByIdAsc(id);
         assertEquals(1, restantes.size(), "solo se borra la marcada");
         assertEquals(guardadas.get(1).getId(), restantes.get(0).getId());
+    }
+
+    @Test
+    void feedConParadasRenderizaRecorrido() {
+        var paradas = List.of(
+                new com.openlab.mx.share.experience.dto.ExperienceStopDTO(0, "Mirador del Cerro", "—", "—", 19.44, -99.14),
+                new com.openlab.mx.share.experience.dto.ExperienceStopDTO(1, "Playa Escondida", "—", "—", 19.45, -99.15));
+        var dto = new com.openlab.mx.share.experience.dto.ExperienceFeedDTO(
+                999L, "Ruta test", "Desc", "QUJD", List.of("QUJD"), "Mirador del Cerro · —",
+                150, LocalDate.now().plusDays(7), BigDecimal.valueOf(250), 4.5, false,
+                "MXN", paradas, "[{\"placeName\":\"Mirador del Cerro\"}]");
+        var variables = new java.util.HashMap<String, Object>();
+        variables.put("feedPage",
+                new org.springframework.data.domain.PageImpl<>(List.of(dto)));
+        variables.put("categories", ExperienceCategory.values());
+        variables.put("selectedCategory", null);
+        variables.put("searchedCity", null);
+        variables.put("savedCity", "CDMX");
+        variables.put("_csrf",
+                new org.springframework.security.web.csrf.DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", "tok"));
+        var webApp = org.thymeleaf.web.servlet.JakartaServletWebApplication
+                .buildApplication(new org.springframework.mock.web.MockServletContext());
+        var exchange = webApp.buildExchange(
+                new org.springframework.mock.web.MockHttpServletRequest(),
+                new org.springframework.mock.web.MockHttpServletResponse());
+        var ctx = new org.thymeleaf.context.WebContext(
+                exchange, java.util.Locale.forLanguageTag("es"), variables);
+
+        String html = templateEngine.process("feed", ctx);
+
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("feed-route-map"),
+                "la tarjeta del feed muestra el mapa del recorrido");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Playa Escondida"),
+                "la tarjeta del feed nombra inicio y fin");
     }
 
     @Test

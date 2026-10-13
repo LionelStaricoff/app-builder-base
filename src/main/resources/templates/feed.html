@@ -79,7 +79,7 @@
                     <div class="map-box feed-route-map" data-map="feed-route" style="height:180px"
                          th:attr="data-stops=${dto.stopsJson}"></div>
                     <p class="hint">🗺️ <span th:text="${#lists.size(dto.stops)}">3</span> paradas ·
-                        <span th:text="${dto.stops[0].placeName} + (${#lists.size(dto.stops) > 1 ? ' → ' + dto.stops[#lists.size(dto.stops) - 1].placeName : ''}">Inicio → Fin</span>
+                        <span th:text="${dto.stops[0].placeName} + (${#lists.size(dto.stops) > 1 ? ' → ' + dto.stops[#lists.size(dto.stops) - 1].placeName : ''})">Inicio → Fin</span>
                     </p>
                 </div>
                 <p class="meta"><span class="stars">★</span>
