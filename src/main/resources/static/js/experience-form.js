@@ -231,10 +231,120 @@
     });
   }
 
+  // ---- Requeridos: marca en rojo y frena el envío si falta algo ----
+  function markMissing(el) {
+    el?.classList?.add('missing');
+    el?.setAttribute?.('aria-invalid', 'true');
+  }
+
+  function validateRequired() {
+    if (!form) return true;
+    form.querySelectorAll('.missing').forEach((el) => {
+      el.classList.remove('missing');
+      el.removeAttribute('aria-invalid');
+    });
+    ['unique-error', 'weekly-error', 'duration-error'].forEach((id) => {
+      const p = document.getElementById(id);
+      if (p) p.hidden = true;
+    });
+    let first = null;
+    const need = (el) => {
+      if (!el) return;
+      markMissing(el);
+      first = first || el;
+    };
+
+    // Imágenes: entre existentes visibles y nuevas tiene que haber al menos una.
+    const existingCount = existingBox
+      ? existingBox.querySelectorAll('.existing-image:not(.img-removed)').length : 0;
+    const imagesInput = document.getElementById('images-input');
+    const newCount = imagesInput?.files?.length || 0;
+    if (existingCount + newCount < 1) {
+      document.getElementById('image-picker')?.classList.add('missing');
+      const box = document.getElementById('image-picker-error');
+      if (box) { box.textContent = 'Subí al menos una imagen.'; box.hidden = false; }
+      first = first || document.getElementById('image-picker-drop');
+    }
+
+    // Duración: campos no vacíos.
+    let durationOk = true;
+    [hoursInput, minsInput].forEach((el) => {
+      if (el && el.value === '') { markMissing(el); first = first || el; durationOk = false; }
+    });
+    if (!durationOk) {
+      const p = document.getElementById('duration-error');
+      if (p) p.hidden = false;
+    }
+
+    // Agenda según el modo activo.
+    const isWeekly = document.querySelector('input[name="recurrenceType"]:checked')?.value === 'WEEKLY';
+    if (!isWeekly && unique) {
+      let ok = true;
+      ['date', 'startTime', 'endTime'].forEach((k) => {
+        const f = unique.querySelector(`[name$=".${k}"]`);
+        if (f && !f.value) { need(f); ok = false; }
+      });
+      if (!ok) {
+        const p = document.getElementById('unique-error');
+        if (p) p.hidden = false;
+      }
+    }
+    if (isWeekly && rows) {
+      let ok = true;
+      [...rows.querySelectorAll('.weekly-row')]
+        .filter((row) => ![...row.querySelectorAll('[name]')].some((f) => f.disabled))
+        .forEach((row) => {
+          ['startTime', 'endTime', 'rangeStart'].forEach((k) => {
+            const f = row.querySelector(`[name$=".${k}"]`);
+            if (f && !f.value) { need(f); ok = false; }
+          });
+        });
+      if (!ok) {
+        const p = document.getElementById('weekly-error');
+        if (p) p.hidden = false;
+      }
+    }
+
+    // Paradas: toda fila necesita nombre Y punto en el mapa.
+    stopsList?.querySelectorAll('[data-stop-row]').forEach((row) => {
+      const name = row.querySelector('input[name="stopPlace"]');
+      const la = parseFloat(row.querySelector('input[name="stopLat"]')?.value || '0') || 0;
+      const lo = parseFloat(row.querySelector('input[name="stopLng"]')?.value || '0') || 0;
+      let msg = '';
+      if (!name?.value.trim()) msg = 'Falta el nombre de esta parada.';
+      else if (!(la && lo)) msg = 'Tocá el mapa para ubicar esta parada.';
+      if (msg) {
+        row.classList.add('missing');
+        const label = row.querySelector('[data-stop-label]');
+        if (label) label.textContent = msg;
+        first = first || name;
+      }
+    });
+
+    if (first) {
+      first.scrollIntoView({ block: 'center' });
+      first.focus?.({ preventScroll: true });
+      return false;
+    }
+    return true;
+  }
+
   // Renumerar solo las filas habilitadas para que los índices sean contiguos.
   const form = document.getElementById('experience-form') || document.querySelector('form');
   if (form) {
-    form.addEventListener('submit', () => {
+    // Limpieza en vivo: al corregir se apaga el rojo.
+    form.addEventListener('input', (e) => e.target.classList?.remove('missing'));
+    form.addEventListener('change', (e) => {
+      e.target.classList?.remove('missing');
+      if (e.target.id === 'images-input') {
+        document.getElementById('image-picker')?.classList.remove('missing');
+      }
+    });
+    form.addEventListener('submit', (e) => {
+      if (!validateRequired()) {
+        e.preventDefault();
+        return;
+      }
       syncHiddenFromInputs();
       if (rows) {
         const enabled = [...rows.querySelectorAll('.weekly-row')].filter(

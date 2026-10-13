@@ -612,6 +612,15 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 .existing-image.img-removed img { opacity: 0.25; filter: grayscale(1); }
 .existing-image.img-removed .image-picker-badge { opacity: 0.25; }
 
+/* Campos faltantes al guardar: borde rojo bien visible */
+input.missing, select.missing, textarea.missing {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.18);
+}
+.stop-row.missing { border-color: #dc2626; box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.18); }
+.stop-row.missing [data-stop-label] { color: #dc2626; font-weight: 700; }
+#image-picker.missing .image-picker-drop { box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.35); }
+
 /* Mini-mapa del feed */
 .feed-route { margin-top: 0.6rem; }
 .feed-route-map { height: 180px; }

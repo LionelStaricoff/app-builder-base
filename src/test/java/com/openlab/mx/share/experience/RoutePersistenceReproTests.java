@@ -344,6 +344,99 @@ class RoutePersistenceReproTests {
     }
 
     @Test
+    @WithMockUser("demo_creator")
+    void crearSinFechaRechazaConError() throws Exception {
+        var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+
+        mockMvc.perform(multipart("/experiences")
+                        .file(image)
+                        .param("name", "Sin fecha " + UUID.randomUUID())
+                        .param("description", "Descripción de prueba")
+                        .param("durationMinutes", "120")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "8")
+                        .param("price", "190.00")
+                        .param("currencyCode", "MXN")
+                        .param("category", "CULTURAL")
+                        .param("recurrenceType", "UNIQUE")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].date", "")
+                        .param("schedules[0].startTime", "10:00")
+                        .param("schedules[0].endTime", "12:00")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("obligatori")));
+    }
+
+    @Test
+    @WithMockUser("demo_creator")
+    void crearSemanalSinRangoRechazaConError() throws Exception {
+        var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+
+        mockMvc.perform(multipart("/experiences")
+                        .file(image)
+                        .param("name", "Sin rango " + UUID.randomUUID())
+                        .param("description", "Descripción de prueba")
+                        .param("durationMinutes", "120")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "8")
+                        .param("price", "190.00")
+                        .param("currencyCode", "MXN")
+                        .param("category", "CULTURAL")
+                        .param("recurrenceType", "WEEKLY")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].dayOfWeek", "SATURDAY")
+                        .param("schedules[0].startTime", "08:00")
+                        .param("schedules[0].endTime", "18:00")
+                        .param("schedules[0].rangeStart", "")
+                        .param("schedules[0].rangeEnd", "")
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("obligatori")));
+    }
+
+    @Test
+    @WithMockUser("demo_creator")
+    void editarBorrandoLaUnicaImagenRechazaConError() throws Exception {
+        var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+        Experience experience = experienceService.create(new ExperienceFormRequest(
+                        "Repro una img " + UUID.randomUUID(), "Desc", 120, 2, 8, BigDecimal.valueOf(190),
+                        ExperienceCategory.CULTURAL, RecurrenceType.UNIQUE,
+                        19.4326, -99.1332,
+                        List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(30), null,
+                                LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
+                        List.of(image)),
+                userRepository.findByUsername("demo_creator").orElseThrow());
+        Long id = experience.getId();
+        Long unica = imageRepository.findByExperienceIdOrderByIdAsc(id).get(0).getId();
+
+        mockMvc.perform(multipart("/experiences/" + id)
+                        .param("name", experience.getName())
+                        .param("description", "Desc")
+                        .param("durationMinutes", "120")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "8")
+                        .param("price", "190.00")
+                        .param("currencyCode", "MXN")
+                        .param("category", "CULTURAL")
+                        .param("recurrenceType", "UNIQUE")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].date", LocalDate.now().plusDays(30).toString())
+                        .param("schedules[0].startTime", "10:00")
+                        .param("schedules[0].endTime", "12:00")
+                        .param("removeImageIds", String.valueOf(unica))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("imagen")));
+
+        assertEquals(1, imageRepository.findByExperienceIdOrderByIdAsc(id).size(),
+                "la única imagen sigue guardada");
+    }
+
+    @Test
     void feedConParadasRenderizaRecorrido() {
         var paradas = List.of(
                 new com.openlab.mx.share.experience.dto.ExperienceStopDTO(0, "Mirador del Cerro", "—", "—", 19.44, -99.14),

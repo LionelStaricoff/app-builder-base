@@ -9,6 +9,7 @@ import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.entity.ExperienceSchedule;
 import com.openlab.mx.share.experience.entity.ExperienceStatus;
 import com.openlab.mx.share.experience.entity.ExperienceStop;
+import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
@@ -102,7 +103,11 @@ public class ExperienceService {
                 .map(ExperienceImage::getId)
                 .filter(imageIds::contains)
                 .toList();
-        if (!borrar.isEmpty()) imageRepository.deleteAllById(borrar);
+        if (borrar.isEmpty()) return;
+        if (propias.size() - borrar.size() < 1) {
+            throw new DomainException("Debe conservar al menos una imagen");
+        }
+        imageRepository.deleteAllById(borrar);
     }
 
     /**
@@ -144,6 +149,18 @@ public class ExperienceService {
         }
         if (request.schedules() == null || request.schedules().isEmpty()) {
             throw new DomainException("Debe definir al menos un horario");
+        }
+        for (ScheduleEntryRequest entry : request.schedules()) {
+            if (entry == null) continue;
+            if (request.recurrenceType() == RecurrenceType.WEEKLY) {
+                if (entry.dayOfWeek() == null || entry.startTime() == null
+                        || entry.endTime() == null || entry.rangeStart() == null) {
+                    throw new DomainException(
+                            "En agenda semanal el día, los horarios y el inicio del rango son obligatorios");
+                }
+            } else if (entry.date() == null || entry.startTime() == null || entry.endTime() == null) {
+                throw new DomainException("La fecha y los horarios son obligatorios");
+            }
         }
         if (request.images() != null) {
             for (MultipartFile img : request.images()) {

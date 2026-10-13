@@ -62,6 +62,7 @@
                     </div>
                     <input type="hidden" th:field="*{durationMinutes}" id="durationMinutes">
                     <p class="hint" id="duration-preview" aria-live="polite">1 h</p>
+                    <p class="error" id="duration-error" hidden>Indicá la duración.</p>
                     <span class="error" th:if="${#fields.hasErrors('durationMinutes')}" th:errors="*{durationMinutes}">Error</span>
                 </div>
                 <div>
@@ -113,6 +114,7 @@
                     <input type="time" name="schedules[0].endTime" value="12:00"
                            th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].endTime != null ? experienceForm.schedules[0].endTime : '12:00'}">
                 </label>
+                <p class="error" id="unique-error" hidden>Completá fecha, inicio y fin.</p>
             </div>
 
             <div id="weekly-fields" hidden>
@@ -144,6 +146,7 @@
                     </div>
                 </div>
                 <button type="button" id="add-weekly-row" class="btn-secondary">+ Agregar día</button>
+                <p class="error" id="weekly-error" hidden>Completá horarios e inicio del rango en cada día.</p>
             </div>
 
             <fieldset>
