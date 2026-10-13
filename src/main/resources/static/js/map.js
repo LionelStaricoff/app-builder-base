@@ -37,22 +37,36 @@
     }
   }
 
-  function numberedIcon(n) {
-    return L.divIcon({
-      className: 'route-number',
-      html: `<span>${n}</span>`,
-      iconSize: [26, 26],
-      iconAnchor: [13, 13],
-    });
+  // Pines de ubicación (el mismo símbolo que el punto de encuentro),
+  // con tooltip de orden + nombre. Arrastrables solo en el editor.
+  function stopLabel(i, name) {
+    const title = (name || 'Parada').trim() || 'Parada';
+    return `${i + 1}. ${title}`;
+  }
+
+  function addStopPin(mapOrLayer, stop, i, draggable, onDragEnd, onSelect) {
+    const marker = L.marker([stop.lat, stop.lng], { draggable: !!draggable });
+    marker.bindTooltip(stopLabel(i, stop.placeName || stop.name), { direction: 'top', offset: [0, -28] });
+    if (draggable) {
+      marker.on('dragend', () => {
+        const pos = marker.getLatLng();
+        onDragEnd?.(pos.lat, pos.lng);
+      });
+      // Tocar el pin lo deja pendiente para reubicarlo con el próximo toque.
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        onSelect?.();
+      });
+    } else {
+      marker.bindPopup(`<strong>${escapeHtml(stopLabel(i, stop.placeName || stop.name))}</strong>`);
+    }
+    marker.addTo(mapOrLayer);
+    return marker;
   }
 
   function drawRoute(map, stops) {
     const latlngs = stops.map((s) => [s.lat, s.lng]);
-    stops.forEach((s, i) => {
-      L.marker([s.lat, s.lng], { icon: numberedIcon(i + 1) })
-        .addTo(map)
-        .bindPopup(`<strong>${i + 1}. ${escapeHtml(s.placeName || 'Parada')}</strong>${s.city ? `<br>${escapeHtml(s.city)}` : ''}`);
-    });
+    stops.forEach((s, i) => addStopPin(map, s, i, false));
     if (latlngs.length >= 2) {
       L.polyline(latlngs, { weight: 4, opacity: 0.85 }).addTo(map);
       map.fitBounds(L.latLngBounds(latlngs).pad(0.25));
@@ -73,9 +87,11 @@
       map.eachLayer((layer) => {
         if (layer instanceof L.Marker || layer instanceof L.Polyline) map.removeLayer(layer);
       });
-      const pts = (window.__stopsApi?.all() || []).filter((p) => p.lat && p.lng);
+      const pts = window.__stopsApi?.located() || [];
       if (pts.length === 0) return;
-      pts.forEach((p, i) => L.marker([p.lat, p.lng], { icon: numberedIcon(i + 1) }).addTo(map));
+      pts.forEach((p, i) => addStopPin(map, p, i, true,
+        (la, lo) => window.__stopsApi?.moveTo(p.index, la, lo),
+        () => window.__stopsApi?.select(p.index)));
       if (pts.length >= 2) {
         L.polyline(pts.map((p) => [p.lat, p.lng]), { weight: 4, opacity: 0.85 }).addTo(map);
         map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lng])).pad(0.25));
@@ -111,6 +127,7 @@
     const latInput = document.getElementById('meetingLat');
     const lngInput = document.getElementById('meetingLng');
     const meetingMarker = L.marker(map.getCenter()).addTo(map);
+    meetingMarker.bindTooltip('Punto de encuentro', { direction: 'top', offset: [0, -28] });
     const routeLayer = L.layerGroup().addTo(map);
 
     const setMeeting = (la, lo, moveView) => {
@@ -123,8 +140,10 @@
 
     const refreshRoute = (fitBounds) => {
       routeLayer.clearLayers();
-      const pts = (window.__stopsApi?.all() || []).filter((p) => p.lat && p.lng);
-      pts.forEach((p, i) => L.marker([p.lat, p.lng], { icon: numberedIcon(i + 1) }).addTo(routeLayer));
+      const pts = window.__stopsApi?.located() || [];
+      pts.forEach((p, i) => addStopPin(routeLayer, p, i, true,
+        (la, lo) => window.__stopsApi?.moveTo(p.index, la, lo),
+        () => window.__stopsApi?.select(p.index)));
       if (pts.length >= 2) {
         L.polyline(pts.map((p) => [p.lat, p.lng]), { weight: 4, opacity: 0.85 }).addTo(routeLayer);
         if (fitBounds) map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lng])).pad(0.25));

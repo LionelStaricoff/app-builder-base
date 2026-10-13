@@ -597,21 +597,6 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 .stops-timeline li { margin-bottom: 0.4rem; }
 .stops-timeline li::marker { color: var(--color-primary); font-weight: 700; }
 
-/* Números del recorrido en Leaflet */
-.route-number {
-  background: var(--color-primary);
-  color: #fff;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 0.85rem;
-}
-.route-number span { line-height: 1; }
-
 /* Mini-mapa del feed */
 .feed-route { margin-top: 0.6rem; }
 .feed-route-map { height: 180px; }

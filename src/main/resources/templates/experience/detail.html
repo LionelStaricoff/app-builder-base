@@ -40,7 +40,6 @@
                 <ol class="stops-timeline">
                     <li th:each="s : ${stops}">
                         <strong th:text="${s.placeName}">Lugar</strong>
-                        <span class="hint" th:text="${s.city} + ' · ' + ${s.country}">Ciudad · País</span>
                     </li>
                 </ol>
             </div>

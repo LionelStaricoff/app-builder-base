@@ -91,8 +91,6 @@
     const node = template.content.firstElementChild.cloneNode(true);
     if (data) {
       node.querySelector('input[name="stopPlace"]').value = data.place || '';
-      node.querySelector('input[name="stopCity"]').value = data.city || '';
-      node.querySelector('input[name="stopCountry"]').value = data.country || '';
       node.querySelector('input[name="stopLat"]').value = data.lat ?? 0;
       node.querySelector('input[name="stopLng"]').value = data.lng ?? 0;
       const label = node.querySelector('[data-stop-label]');
@@ -159,7 +157,37 @@
       return [...stopsList.querySelectorAll('[data-stop-row]')].map((r) => ({
         lat: parseFloat(r.querySelector('input[name="stopLat"]').value || '0') || 0,
         lng: parseFloat(r.querySelector('input[name="stopLng"]').value || '0') || 0,
+        name: r.querySelector('input[name="stopPlace"]')?.value || '',
       }));
+    },
+    // Filas ubicadas con su índice DOM (estable aunque haya filas sin ubicar).
+    located() {
+      if (!stopsList) return [];
+      return [...stopsList.querySelectorAll('[data-stop-row]')]
+        .map((r, index) => ({
+          index,
+          lat: parseFloat(r.querySelector('input[name="stopLat"]').value || '0') || 0,
+          lng: parseFloat(r.querySelector('input[name="stopLng"]').value || '0') || 0,
+          name: r.querySelector('input[name="stopPlace"]')?.value || '',
+        }))
+        .filter((p) => p.lat && p.lng);
+    },
+    // Marca la fila para reubicarla con el próximo toque en el mapa.
+    select(index) {
+      const row = stopsList?.querySelectorAll('[data-stop-row]')[index];
+      if (row) markPending(row);
+    },
+    // Mueve la parada (arrastre del pin en el mapa) sin cambiar el orden.
+    moveTo(index, lat, lng) {
+      const row = stopsList?.querySelectorAll('[data-stop-row]')[index];
+      if (!row) return;
+      row.querySelector('input[name="stopLat"]').value = lat.toFixed(6);
+      row.querySelector('input[name="stopLng"]').value = lng.toFixed(6);
+      const label = row.querySelector('[data-stop-label]');
+      if (label) label.textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)} — clic para reubicar`;
+      row.classList.remove('stop-pending');
+      if (pendingStopRow === row) pendingStopRow = null;
+      window.dispatchEvent(new CustomEvent('stops-changed'));
     },
   };
 
@@ -173,8 +201,7 @@
   if (prefill) {
     prefill.querySelectorAll('span').forEach((s) => {
       addStop({
-        place: s.dataset.place, city: s.dataset.city,
-        country: s.dataset.country, lat: s.dataset.lat, lng: s.dataset.lng,
+        place: s.dataset.place, lat: s.dataset.lat, lng: s.dataset.lng,
       });
     });
   }

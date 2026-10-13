@@ -118,7 +118,7 @@
 
             <fieldset>
                 <legend>Punto de encuentro y recorrido (un solo mapa)</legend>
-                <p class="hint">Tocá el mapa para mover el punto de encuentro. Si agregás una parada, el próximo toque la ubica y se une con línea numerada.</p>
+                <p class="hint">Tocá el mapa para mover el punto de encuentro. Agregá paradas con su nombre: el próximo toque las ubica y se unen con una línea. Arrastrá los pines para ajustarlas.</p>
                 <div id="form-map" class="map-box" data-map="pick-route" style="height:300px"
                      th:attr="data-fresh=${experienceId == null}"></div>
                 <input type="hidden" th:field="*{meetingLat}" id="meetingLat">
@@ -132,14 +132,6 @@
                             <label>Lugar
                                 <input type="text" name="stopPlace" placeholder="Mirador del Cerro" autocomplete="off">
                             </label>
-                            <div class="form-grid">
-                                <label>Ciudad
-                                    <input type="text" name="stopCity" placeholder="Ciudad" autocomplete="off">
-                                </label>
-                                <label>País
-                                    <input type="text" name="stopCountry" placeholder="País" autocomplete="off">
-                                </label>
-                            </div>
                             <div class="stop-coords">
                                 <input type="hidden" name="stopLat" value="0">
                                 <input type="hidden" name="stopLng" value="0">
