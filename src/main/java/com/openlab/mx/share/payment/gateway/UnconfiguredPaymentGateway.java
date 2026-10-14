@@ -1,0 +1,41 @@
+package com.openlab.mx.share.payment.gateway;
+
+import com.openlab.mx.share.shared.exception.PaymentUnavailableException;
+
+import java.math.BigDecimal;
+
+/**
+ * Fallback del puerto cuando no hay keys de Stripe (spec §8): cualquier uso
+ * lanza un mensaje claro — nunca NullPointerException ni silencio.
+ */
+public class UnconfiguredPaymentGateway implements PaymentGateway {
+
+    private PaymentUnavailableException noDisponible() {
+        return new PaymentUnavailableException();
+    }
+
+    @Override
+    public GatewaySession createCheckout(GatewayCheckoutRequest request) {
+        throw noDisponible();
+    }
+
+    @Override
+    public GatewaySession authorizeInfo(String sessionId) {
+        throw noDisponible();
+    }
+
+    @Override
+    public void capture(String paymentIntentId) {
+        throw noDisponible();
+    }
+
+    @Override
+    public void capturePartial(String paymentIntentId, BigDecimal amount) {
+        throw noDisponible();
+    }
+
+    @Override
+    public void cancel(String paymentIntentId) {
+        throw noDisponible();
+    }
+}
