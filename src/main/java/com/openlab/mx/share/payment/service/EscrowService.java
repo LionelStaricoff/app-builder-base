@@ -40,6 +40,7 @@ public class EscrowService {
     private final RatingRepository ratingRepository;
     private final CommentRepository commentRepository;
     private final NotificationService notificationService;
+    private final com.openlab.mx.share.payment.gateway.PaymentGateway gateway;
 
     @Value("${escrow.auto-release-days}")
     private long autoReleaseDays = 2;
@@ -78,6 +79,11 @@ public class EscrowService {
         payment.setReleasedAt(LocalDateTime.now());
         payment.setPayout(payment.getAmount().subtract(payment.getCommission()));
         paymentRepository.save(payment);
+        // Spec §4: RELEASED aplica el dinero real (capture) tras la persistencia
+        // (DB source of truth). Legacy sin pi: solo contable.
+        if (payment.getStripePaymentIntentId() != null) {
+            gateway.capture(payment.getStripePaymentIntentId());
+        }
 
         var creador = reservation.getInstance().getExperience().getCreator();
         if (creador != null) {

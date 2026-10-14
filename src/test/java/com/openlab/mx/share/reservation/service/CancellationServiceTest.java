@@ -49,6 +49,8 @@ class CancellationServiceTest {
     private ExperienceInstanceRepository instanceRepository;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private com.openlab.mx.share.payment.gateway.PaymentGateway paymentGateway;
 
     @InjectMocks
     private CancellationService cancellationService;
@@ -87,12 +89,17 @@ class CancellationServiceTest {
     }
 
     private Payment pago() {
+        return pago("pi_cancel_1");
+    }
+
+    private Payment pago(String paymentIntentId) {
         return Payment.builder()
                 .id(50L)
                 .amount(new BigDecimal("380.00"))
                 .commission(new BigDecimal("19.00"))
                 .status(PaymentStatus.HELD)
                 .heldAt(LocalDateTime.now().minusDays(1))
+                .stripePaymentIntentId(paymentIntentId)
                 .build();
     }
 
@@ -126,6 +133,8 @@ class CancellationServiceTest {
 
         assertEquals(PaymentStatus.REFUNDED_FULL, pago.getStatus());
         assertEquals(0, pago.getRefund().compareTo(pago.getAmount()), "reembolso del 100%");
+        // refund total de autorización no capturada = cancel en Stripe (spec §4)
+        verify(paymentGateway).cancel("pi_cancel_1");
     }
 
     @Test
@@ -141,6 +150,24 @@ class CancellationServiceTest {
         assertEquals(PaymentStatus.REFUNDED_PARTIAL, pago.getStatus());
         assertEquals(0, pago.getRefund().compareTo(new BigDecimal("190.00")),
                 "parcial = amount * 0.5");
+        // refund parcial = capture del 50%: la penalidad queda en la plataforma (spec §4)
+        verify(paymentGateway).capturePartial("pi_cancel_1", new BigDecimal("190.00"));
+    }
+
+    /** Pago legacy (sin pi): refund contable, gateway no invocado (spec §11). */
+    @Test
+    void testCaso1LegacySinPiNoInvocaGateway() {
+        ExperienceInstance instancia = instance(10L, LocalDate.now().plusDays(10), LocalTime.of(10, 0));
+        Reservation reserva = reserva(1L, instancia, 200L);
+        Payment pago = pago(null);
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(reserva));
+        when(paymentRepository.findByReservationId(1L)).thenReturn(Optional.of(pago));
+
+        cancellationService.cancelByParticipant(1L, user(200L));
+
+        assertEquals(PaymentStatus.REFUNDED_FULL, pago.getStatus());
+        verify(paymentGateway, never()).cancel(any());
+        verify(paymentGateway, never()).capturePartial(any(), any());
     }
 
     @Test

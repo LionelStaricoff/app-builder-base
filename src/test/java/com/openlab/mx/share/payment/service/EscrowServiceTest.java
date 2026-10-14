@@ -51,6 +51,8 @@ class EscrowServiceTest {
     private CommentRepository commentRepository;
     @Mock
     private com.openlab.mx.share.notification.service.NotificationService notificationService;
+    @Mock
+    private com.openlab.mx.share.payment.gateway.PaymentGateway paymentGateway;
 
     @InjectMocks
     private EscrowService escrowService;
@@ -85,12 +87,17 @@ class EscrowServiceTest {
     }
 
     private Payment payment(PaymentStatus status, LocalDateTime heldAt) {
+        return payment(status, heldAt, null);
+    }
+
+    private Payment payment(PaymentStatus status, LocalDateTime heldAt, String paymentIntentId) {
         return Payment.builder()
                 .id(50L)
                 .amount(new BigDecimal("380.00"))
                 .commission(new BigDecimal("19.00"))
                 .status(status)
                 .heldAt(heldAt)
+                .stripePaymentIntentId(paymentIntentId)
                 .build();
     }
 
@@ -99,7 +106,7 @@ class EscrowServiceTest {
         ExperienceInstance instancia = instance(InstanceStatus.COMPLETED);
         Reservation r1 = reservation(1L, 100L, instancia);
         Reservation r2 = reservation(2L, 101L, instancia);
-        Payment pago = payment(PaymentStatus.HELD, LocalDateTime.now());
+        Payment pago = payment(PaymentStatus.HELD, LocalDateTime.now(), "pi_escrow_1");
 
         when(reservationRepository.findById(1L)).thenReturn(Optional.of(r1));
         when(paymentRepository.findByReservationId(1L)).thenReturn(Optional.of(pago));
@@ -119,6 +126,8 @@ class EscrowServiceTest {
         boolean liberado = escrowService.tryRelease(1L);
 
         assertTrue(liberado);
+        // release de escrow captura el pago en Stripe (spec §4)
+        verify(paymentGateway).capture("pi_escrow_1");
         assertEquals(PaymentStatus.RELEASED, pago.getStatus());
         assertEquals(0, pago.getPayout().compareTo(new BigDecimal("361.00")),
                 "payout = amount - commission (95%)");
@@ -185,6 +194,27 @@ class EscrowServiceTest {
         assertThrows(EscrowException.class, () -> escrowService.tryRelease(1L));
         assertEquals(PaymentStatus.REFUNDED_FULL, pago.getStatus());
         verify(paymentRepository, never()).save(any(Payment.class));
+    }
+
+    /** Pago legacy simulado (sin pi): el gateway no se invoca (spec §11). */
+    @Test
+    void testPagoLegacySinPiNoInvocaGateway() {
+        ExperienceInstance instancia = instance(InstanceStatus.COMPLETED);
+        Reservation r1 = reservation(1L, 100L, instancia);
+        Payment pago = payment(PaymentStatus.HELD, LocalDateTime.now().minusDays(3));
+
+        when(reservationRepository.findById(1L)).thenReturn(Optional.of(r1));
+        when(paymentRepository.findByReservationId(1L)).thenReturn(Optional.of(pago));
+        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
+                .thenReturn(List.of(r1));
+        when(ratingRepository.findByInstanceId(10L)).thenReturn(List.of());
+        when(commentRepository.findByInstanceId(10L)).thenReturn(List.of());
+
+        assertTrue(escrowService.tryRelease(1L));
+        assertEquals(PaymentStatus.RELEASED, pago.getStatus());
+        verify(paymentGateway, never()).capture(any());
+        verify(paymentGateway, never()).cancel(any());
+        verify(paymentGateway, never()).capturePartial(any(), any());
     }
 
     @Test

@@ -38,6 +38,7 @@ public class CancellationService {
     private final PaymentRepository paymentRepository;
     private final ExperienceInstanceRepository instanceRepository;
     private final NotificationService notificationService;
+    private final com.openlab.mx.share.payment.gateway.PaymentGateway gateway;
 
     @Value("${partial-refund-rate}")
     private BigDecimal partialRefundRate = new BigDecimal("0.5");
@@ -122,9 +123,19 @@ public class CancellationService {
                 payment.setRefund(payment.getAmount());
             } else {
                 payment.setStatus(PaymentStatus.REFUNDED_PARTIAL);
-                payment.setRefund(payment.getAmount().multiply(partialRefundRate));
+                payment.setRefund(payment.getAmount().multiply(partialRefundRate)
+                        .setScale(2, java.math.RoundingMode.HALF_UP));
             }
             paymentRepository.save(payment);
+            // Spec §4: el reembolso aplica dinero real solo con pi conocido
+            // (pagos Stripe); legacy sin referencia Stripe queda contable.
+            if (payment.getStripePaymentIntentId() != null) {
+                if (total) {
+                    gateway.cancel(payment.getStripePaymentIntentId());
+                } else {
+                    gateway.capturePartial(payment.getStripePaymentIntentId(), payment.getRefund());
+                }
+            }
         });
     }
 
