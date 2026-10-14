@@ -39,3 +39,4 @@ data/
 /graft/
 /.env
 .worktrees/
+.superpowers/
