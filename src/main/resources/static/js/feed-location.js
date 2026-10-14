@@ -17,8 +17,9 @@
   const savedCountry = banner.dataset.country || '';
   const savedLat = banner.dataset.lat || '';
   const savedLng = banner.dataset.lng || '';
-  // "Activado" = hay ubicación guardada (coords o ciudad), aunque no se haya
-  // resuelto la ciudad: el GPS puede no traer ciudad y igual estar conectado.
+  // Ubicación guardada = hay coords o ciudad (aunque no se haya resuelto la
+  // ciudad: el GPS puede no traer ciudad y igual estar conectado). Alimenta el
+  // check verde, el texto del banner y el label del botón — no su color.
   const hasLocation = banner.dataset.hasLocation === 'true';
   const dismissedKey = 'shared.location.dismissed';
 
@@ -26,14 +27,17 @@
     if (statusEl) statusEl.textContent = text;
   }
 
-  function setAllowButton(on) {
-    // Estado del botón: rojo "Activar" vs verde "Activado". Solo toca el
-    // label para no borrar el pin SVG que lleva dentro.
+  /**
+   * El botón es SIEMPRE la acción manual (rojo, sin is-on): pide GPS otra vez
+   * para cambiar de lugar. El estado "ubicación guardada" lo comunican el check
+   * verde y el texto del banner — no el botón, para que nunca mienta.
+   */
+  function showAllowButton() {
     if (!allowBtn) return;
     allowBtn.hidden = false;
-    allowBtn.classList.toggle('is-on', on);
+    allowBtn.classList.remove('is-on');
     const label = document.getElementById('location-allow-label');
-    if (label) label.textContent = on ? 'Activado' : 'Activar';
+    if (label) label.textContent = hasLocation ? 'Actualizar ubicación' : 'Activar';
   }
 
 
@@ -43,7 +47,7 @@
     const coords = (savedLat && savedLng)
       ? Number(savedLat).toFixed(4) + ', ' + Number(savedLng).toFixed(4)
       : '';
-    if (place && coords) return place + ' (' + coords + ')';
+    if (place && coords) return place //+ ' (' + coords + ')';
     if (place) return place;
     if (coords) return coords + ' (sin ciudad identificada)';
     return '';
@@ -54,25 +58,32 @@
       ' | city="' + savedCity + '" | country="' + savedCountry + '"' +
       ' | coords=' + savedLat + ',' + savedLng +
       ' | allowBtn=' + !!allowBtn + ' | csrf=' + !!csrfToken + '/' + !!csrfHeader);
+    banner.hidden = false;
+
+    const q = new URLSearchParams(window.location.search).get('city');
+    const viendoOtraCiudad = !!(q && q.toLowerCase() !== savedCity.toLowerCase());
+
+    // Viendo otra ciudad: mostramos la ubicación guardada y dejamos el botón
+    // a mano para volver/cambiar (apretarlo recarga /feed sin la búsqueda).
+    if (viendoOtraCiudad) {
+      setStatus(hasLocation
+        ? `Viendo resultados de "${q}". Tu ubicación guardada es "${locationLabel()}".`
+        : `Viendo resultados de "${q}". Activá tu ubicación para ver primero lo que hay cerca tuyo.`);
+      showAllowButton();
+      return;
+    }
+
     // Sin ubicación guardada: ofrecer activarla.
     if (!hasLocation) {
-      banner.hidden = false;
       setStatus('Activá tu ubicación para ver primero experiencias cerca tuyo.');
-      setAllowButton(false);
+      showAllowButton();
       return;
     }
-    // Con ubicación guardada: mostrarla siempre (el feed ya usa la última)
-    // y permitirla actualizarla o buscar otra ciudad manualmente.
-    const q = new URLSearchParams(window.location.search).get('city');
-    if (q && q.toLowerCase() !== savedCity.toLowerCase()) {
-      banner.hidden = false;
-      setStatus(`Viendo resultados de "${q}". Tu ubicación guardada es "${locationLabel()}".`);
-      if (allowBtn) allowBtn.hidden = true;
-      return;
-    }
-    banner.hidden = false;
-    setStatus('📍 Usando tu última ubicación guardada: ' + locationLabel() + '.');
-    setAllowButton(true);
+
+    // Con ubicación guardada: el check verde + el texto dicen el estado;
+    // el botón queda rojo y accionable para cambiar de lugar cuando quieras.
+    setStatus('Ubicación : ' + locationLabel() + '.');
+    showAllowButton();
   }
 
   async function saveLocation(lat, lng) {
@@ -110,7 +121,7 @@
 
   if (allowBtn) {
     allowBtn.addEventListener('click', () => {
-      console.log('[location] click "Activar" | is-on=' + allowBtn.classList.contains('is-on') +
+      console.log('[location] click en el botón de ubicación | hasLocation=' + hasLocation +
         ' | disabled=' + allowBtn.disabled +
         ' | secureContext=' + window.isSecureContext +
         ' | protocolo=' + window.location.protocol +
