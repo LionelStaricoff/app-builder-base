@@ -49,7 +49,7 @@ public class StripeCheckoutService {
      * reusa esa sesión (redirect a su URL) sin duplicar nada (spec §11.2).
      */
     @Transactional
-    public GatewaySession start(Long instanceId, int attendees, User user, String baseUrl) {
+    public GatewaySession start(Long instanceId, int attendees, User user) {
         Reservation reservation = pendiente(instanceId, user).orElse(null);
         if (reservation == null) {
             reservation = reservationService.reserve(instanceId, attendees, user);

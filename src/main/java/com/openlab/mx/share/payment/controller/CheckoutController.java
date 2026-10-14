@@ -4,21 +4,18 @@ import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.notification.entity.NotificationType;
 import com.openlab.mx.share.notification.service.NotificationService;
-import com.openlab.mx.share.reservation.dto.CheckoutRequest;
+import com.openlab.mx.share.payment.gateway.GatewaySession;
+import com.openlab.mx.share.payment.service.StripeCheckoutService;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
-import com.openlab.mx.share.reservation.service.ReservationService;
 import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.user.entity.User;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,14 +24,15 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 
 /**
- * Checkout simulado (spec §5.3): la tarjeta no se valida más allá del
- * formato; el pago queda retenido en escrow hasta la liberación.
+ * Checkout con Stripe (spec §5-6): el resumen se muestra con el total
+ * desde el dominio; el POST crea reserva+payment PENDING y la Checkout
+ * Session, y redirige a la página hosted de Stripe.
  */
 @Controller
 @RequiredArgsConstructor
 public class CheckoutController {
 
-    private final ReservationService reservationService;
+    private final StripeCheckoutService stripeCheckoutService;
     private final ReservationRepository reservationRepository;
     private final ExperienceInstanceRepository instanceRepository;
     private final NotificationService notificationService;
@@ -47,8 +45,7 @@ public class CheckoutController {
         ExperienceInstance instance = instance(instanceId);
         User user = currentUser.require();
         Reservation pendiente = pendiente(instanceId, user);
-        // Si ya pagó (reintento / refresh), mostrar lo reservado. Si no,
-        // usar lo que viene en el query param del picker.
+        // Si ya tiene reserva PENDIENTE (reintento / refresh), mostrar sus cupos.
         int cupos = pendiente != null ? pendiente.getAttendees() : sanitize(attendees);
         BigDecimal total = instance.getExperience().getPrice().multiply(BigDecimal.valueOf(cupos));
 
@@ -57,39 +54,35 @@ public class CheckoutController {
         model.addAttribute("total", total);
         model.addAttribute("currencyCode", instance.getExperience().getCurrencyCode() == null
                 ? "MXN" : instance.getExperience().getCurrencyCode());
-        model.addAttribute("checkoutRequest", new CheckoutRequest("", "", "", ""));
         return "checkout";
     }
 
     @PostMapping("/checkout/{instanceId}")
     public String pay(@PathVariable Long instanceId,
                       @RequestParam(defaultValue = "1") int attendees,
-                      @Valid @ModelAttribute CheckoutRequest checkoutRequest,
-                      BindingResult bindingResult,
                       RedirectAttributes redirectAttributes) {
         int cupos = sanitize(attendees);
-        if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("error", "Revisá los datos de la tarjeta");
+        User user = currentUser.require();
+        boolean nuevaReserva = pendiente(instanceId, user) == null;
+        GatewaySession session;
+        try {
+            session = stripeCheckoutService.start(instanceId, cupos, user);
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/checkout/" + instanceId + "?attendees=" + cupos;
         }
-        User user = currentUser.require();
-        // Idempotencia ante doble submit: si ya existe el PENDIENTE, no duplicar.
-        if (pendiente(instanceId, user) == null) {
-            try {
-                Reservation reservation = reservationService.reserve(instanceId, cupos, user);
-                User creador = reservation.getInstance().getExperience().getCreator();
-                if (creador != null) {
-                    notificationService.notify(creador, NotificationType.SOLICITUD_RESERVA,
-                            user.getUsername() + " reservó " + cupos + " lugar(es) en "
-                                    + reservation.getInstance().getExperience().getName(),
-                            "/reservations");
-                }
-            } catch (RuntimeException e) {
-                redirectAttributes.addFlashAttribute("error", e.getMessage());
-                return "redirect:/checkout/" + instanceId + "?attendees=" + cupos;
+        if (nuevaReserva) {
+            ExperienceInstance instance = instanceRepository.findById(instanceId)
+                    .orElseThrow(() -> new DomainException("Fecha no encontrada"));
+            User creador = instance.getExperience().getCreator();
+            if (creador != null) {
+                notificationService.notify(creador, NotificationType.SOLICITUD_RESERVA,
+                        user.getUsername() + " reservó " + cupos + " lugar(es) en "
+                                + instance.getExperience().getName(),
+                        "/reservations");
             }
         }
-        return "redirect:/confirmation";
+        return "redirect:" + session.url();
     }
 
     private ExperienceInstance instance(Long instanceId) {
@@ -99,7 +92,8 @@ public class CheckoutController {
 
     private Reservation pendiente(Long instanceId, User user) {
         return reservationRepository
-                .findFirstByInstanceIdAndUserIdAndStatus(instanceId, user.getId(), ReservationStatus.PENDIENTE)
+                .findFirstByInstanceIdAndUserIdAndStatus(instanceId, user.getId(),
+                        ReservationStatus.PENDIENTE)
                 .orElse(null);
     }
 

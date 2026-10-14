@@ -11,13 +11,16 @@ import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
 import com.openlab.mx.share.payment.entity.PaymentStatus;
 import com.openlab.mx.share.payment.repository.PaymentRepository;
+import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
+import com.openlab.mx.share.shared.TestGatewayConfig;
 import com.openlab.mx.share.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -40,6 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(TestGatewayConfig.class)
 class E2eSmokeTests {
 
     @Autowired
@@ -85,18 +89,24 @@ class E2eSmokeTests {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/checkout/" + instanceId + "?attendees=1"));
 
+        // 3. demo_user reserva: POST redirige a la página de Stripe (fake) y el
+        //    retorno /pago/exito revalida la sesión (spec §6) antes de confirmar.
         mockMvc.perform(post("/checkout/" + instanceId).with(user("demo_user")).with(csrf())
-                        .param("attendees", "1")
-                        .param("cardNumber", "123456789012").param("holder", "Demo"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/confirmation"));
+                        .param("attendees", "1"))
+                .andExpect(status().is3xxRedirection());
+
+        Long userId = userRepository.findByUsername("demo_user").orElseThrow().getId();
+        Reservation reservationParaPagar = reservationRepository
+                .findFirstByInstanceIdAndUserIdAndStatus(instanceId, userId,
+                        ReservationStatus.PENDIENTE).orElseThrow();
+        String sessionId = paymentRepository.findByReservationId(
+                reservationParaPagar.getId()).orElseThrow().getStripeSessionId();
+        mockMvc.perform(get("/pago/exito").param("session_id", sessionId)
+                        .with(user("demo_user")))
+                .andExpect(status().is3xxRedirection());
 
         // 4. el creador confirma
-        Long reservationId = reservationRepository
-                .findFirstByInstanceIdAndUserIdAndStatus(
-                        instanceId, userRepository.findByUsername("demo_user").orElseThrow().getId(),
-                        ReservationStatus.PENDIENTE)
-                .orElseThrow().getId();
+        Long reservationId = reservationParaPagar.getId();
         mockMvc.perform(post("/reservations/" + reservationId + "/confirm")
                         .with(user("demo_creator")).with(csrf()))
                 .andExpect(status().is3xxRedirection());

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('Pagar')}"></head>
+<head th:replace="~{fragments/layout :: head('Pagar con Stripe')}"></head>
 <body>
 <main class="app-main">
     <div class="card" style="padding:1rem">
-        <h2>Pago simulado</h2>
+        <h2>Pago seguro con Stripe</h2>
         <p><strong th:text="${instance.experience.name}">Experiencia</strong></p>
         <p class="meta">
             📅 <span th:text="${instance.date} + ' ' + ${instance.startTime}">01/11/2026 10:00</span>
@@ -18,20 +18,7 @@
         <form th:action="@{/checkout/{id}(id=${instance.id})}" method="post">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <input type="hidden" name="attendees" th:value="${attendees}">
-            <label>Número de tarjeta
-                <input name="cardNumber" inputmode="numeric" pattern="\d{12,19}"
-                       placeholder="123456789012" required>
-            </label>
-            <label>Titular
-                <input name="holder" placeholder="Nombre como figura en la tarjeta" required>
-            </label>
-            <label>Vencimiento
-                <input name="expiry" placeholder="MM/AA">
-            </label>
-            <label>CVV
-                <input name="cvv" inputmode="numeric" placeholder="123">
-            </label>
-            <button type="submit" class="btn-primary">Pagar</button>
+            <button type="submit" class="btn-primary">Pagar con Stripe</button>
         </form>
     </div>
 </main>

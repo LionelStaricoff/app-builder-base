@@ -7,11 +7,14 @@ import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
+import com.openlab.mx.share.payment.repository.PaymentRepository;
+import com.openlab.mx.share.shared.TestGatewayConfig;
 import com.openlab.mx.share.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(TestGatewayConfig.class)
 class ReservationFlowTests {
 
     @Autowired
@@ -45,6 +49,12 @@ class ReservationFlowTests {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
+    private com.openlab.mx.share.reservation.repository.ReservationRepository reservationRepository;
 
     private Long fechaFutura() {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
@@ -73,12 +83,24 @@ class ReservationFlowTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("MXN")));
 
+        // Checkout Stripe: POST redirige a la página hosted (fake) y el retorno
+        // /pago/exito revalida la sesión ante la puerta real (spec §6).
+        String[] redirect = new String[1];
         mockMvc.perform(post("/checkout/" + instanceId).with(csrf())
-                        .param("attendees", "2")
-                        .param("cardNumber", "123456789012")
-                        .param("holder", "Demo User")
-                        .param("expiry", "12/30")
-                        .param("cvv", "123"))
+                        .param("attendees", "2"))
+                .andExpect(status().is3xxRedirection())
+                .andDo(r -> redirect[0] = r.getResponse().getRedirectedUrl());
+        org.junit.jupiter.api.Assertions.assertNotNull(redirect[0]);
+
+        Long userId = userRepository.findByUsername("demo_user").orElseThrow().getId();
+        var reservation = reservationRepository.findFirstByInstanceIdAndUserIdAndStatus(
+                instanceId, userId,
+                com.openlab.mx.share.reservation.entity.ReservationStatus.PENDIENTE)
+                .orElseThrow();
+        String sessionId = paymentRepository.findByReservationId(reservation.getId())
+                .orElseThrow().getStripeSessionId();
+
+        mockMvc.perform(get("/pago/exito").param("session_id", sessionId))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/confirmation"));
 
@@ -98,8 +120,7 @@ class ReservationFlowTests {
                 .andExpect(redirectedUrl("/login"));
 
         mockMvc.perform(post("/checkout/1").with(csrf())
-                        .param("cardNumber", "123456789012")
-                        .param("holder", "Demo"))
+                        .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
 

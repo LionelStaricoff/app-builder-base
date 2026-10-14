@@ -104,7 +104,7 @@ class StripeCheckoutServiceTest {
         when(paymentRepository.findByReservationId(99L)).thenReturn(Optional.empty());
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        GatewaySession gs = service.start(1L, 2, u, "http://localhost:8080");
+        GatewaySession gs = service.start(1L, 2, u);
 
         assertEquals("cs_fake_1", gs.sessionId());
         assertTrue(gs.url().contains("/__fake_stripe_/checkout/cs_fake_1"));
@@ -141,7 +141,7 @@ class StripeCheckoutServiceTest {
         when(paymentRepository.findByReservationId(99L)).thenReturn(Optional.empty());
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        service.start(1L, 1, u, "http://localhost:8080");
+        service.start(1L, 1, u);
         assertEquals("MXN", gateway.lastRequest().currency(), "default MXN de spec §11.1");
     }
 
@@ -156,7 +156,7 @@ class StripeCheckoutServiceTest {
                 ReservationStatus.PENDIENTE)).thenReturn(Optional.of(r));
         when(paymentRepository.findByReservationId(99L)).thenReturn(Optional.of(pago));
 
-        GatewaySession gs = service.start(1L, 2, u, "http://localhost:8080");
+        GatewaySession gs = service.start(1L, 2, u);
 
         assertEquals("cs_fake_1", gs.sessionId(), "reusa la sesión del POST anterior (spec §11.2)");
         verify(reservationService, never()).reserve(any(), org.mockito.ArgumentMatchers.anyInt(), any());
