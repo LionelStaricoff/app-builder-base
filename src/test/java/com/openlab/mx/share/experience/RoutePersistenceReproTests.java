@@ -305,10 +305,17 @@ class RoutePersistenceReproTests {
         Long expId = experience.getId();
         Long instanceId = instanceRepository.findByExperienceIdOrderByDateAsc(expId).get(0).getId();
 
-        // demo_user reserva la fecha (queda vigente, no cancelada).
+        // demo_user reserva la fecha y paga (sin pago no hay reserva vigente).
         mockMvc.perform(post("/reservations/" + instanceId)
                         .with(user("demo_user")).with(csrf())
                         .param("attendees", "1"))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/checkout/" + instanceId)
+                        .with(user("demo_user")).with(csrf())
+                        .param("attendees", "1")
+                        .param("cardNumber", "123456789012")
+                        .param("holder", "Demo User"))
                 .andExpect(status().is3xxRedirection());
 
         // demo_creator edita todo (descripción + imagen nueva) con la misma agenda.
