@@ -239,6 +239,11 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 
 .location-allow { flex: none; }
 
+/* Pin del botón: rojo apagado, verde una vez activada la ubicación. */
+.location-allow .location-allow-icon { color: #dc2626; vertical-align: -2px; }
+.location-allow.is-on { border-color: #16a34a; color: #15803d; font-weight: 600; }
+.location-allow.is-on .location-allow-icon { color: #16a34a; }
+
 .location-manual {
   display: flex;
   gap: 0.5rem;

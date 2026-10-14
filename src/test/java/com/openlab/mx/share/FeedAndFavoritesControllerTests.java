@@ -190,6 +190,25 @@ class FeedAndFavoritesControllerTests {
     }
 
     @Test
+    @WithMockUser("demo_user")
+    void feedBotonMuestraActivadoConUbicacion() throws Exception {
+        // demo_user tiene ciudad guardada: pin verde + "Activado".
+        mockMvc.perform(get("/feed"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("location-allow is-on")))
+                .andExpect(content().string(containsString(">Activado<")));
+    }
+
+    @Test
+    void feedBotonMuestraActivarSinUbicacion() throws Exception {
+        String username = crearUsuarioSinCiudad();
+        mockMvc.perform(get("/feed").with(user(username)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("is-on"))))
+                .andExpect(content().string(containsString(">Activar<")));
+    }
+
+    @Test
     @WithMockUser("demo_creator")
     void detalleMuestraCiudadYPaisDeParadas() throws Exception {
         Long id = createExperience("Detalle Loc " + UUID.randomUUID(), ExperienceCategory.CULTURAL);

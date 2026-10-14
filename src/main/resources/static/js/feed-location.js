@@ -20,11 +20,22 @@
     if (statusEl) statusEl.textContent = text;
   }
 
+  function setAllowButton(on) {
+    // Estado del botón: rojo "Activar" vs verde "Activado". Solo toca el
+    // label para no borrar el pin SVG que lleva dentro.
+    if (!allowBtn) return;
+    allowBtn.hidden = false;
+    allowBtn.classList.toggle('is-on', on);
+    const label = document.getElementById('location-allow-label');
+    if (label) label.textContent = on ? 'Activado' : 'Activar';
+  }
+
   function bannerForManualSearch() {
     // Sin ubicación guardada: ofrecer activarla.
     if (!savedCity) {
       banner.hidden = false;
       setStatus('Activá tu ubicación para ver primero experiencias cerca tuyo.');
+      setAllowButton(false);
       return;
     }
     // Con ubicación guardada: mostrarla siempre (el feed ya usa la última)
@@ -38,10 +49,7 @@
     }
     banner.hidden = false;
     setStatus(`📍 Usando tu última ubicación guardada: "${savedCity}".`);
-    if (allowBtn) {
-      allowBtn.hidden = false;
-      allowBtn.textContent = '📍 Actualizar';
-    }
+    setAllowButton(true);
   }
 
   async function saveLocation(lat, lng) {
@@ -56,11 +64,18 @@
         body: JSON.stringify({ lat, lng }),
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
+      // Sesión vencida: el servidor redirige al login y vuelve HTML, no JSON.
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error('sesion-vencida');
+      }
       const data = await res.json();
       // Recargar sin query de búsqueda manual: el feed ya ordena por su ciudad.
       window.location.href = '/feed';
     } catch (e) {
-      setStatus('No pudimos guardar tu ubicación. Intentá de nuevo.');
+      setStatus(e && e.message === 'sesion-vencida'
+        ? 'Tu sesión venció. Recargá la página e intentá de nuevo.'
+        : 'No pudimos guardar tu ubicación. Intentá de nuevo.');
       if (allowBtn) allowBtn.disabled = false;
     }
   }

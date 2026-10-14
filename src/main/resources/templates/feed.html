@@ -17,7 +17,14 @@
                       stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span id="location-status">Activá tu ubicación para ver primero experiencias cerca tuyo.</span>
-            <button type="button" class="btn-secondary location-allow" id="location-allow">📍 Activar</button>
+            <button type="button" class="btn-secondary location-allow" id="location-allow"
+                    th:classappend="${savedCity != null} ? 'is-on'">
+                <svg class="location-allow-icon" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8 1.5a4.5 4.5 0 0 0-4.5 4.5C3.5 9.5 8 14.5 8 14.5S12.5 9.5 12.5 6A4.5 4.5 0 0 0 8 1.5Z" fill="currentColor"/>
+                    <circle cx="8" cy="6" r="1.8" fill="#fff"/>
+                </svg>
+                <span id="location-allow-label" th:text="${savedCity != null} ? 'Activado' : 'Activar'">Activar</span>
+            </button>
         </div>
         <form id="location-manual-form" class="location-manual">
             <input type="text" id="location-manual-input" list="country-options"
