@@ -285,8 +285,19 @@ public class ExperienceService {
     public List<ExperienceStopDTO> stopsOf(Long experienceId) {
         return stopRepository.findByExperienceIdOrderByPositionAscIdAsc(experienceId).stream()
                 .map(s -> new ExperienceStopDTO(s.getPosition(), s.getPlaceName(),
-                        s.getCity(), s.getCountry(), s.getLat(), s.getLng()))
+                        displayLocation(s.getCity()), displayLocation(s.getCountry()),
+                        s.getLat(), s.getLng()))
                 .toList();
+    }
+
+    /**
+     * El "—" es un artefacto de almacenamiento (columnas no nulas), no un
+     * dato para mostrar: en el DTO de vista se expone como vacío para que
+     * los templates no tengan que conocer el placeholder.
+     */
+    private static String displayLocation(String stored) {
+        String clean = cleanLocation(stored);
+        return clean != null ? clean : "";
     }
 
     private void saveImages(Experience experience, List<MultipartFile> files) {

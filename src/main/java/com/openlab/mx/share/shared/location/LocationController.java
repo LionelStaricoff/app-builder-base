@@ -1,8 +1,8 @@
 package com.openlab.mx.share.shared.location;
 
 import com.openlab.mx.share.shared.CurrentUser;
-import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.user.entity.User;
+import com.openlab.mx.share.user.repository.UserRepository;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -25,6 +25,7 @@ public class LocationController {
 
     private final GeocodingService geocodingService;
     private final CurrentUser currentUser;
+    private final UserRepository userRepository;
 
     public record LocationRequest(
             @NotNull @Min(-90) @Max(90) Double lat,
@@ -42,6 +43,7 @@ public class LocationController {
         if (place != null && place.city() != null) {
             user.setCity(place.city());
         }
+        userRepository.save(user);
         return new LocationResponse(user.getCity(), null);
     }
 }

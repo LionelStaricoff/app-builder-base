@@ -42,6 +42,8 @@
                 <ol class="stops-timeline">
                     <li th:each="s : ${stops}">
                         <strong th:text="${s.placeName}">Lugar</strong>
+                        <span class="stop-location" th:if="${!#strings.isEmpty(s.city)}"
+                              th:text="'📍 ' + ${s.city} + (${!#strings.isEmpty(s.country)} ? ', ' + ${s.country} : '')">📍 Ciudad, País</span>
                     </li>
                 </ol>
             </div>

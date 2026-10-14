@@ -9,6 +9,7 @@ import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.experience.entity.ExperienceStop;
 import com.openlab.mx.share.experience.service.ExperienceService;
+import com.openlab.mx.share.user.entity.Role;
 import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,10 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -166,6 +170,50 @@ class FeedAndFavoritesControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("location-manual-input")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("country-options")));
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void feedConUbicacionMuestraIconoConectado() throws Exception {
+        // demo_user tiene ciudad guardada (CDMX): el banner muestra el icono de conectado.
+        mockMvc.perform(get("/feed"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("location-connected-icon")));
+    }
+
+    @Test
+    void feedSinUbicacionNoMuestraIconoConectado() throws Exception {
+        String username = crearUsuarioSinCiudad();
+        mockMvc.perform(get("/feed").with(user(username)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("location-connected-icon"))));
+    }
+
+    @Test
+    @WithMockUser("demo_creator")
+    void detalleMuestraCiudadYPaisDeParadas() throws Exception {
+        Long id = createExperience("Detalle Loc " + UUID.randomUUID(), ExperienceCategory.CULTURAL);
+        agregarPrimeraParada(id, "Mirador", "Lima", "Perú", -12.0, -77.0);
+
+        mockMvc.perform(get("/experiences/" + id))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Lima, Perú")));
+    }
+
+    /** Usuario sin ciudad ni coords: representa a quien nunca activó la ubicación. */
+    private String crearUsuarioSinCiudad() {
+        String base = "u-sinciudad-" + UUID.randomUUID().toString().substring(0, 8);
+        userRepository.save(User.builder()
+                .username(base)
+                .email(base + "@x.com")
+                .passwordHash("{noop}Clave1234!")
+                .birthDate(LocalDate.of(1995, 1, 1))
+                .country("México")
+                .currencyCode("MXN")
+                .role(Role.USER)
+                .spPoints(0)
+                .build());
+        return base;
     }
 
     @Test
