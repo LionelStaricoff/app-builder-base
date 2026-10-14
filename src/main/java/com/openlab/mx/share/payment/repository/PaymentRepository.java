@@ -12,6 +12,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     Optional<Payment> findByReservationId(Long reservationId);
 
+    Optional<Payment> findFirstByStripeSessionId(String stripeSessionId);
+
     List<Payment> findByStatus(PaymentStatus status);
 
     /** Pagos retenidos de instancias que ya cumplieron la ventana de escrow. */

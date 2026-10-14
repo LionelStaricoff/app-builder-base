@@ -4,9 +4,6 @@ import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.entity.InstanceStatus;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
-import com.openlab.mx.share.payment.entity.Payment;
-import com.openlab.mx.share.payment.entity.PaymentStatus;
-import com.openlab.mx.share.payment.repository.PaymentRepository;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
@@ -16,7 +13,6 @@ import com.openlab.mx.share.shared.exception.NotOwnerException;
 import com.openlab.mx.share.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,8 +36,6 @@ class ReservationServiceTest {
     private ExperienceInstanceRepository instanceRepository;
     @Mock
     private ReservationRepository reservationRepository;
-    @Mock
-    private PaymentRepository paymentRepository;
 
     @InjectMocks
     private ReservationService reservationService;
@@ -75,15 +69,14 @@ class ReservationServiceTest {
             r.setId(1L);
             return r;
         });
-        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> {
-            Payment p = inv.getArgument(0);
-            p.setId(1L);
-            return p;
-        });
     }
 
+    /**
+     * Spec §5-6: reservar ya no retiene pago (HELD); el Payment lo crea
+     * StripeCheckoutService al armar la Checkout Session.
+     */
     @Test
-    void testReservaHappyPathCreaPaymentHeld() {
+    void testReservaHappyPathSoloCreaLaReserva() {
         when(instanceRepository.findById(5L)).thenReturn(
                 Optional.of(instance(5L, 8, BigDecimal.valueOf(190), LocalDate.now().plusDays(10))));
         when(reservationRepository.countAttendees(anyLong())).thenReturn(0L);
@@ -93,15 +86,6 @@ class ReservationServiceTest {
 
         assertEquals(ReservationStatus.PENDIENTE, reservation.getStatus());
         assertEquals(2, reservation.getAttendees());
-
-        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
-        verify(paymentRepository).save(captor.capture());
-        Payment payment = captor.getValue();
-        assertEquals(PaymentStatus.HELD, payment.getStatus());
-        assertEquals(0, payment.getAmount().compareTo(BigDecimal.valueOf(380)),
-                "amount = price * attendees");
-        assertEquals(0, payment.getCommission().compareTo(BigDecimal.valueOf(19)),
-                "commission = amount * 0.05");
     }
 
     @Test
@@ -109,7 +93,6 @@ class ReservationServiceTest {
         when(instanceRepository.findById(5L)).thenReturn(
                 Optional.of(instance(5L, 1, BigDecimal.valueOf(100), LocalDate.now().plusDays(10))));
         when(reservationRepository.countAttendees(anyLong())).thenReturn(0L, 1L);
-        stubGuardar();
 
         reservationService.reserve(5L, 1, user(2L));
 

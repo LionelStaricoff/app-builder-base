@@ -19,9 +19,11 @@ public class FakePaymentGateway implements PaymentGateway {
     private final Map<String, FakeSession> sessions = new ConcurrentHashMap<>();
     private final Map<String, String> operations = new ConcurrentHashMap<>();
     private final AtomicInteger secuencia = new AtomicInteger();
+    private GatewayCheckoutRequest ultimoRequest;
 
     @Override
     public GatewaySession createCheckout(GatewayCheckoutRequest request) {
+        this.ultimoRequest = request;
         int n = secuencia.incrementAndGet();
         String sessionId = "cs_fake_" + n;
         String paymentIntentId = "pi_fake_" + n;
@@ -58,6 +60,11 @@ public class FakePaymentGateway implements PaymentGateway {
     /** Helper de test: operación registrada ("capture|cancel|capturePartial:<monto>") o null. */
     public String operationOf(String paymentIntentId) {
         return operations.get(paymentIntentId);
+    }
+
+    /** Helper de test: último GatewayCheckoutRequest recibido (para asserts de montos/moneda/metadata). */
+    public GatewayCheckoutRequest lastRequest() {
+        return ultimoRequest;
     }
 
     /** Helper de test: la próxima authorizeInfo de esa sesión reportará "unpaid". */
