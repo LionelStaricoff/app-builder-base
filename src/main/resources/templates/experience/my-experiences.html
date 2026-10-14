@@ -49,14 +49,14 @@
             · <span th:text="${e.category}">CULTURAL</span>
             · <span th:text="${e.minCapacity} + ' a ' + ${e.maxCapacity}">1 a 4</span>
         </p>
-        <p style="display:flex;gap:.5rem;flex-wrap:wrap">
-            <a class="btn-secondary" th:href="@{/experiences/{id}/edit(id=${e.id})}">Editar</a>
+        <div class="mine-actions">
+            <a class="btn-primary" th:href="@{/experiences/{id}/edit(id=${e.id})}">Editar</a>
             <form th:action="@{/experiences/{id}/delete(id=${e.id})}" method="post"
                   th:onsubmit="'return confirm(\\'¿Eliminar esta experiencia?\\')'">
                 <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-                <button type="submit" class="btn-secondary">Eliminar</button>
+                <button type="submit" class="btn-danger-outline">Eliminar</button>
             </form>
-        </p>
+        </div>
         </div>
     </div>
 

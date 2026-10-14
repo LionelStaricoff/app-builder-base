@@ -289,6 +289,41 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 .btn-secondary { transition: border-color 0.15s ease, color 0.15s ease; }
 .btn-secondary:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
+/* Acciones Mis Experiencias: Editar + Eliminar en la misma línea.
+   Respeta brandkit: solo tokens --color-primary/secondary/accent, --surface, --radius. */
+.mine-actions { display: flex; gap: .5rem; align-items: stretch; }
+.mine-actions > a,
+.mine-actions > form { flex: 1 1 0; min-width: 0; }
+.mine-actions > form { margin: 0; display: flex; }
+.mine-actions .btn-primary,
+.mine-actions .btn-danger-outline {
+  flex: 1;
+  width: 100%;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .95rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn-danger-outline {
+  background: var(--surface);
+  border: 1.5px solid var(--color-primary);
+  color: var(--color-secondary);
+  border-radius: var(--radius);
+  padding: .5rem 1rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+.btn-danger-outline:hover { background: #FCE4EC; border-color: var(--color-secondary); }
+.btn-danger-outline:active { transform: scale(0.98); }
+.btn-danger-outline:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 /* Estado vacío con ilustración local */
 .empty-illustration {
   text-align: center;
