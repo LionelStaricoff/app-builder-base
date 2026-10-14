@@ -63,4 +63,15 @@ public class Payment {
     /** Lo que se devolvió al participante al cancelar. */
     @Column(precision = 10, scale = 2)
     private BigDecimal refund;
+
+
+    // Referencias Stripe (spec §3.1). Nullable por pagos legacy simulados.
+
+    /** Checkout session (cs_test_...): idempotencia del reintento del POST. */
+    @Column(name = "stripe_session_id")
+    private String stripeSessionId;
+
+    /** PaymentIntent (pi_test_...): capture/cancel/capturePartial. */
+    @Column(name = "stripe_payment_intent_id")
+    private String stripePaymentIntentId;
 }
