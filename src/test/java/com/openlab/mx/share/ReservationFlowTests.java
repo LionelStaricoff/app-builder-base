@@ -67,13 +67,14 @@ class ReservationFlowTests {
         mockMvc.perform(post("/reservations/" + instanceId).with(csrf())
                         .param("attendees", "2"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/checkout/" + instanceId));
+                .andExpect(redirectedUrl("/checkout/" + instanceId + "?attendees=2"));
 
-        mockMvc.perform(get("/checkout/" + instanceId))
+        mockMvc.perform(get("/checkout/" + instanceId).param("attendees", "2"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("MXN")));
 
         mockMvc.perform(post("/checkout/" + instanceId).with(csrf())
+                        .param("attendees", "2")
                         .param("cardNumber", "123456789012")
                         .param("holder", "Demo User")
                         .param("expiry", "12/30")

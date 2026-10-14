@@ -17,6 +17,7 @@
 
         <form th:action="@{/checkout/{id}(id=${instance.id})}" method="post">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+            <input type="hidden" name="attendees" th:value="${attendees}">
             <label>Número de tarjeta
                 <input name="cardNumber" inputmode="numeric" pattern="\d{12,19}"
                        placeholder="123456789012" required>

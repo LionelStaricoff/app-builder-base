@@ -2,6 +2,8 @@ package com.openlab.mx.share.payment.controller;
 
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
+import com.openlab.mx.share.notification.entity.NotificationType;
+import com.openlab.mx.share.notification.service.NotificationService;
 import com.openlab.mx.share.reservation.dto.CheckoutRequest;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
@@ -34,18 +37,23 @@ public class CheckoutController {
     private final ReservationService reservationService;
     private final ReservationRepository reservationRepository;
     private final ExperienceInstanceRepository instanceRepository;
+    private final NotificationService notificationService;
     private final CurrentUser currentUser;
 
     @GetMapping("/checkout/{instanceId}")
-    public String form(@PathVariable Long instanceId, Model model) {
+    public String form(@PathVariable Long instanceId,
+                       @RequestParam(defaultValue = "1") int attendees,
+                       Model model) {
         ExperienceInstance instance = instance(instanceId);
         User user = currentUser.require();
         Reservation pendiente = pendiente(instanceId, user);
-        int attendees = pendiente != null ? pendiente.getAttendees() : 1;
-        BigDecimal total = instance.getExperience().getPrice().multiply(BigDecimal.valueOf(attendees));
+        // Si ya pagó (reintento / refresh), mostrar lo reservado. Si no,
+        // usar lo que viene en el query param del picker.
+        int cupos = pendiente != null ? pendiente.getAttendees() : sanitize(attendees);
+        BigDecimal total = instance.getExperience().getPrice().multiply(BigDecimal.valueOf(cupos));
 
         model.addAttribute("instance", instance);
-        model.addAttribute("attendees", attendees);
+        model.addAttribute("attendees", cupos);
         model.addAttribute("total", total);
         model.addAttribute("currencyCode", instance.getExperience().getCurrencyCode() == null
                 ? "MXN" : instance.getExperience().getCurrencyCode());
@@ -55,16 +63,31 @@ public class CheckoutController {
 
     @PostMapping("/checkout/{instanceId}")
     public String pay(@PathVariable Long instanceId,
+                      @RequestParam(defaultValue = "1") int attendees,
                       @Valid @ModelAttribute CheckoutRequest checkoutRequest,
                       BindingResult bindingResult,
                       RedirectAttributes redirectAttributes) {
+        int cupos = sanitize(attendees);
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", "Revisá los datos de la tarjeta");
-            return "redirect:/checkout/" + instanceId;
+            return "redirect:/checkout/" + instanceId + "?attendees=" + cupos;
         }
         User user = currentUser.require();
+        // Idempotencia ante doble submit: si ya existe el PENDIENTE, no duplicar.
         if (pendiente(instanceId, user) == null) {
-            reservationService.reserve(instanceId, 1, user);
+            try {
+                Reservation reservation = reservationService.reserve(instanceId, cupos, user);
+                User creador = reservation.getInstance().getExperience().getCreator();
+                if (creador != null) {
+                    notificationService.notify(creador, NotificationType.SOLICITUD_RESERVA,
+                            user.getUsername() + " reservó " + cupos + " lugar(es) en "
+                                    + reservation.getInstance().getExperience().getName(),
+                            "/reservations");
+                }
+            } catch (RuntimeException e) {
+                redirectAttributes.addFlashAttribute("error", e.getMessage());
+                return "redirect:/checkout/" + instanceId + "?attendees=" + cupos;
+            }
         }
         return "redirect:/confirmation";
     }
@@ -78,5 +101,12 @@ public class CheckoutController {
         return reservationRepository
                 .findFirstByInstanceIdAndUserIdAndStatus(instanceId, user.getId(), ReservationStatus.PENDIENTE)
                 .orElse(null);
+    }
+
+    private int sanitize(int attendees) {
+        if (attendees < 1) {
+            return 1;
+        }
+        return Math.min(attendees, 20);
     }
 }

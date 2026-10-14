@@ -116,6 +116,14 @@ class CancellationFlowTests {
                         .with(user("demo_user")).with(csrf()).param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
 
+        // Sin pago no hay reserva ni notificación: solo se reserva al pagar.
+        mockMvc.perform(post("/checkout/" + instanceId)
+                        .with(user("demo_user")).with(csrf())
+                        .param("attendees", "1")
+                        .param("cardNumber", "123456789012")
+                        .param("holder", "Demo User"))
+                .andExpect(status().is3xxRedirection());
+
         mockMvc.perform(get("/notifications").with(user("demo_creator")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("reserv")));

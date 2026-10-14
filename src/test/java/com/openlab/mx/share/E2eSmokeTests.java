@@ -83,9 +83,10 @@ class E2eSmokeTests {
         mockMvc.perform(post("/reservations/" + instanceId).with(user("demo_user")).with(csrf())
                         .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/checkout/" + instanceId));
+                .andExpect(redirectedUrl("/checkout/" + instanceId + "?attendees=1"));
 
         mockMvc.perform(post("/checkout/" + instanceId).with(user("demo_user")).with(csrf())
+                        .param("attendees", "1")
                         .param("cardNumber", "123456789012").param("holder", "Demo"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/confirmation"));

@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,17 +39,19 @@ public class ReservationController {
 
     @PostMapping("/reservations/{instanceId}")
     public String reserve(@PathVariable Long instanceId,
-                          @Valid @ModelAttribute ReservationRequest request) {
-        User user = currentUser.require();
-        Reservation reservation = reservationService.reserve(instanceId, request.attendees(), user);
-        User creador = reservation.getInstance().getExperience().getCreator();
-        if (creador != null) {
-            notificationService.notify(creador, NotificationType.SOLICITUD_RESERVA,
-                    user.getUsername() + " reservó " + request.attendees() + " lugar(es) en "
-                            + reservation.getInstance().getExperience().getName(),
-                    "/reservations");
+                          @Valid @ModelAttribute ReservationRequest request,
+                          BindingResult bindingResult) {
+        // Opción A: sin pago no hay reserva. Este paso solo lleva al checkout
+        // con los cupos elegidos, no persiste nada en DB.
+        currentUser.require();
+        int attendees = request != null ? request.attendees() : 1;
+        if (bindingResult.hasErrors() || attendees < 1) {
+            attendees = 1;
         }
-        return "redirect:/checkout/" + instanceId;
+        if (attendees > 20) {
+            attendees = 20;
+        }
+        return "redirect:/checkout/" + instanceId + "?attendees=" + attendees;
     }
 
     /** El creador confirma la reserva pendiente (spec §5.3). */
