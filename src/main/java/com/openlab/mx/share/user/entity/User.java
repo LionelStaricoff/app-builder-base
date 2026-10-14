@@ -50,6 +50,13 @@ public class User {
 
     private Double lng;
 
+    /**
+     * País que resuelve el reverse geocoding de la ubicación GPS (ej. "Colombia").
+     * Va en un campo propio: {@link #country} es el país elegido en el registro y
+     * alimenta la sugerencia de moneda, así que el GPS no lo pisa.
+     */
+    private String locationCountry;
+
     /** País seleccionado en el registro (ej. "México"). Opcional para cuentas viejas. */
     private String country;
 

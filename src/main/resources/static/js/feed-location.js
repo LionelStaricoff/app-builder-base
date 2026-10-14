@@ -14,6 +14,12 @@
   const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
   const savedCity = banner.dataset.city || '';
+  const savedCountry = banner.dataset.country || '';
+  const savedLat = banner.dataset.lat || '';
+  const savedLng = banner.dataset.lng || '';
+  // "Activado" = hay ubicación guardada (coords o ciudad), aunque no se haya
+  // resuelto la ciudad: el GPS puede no traer ciudad y igual estar conectado.
+  const hasLocation = banner.dataset.hasLocation === 'true';
   const dismissedKey = 'shared.location.dismissed';
 
   function setStatus(text) {
@@ -30,30 +36,48 @@
     if (label) label.textContent = on ? 'Activado' : 'Activar';
   }
 
+
+  /** "Cartagena de Indias, Colombia (10.3976, -75.4649)" con lo que haya. */
+  function locationLabel() {
+    const place = [savedCity, savedCountry].filter(Boolean).join(', ');
+    const coords = (savedLat && savedLng)
+      ? Number(savedLat).toFixed(4) + ', ' + Number(savedLng).toFixed(4)
+      : '';
+    if (place && coords) return place + ' (' + coords + ')';
+    if (place) return place;
+    if (coords) return coords + ' (sin ciudad identificada)';
+    return '';
+  }
+
   function bannerForManualSearch() {
+    console.log('[location] init | hasLocation=' + hasLocation +
+      ' | city="' + savedCity + '" | country="' + savedCountry + '"' +
+      ' | coords=' + savedLat + ',' + savedLng +
+      ' | allowBtn=' + !!allowBtn + ' | csrf=' + !!csrfToken + '/' + !!csrfHeader);
     // Sin ubicación guardada: ofrecer activarla.
-    if (!savedCity) {
+    if (!hasLocation) {
       banner.hidden = false;
       setStatus('Activá tu ubicación para ver primero experiencias cerca tuyo.');
       setAllowButton(false);
       return;
     }
     // Con ubicación guardada: mostrarla siempre (el feed ya usa la última)
-    // y permitir actualizarla o buscar otra ciudad manualmente.
+    // y permitirla actualizarla o buscar otra ciudad manualmente.
     const q = new URLSearchParams(window.location.search).get('city');
     if (q && q.toLowerCase() !== savedCity.toLowerCase()) {
       banner.hidden = false;
-      setStatus(`Viendo resultados de "${q}". Tu ubicación guardada es "${savedCity}".`);
+      setStatus(`Viendo resultados de "${q}". Tu ubicación guardada es "${locationLabel()}".`);
       if (allowBtn) allowBtn.hidden = true;
       return;
     }
     banner.hidden = false;
-    setStatus(`📍 Usando tu última ubicación guardada: "${savedCity}".`);
+    setStatus('📍 Usando tu última ubicación guardada: ' + locationLabel() + '.');
     setAllowButton(true);
   }
 
   async function saveLocation(lat, lng) {
     setStatus('Guardando tu ubicación…');
+    console.log('[location] POST /location body={lat:' + lat + ', lng:' + lng + '}');
     try {
       const res = await fetch('/location', {
         method: 'POST',
@@ -63,16 +87,20 @@
         },
         body: JSON.stringify({ lat, lng }),
       });
+      const contentType = res.headers.get('content-type') || '';
+      console.log('[location] respuesta HTTP ' + res.status + ' | content-type=' + contentType);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       // Sesión vencida: el servidor redirige al login y vuelve HTML, no JSON.
-      const contentType = res.headers.get('content-type') || '';
       if (!contentType.includes('application/json')) {
         throw new Error('sesion-vencida');
       }
       const data = await res.json();
+      console.log('[location] guardado OK city="' + data.city + '" country="' + data.country +
+        '" coords=' + data.lat + ',' + data.lng + ' -> recargando /feed');
       // Recargar sin query de búsqueda manual: el feed ya ordena por su ciudad.
       window.location.href = '/feed';
     } catch (e) {
+      console.error('[location] fallo al guardar:', e && e.message);
       setStatus(e && e.message === 'sesion-vencida'
         ? 'Tu sesión venció. Recargá la página e intentá de nuevo.'
         : 'No pudimos guardar tu ubicación. Intentá de nuevo.');
@@ -82,6 +110,12 @@
 
   if (allowBtn) {
     allowBtn.addEventListener('click', () => {
+      console.log('[location] click "Activar" | is-on=' + allowBtn.classList.contains('is-on') +
+        ' | disabled=' + allowBtn.disabled +
+        ' | secureContext=' + window.isSecureContext +
+        ' | protocolo=' + window.location.protocol +
+        ' | host=' + window.location.host +
+        ' | geolocationOK=' + !!navigator.geolocation);
       if (!navigator.geolocation) {
         setStatus('Tu navegador no soporta geolocalización. Usá la búsqueda manual.');
         return;
@@ -89,8 +123,15 @@
       allowBtn.disabled = true;
       setStatus('Pidiendo tu ubicación…');
       navigator.geolocation.getCurrentPosition(
-        (pos) => saveLocation(pos.coords.latitude, pos.coords.longitude),
+        (pos) => {
+          console.log('[location] GPS OK lat=' + pos.coords.latitude + ' lng=' + pos.coords.longitude +
+            ' precision=' + pos.coords.accuracy + 'm');
+          saveLocation(pos.coords.latitude, pos.coords.longitude);
+        },
         (err) => {
+          console.warn('[location] GPS ERROR code=' + err.code + ' msg=' + err.message +
+            ' | secureContext=' + window.isSecureContext +
+            ' | protocolo=' + window.location.protocol);
           setStatus(
             err.code === err.PERMISSION_DENIED
               ? 'Permiso denegado. Podés activarlo desde el candado de la barra de direcciones o buscar tu ciudad manualmente.'

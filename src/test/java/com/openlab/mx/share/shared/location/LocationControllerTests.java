@@ -55,14 +55,17 @@ class LocationControllerTests {
     void postGuardaUbicacionYResuelveCiudad() throws Exception {
         User user = usuario();
         when(currentUser.require()).thenReturn(user);
-        when(geocodingService.resolve(-12.0464, -77.0428))
+        when(geocodingService.resolvePlace(-12.0464, -77.0428))
                 .thenReturn(new GeocodingService.Place("Lima", "Perú"));
 
         mockMvc.perform(post("/location")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"lat\":-12.0464,\"lng\":-77.0428}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.city").value("Lima"));
+                .andExpect(jsonPath("$.city").value("Lima"))
+                .andExpect(jsonPath("$.country").value("Perú"))
+                .andExpect(jsonPath("$.lat").value(-12.0464))
+                .andExpect(jsonPath("$.lng").value(-77.0428));
 
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
@@ -70,13 +73,14 @@ class LocationControllerTests {
         assertEquals(-12.0464, guardado.getLat(), 0.000001, "la latitud posteada se guarda");
         assertEquals(-77.0428, guardado.getLng(), 0.000001, "la longitud posteada se guarda");
         assertEquals("Lima", guardado.getCity(), "la ciudad geocodificada se guarda");
+        assertEquals("Perú", guardado.getLocationCountry(), "el país geocodificado se guarda");
     }
 
     @Test
     void postSinGeocodingIgualGuardaCoordenadas() throws Exception {
         User user = usuario();
         when(currentUser.require()).thenReturn(user);
-        when(geocodingService.resolve(anyDouble(), anyDouble())).thenReturn(null);
+        when(geocodingService.resolvePlace(anyDouble(), anyDouble())).thenReturn(null);
 
         mockMvc.perform(post("/location")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -90,5 +94,26 @@ class LocationControllerTests {
         assertEquals(19.4326, guardado.getLat(), 0.000001, "sin geocoding igual se guardan las coords");
         assertEquals(-99.1332, guardado.getLng(), 0.000001, "sin geocoding igual se guardan las coords");
         assertEquals("CDMX", guardado.getCity(), "sin geocoding se conserva la ciudad anterior");
+    }
+
+    /** Zona sin ciudad: Nominatim no devuelve city pero sí country (y las coords están). */
+    @Test
+    void postSoloPaisIgualSeGuardaPais() throws Exception {
+        User user = usuario();
+        when(currentUser.require()).thenReturn(user);
+        when(geocodingService.resolvePlace(anyDouble(), anyDouble()))
+                .thenReturn(new GeocodingService.Place(null, "Colombia"));
+
+        mockMvc.perform(post("/location")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lat\":10.3976,\"lng\":-75.4649}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.country").value("Colombia"));
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        User guardado = captor.getValue();
+        assertEquals("Colombia", guardado.getLocationCountry(), "el país se guarda sin ciudad");
+        assertEquals("CDMX", guardado.getCity(), "sin ciudad se conserva la anterior");
     }
 }

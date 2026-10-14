@@ -47,6 +47,13 @@ public class FeedController {
         model.addAttribute("searchedCity", effectiveCity);
         model.addAttribute("searchedQuery", city != null && !city.isBlank() ? city.trim() : null);
         model.addAttribute("savedCity", user != null ? user.getCity() : null);
+        model.addAttribute("savedCountry", user != null ? user.getLocationCountry() : null);
+        model.addAttribute("savedLat", user != null ? user.getLat() : null);
+        model.addAttribute("savedLng", user != null ? user.getLng() : null);
+        // "Activado" = hay ubicación guardada (coords o ciudad), no que se haya
+        // resuelto la ciudad: el GPS puede no traer ciudad y igual estar conectado.
+        model.addAttribute("hasLocation", user != null
+                && (user.getLat() != null || user.getCity() != null));
         return "feed";
     }
 
