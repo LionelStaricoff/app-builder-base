@@ -7,5 +7,6 @@ package com.openlab.mx.share.payment.entity;
  */
 public enum PaymentStatus {
     PENDING,
-    HELD, RELEASED, REFUNDED_FULL, REFUNDED_PARTIAL
+    HELD, RELEASED, REFUNDED_FULL, REFUNDED_PARTIAL,
+    FAILED
 }
