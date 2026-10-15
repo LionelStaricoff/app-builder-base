@@ -1,0 +1,145 @@
+package com.openlab.mx.share;
+
+import com.openlab.mx.share.experience.dto.ExperienceFormRequest;
+import com.openlab.mx.share.experience.dto.ScheduleEntryRequest;
+import com.openlab.mx.share.experience.entity.Experience;
+import com.openlab.mx.share.experience.entity.ExperienceCategory;
+import com.openlab.mx.share.experience.entity.RecurrenceType;
+import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
+import com.openlab.mx.share.experience.service.ExperienceService;
+import com.openlab.mx.share.identity.entity.DiditVerification;
+import com.openlab.mx.share.identity.entity.VerificationStatus;
+import com.openlab.mx.share.identity.repository.DiditVerificationRepository;
+import com.openlab.mx.share.user.entity.User;
+import com.openlab.mx.share.user.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.UUID;
+
+import static org.hamcrest.Matchers.startsWith;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * Gate de identidad end-to-end con el bean REAL (sin TestIdentityGateConfig):
+ * reservar sin verificar redirige a /verificacion con returnUrl; verificado
+ * pasa al checkout.
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+class IdentityGateFlowTests {
+
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private DiditVerificationRepository verificationRepository;
+    @Autowired
+    private ExperienceService experienceService;
+    @Autowired
+    private ExperienceInstanceRepository instanceRepository;
+
+    private User usuarioNuevo() {
+        String username = "gate-" + UUID.randomUUID().toString().substring(0, 8);
+        return userRepository.save(User.builder()
+                .username(username)
+                .email(username + "@x.com")
+                .passwordHash("{noop}x")
+                .role(com.openlab.mx.share.user.entity.Role.USER)
+                .birthDate(LocalDate.of(1990, 1, 1))
+                .build());
+    }
+
+    private void marcarVerificado(User user) {
+        DiditVerification v = DiditVerification.started(user.getId(), "sess-" + user.getId());
+        v.applyDecision(VerificationStatus.VERIFIED, "Approved");
+        verificationRepository.save(v);
+    }
+
+    private Long instanciaFuturaComo(User creator) {
+        marcarVerificado(creator); // el gate de publicar también está activo acá
+        var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+        Experience experience = experienceService.create(new ExperienceFormRequest(
+                "Gate Exp " + UUID.randomUUID(), "Desc", 120, 1, 4, BigDecimal.valueOf(100),
+                ExperienceCategory.CULTURAL, RecurrenceType.UNIQUE,
+                19.4326, -99.1332,
+                List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(20), null,
+                        LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
+                List.of(image)), creator);
+        return instanceRepository.findByExperienceIdOrderByDateAsc(experience.getId()).get(0).getId();
+    }
+
+    @Test
+    void reserva_sin_verificar_redirige_a_verificacion() throws Exception {
+        User creador = usuarioNuevo();
+        Long instanceId = instanciaFuturaComo(creador);
+        User participante = usuarioNuevo(); // sin verificar
+
+        mockMvc.perform(post("/reservations/" + instanceId)
+                        .with(user(participante.getUsername()))
+                        .with(csrf())
+                        .param("attendees", "1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/verificacion*"));
+    }
+
+    @Test
+    void reserva_verificada_pasa_al_checkout() throws Exception {
+        User creador = usuarioNuevo();
+        Long instanceId = instanciaFuturaComo(creador);
+        User participante = usuarioNuevo();
+        marcarVerificado(participante);
+
+        mockMvc.perform(post("/reservations/" + instanceId)
+                        .with(user(participante.getUsername()))
+                        .with(csrf())
+                        .param("attendees", "1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/checkout/" + instanceId + "?attendees=1"));
+    }
+
+    @Test
+    void publicar_sin_verificar_redirige_a_verificacion() throws Exception {
+        User creador = usuarioNuevo(); // sin verificar
+
+        var imagen = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+        var res = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .multipart("/experiences")
+                        .file(imagen)
+                        .param("name", "Exp sin verificar " + UUID.randomUUID())
+                        .param("description", "No debería crearse")
+                        .param("durationMinutes", "120")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "8")
+                        .param("price", "190.00")
+                        .param("category", "CULTURAL")
+                        .param("recurrenceType", "UNIQUE")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].date", "2026-12-01")
+                        .param("schedules[0].startTime", "10:00")
+                        .param("schedules[0].endTime", "12:00")
+                        .with(user(creador.getUsername()))
+                        .with(csrf()))
+                .andReturn();
+
+        org.junit.jupiter.api.Assertions.assertEquals(302, res.getResponse().getStatus());
+        org.junit.jupiter.api.Assertions.assertTrue(
+                res.getResponse().getRedirectedUrl().startsWith("/verificacion"),
+                "debe redirigir a /verificacion pero fue: " + res.getResponse().getRedirectedUrl());
+    }
+}
