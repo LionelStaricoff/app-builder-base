@@ -28,8 +28,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /** Botón "Compartir viaje": el controller responde url canónica + título + descripción. */
+import org.springframework.context.annotation.Import;
+
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(com.openlab.mx.share.shared.TestIdentityGateConfig.class)
 class ShareControllerTests {
 
     @Autowired

@@ -3,6 +3,7 @@ package com.openlab.mx.share;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -25,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * cubre este camino, así que acá se habla HTTP contra el puerto aleatorio.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Import(com.openlab.mx.share.shared.TestIdentityGateConfig.class)
 class MultipartRealServerTests {
 
     private static final Pattern CSRF = Pattern.compile("name=\"_csrf\" value=\"([^\"]+)\"");

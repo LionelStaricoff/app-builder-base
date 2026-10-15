@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestGatewayConfig.class)
+@Import({TestGatewayConfig.class, com.openlab.mx.share.shared.TestIdentityGateConfig.class})
 class E2eSmokeTests {
 
     @Autowired

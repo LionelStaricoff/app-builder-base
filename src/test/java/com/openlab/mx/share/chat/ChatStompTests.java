@@ -53,7 +53,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.springframework.context.annotation.Import;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Import(com.openlab.mx.share.shared.TestIdentityGateConfig.class)
 class ChatStompTests {
 
     @LocalServerPort

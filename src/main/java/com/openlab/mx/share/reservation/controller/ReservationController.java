@@ -33,6 +33,8 @@ public class ReservationController {
     private final ReservationRepository reservationRepository;
     private final NotificationService notificationService;
     private final CurrentUser currentUser;
+    private final com.openlab.mx.share.identity.service.RequireVerifiedIdentityService
+            requireVerifiedIdentityService;
 
     @Value("${escrow.commission-rate}")
     private java.math.BigDecimal commissionRate = new java.math.BigDecimal("0.05");
@@ -43,7 +45,10 @@ public class ReservationController {
                           BindingResult bindingResult) {
         // Opción A: sin pago no hay reserva. Este paso solo lleva al checkout
         // con los cupos elegidos, no persiste nada en DB.
-        currentUser.require();
+        // KYC (Didit): el primer paso de reservar ya exige identidad verificada
+        // (el service de reserva también lo exige al persistir).
+        User user = currentUser.require();
+        requireVerifiedIdentityService.requireVerified(user.getId());
         int attendees = request != null ? request.attendees() : 1;
         if (bindingResult.hasErrors() || attendees < 1) {
             attendees = 1;

@@ -33,6 +33,27 @@ public class GlobalExceptionHandler {
         return com.openlab.mx.share.shared.CurrentUser.backOr("/my-experiences");
     }
 
+    /**
+     * Gate de identidad verificada (Didit): en vez del PRG genérico, se
+     * manda al usuario a /verificacion con returnUrl de regreso. Los
+     * endpoints /api que disparen este gate reciben el mismo redirect
+     * (hoy los protegidos son form-POST de MVC).
+     */
+    @ExceptionHandler(UnverifiedIdentityException.class)
+    public String unverifiedIdentity(UnverifiedIdentityException e) {
+        log.warn("Identidad no verificada, redirigiendo a /verificacion");
+        String returnUrl = com.openlab.mx.share.shared.CurrentUser.refererPathOr("/feed");
+        String encoded = java.net.URLEncoder.encode(returnUrl, java.nio.charset.StandardCharsets.UTF_8);
+        return "redirect:/verificacion?returnUrl=" + encoded;
+    }
+
+    /** VERIFIED es terminal: redirigir a la propia página de verificación. */
+    @ExceptionHandler(VerificationAlreadyCompletedException.class)
+    public String alreadyCompleted(VerificationAlreadyCompletedException e) {
+        log.info("Verificación ya completada: {}", e.getMessage());
+        return "redirect:/verificacion";
+    }
+
     @ExceptionHandler(DomainException.class)
     public String domain(DomainException e, RedirectAttributes redirectAttributes) {
         log.warn("DomainException: {}", e.getMessage());

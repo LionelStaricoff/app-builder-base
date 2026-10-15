@@ -37,8 +37,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.springframework.context.annotation.Import;
+
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(com.openlab.mx.share.shared.TestIdentityGateConfig.class)
 class FeedAndFavoritesControllerTests {
 
     @Autowired

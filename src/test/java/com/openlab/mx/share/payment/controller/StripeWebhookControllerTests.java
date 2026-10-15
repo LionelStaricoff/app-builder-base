@@ -54,7 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // El secret vive en src/test/resources/application.properties (compartido).
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestGatewayConfig.class)
+@Import({TestGatewayConfig.class, com.openlab.mx.share.shared.TestIdentityGateConfig.class})
 @WithMockUser("demo_user")
 class StripeWebhookControllerTests {
 

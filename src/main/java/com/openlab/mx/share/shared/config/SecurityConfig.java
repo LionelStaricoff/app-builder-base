@@ -24,9 +24,13 @@ public class SecurityConfig {
                 ).permitAll()
                 // Spec §7: Stripe no firma requests con sesión ni CSRF.
                 .requestMatchers("/api/stripe/webhooks").permitAll()
+                // Didit entrega el webhook sin sesión: la autenticación es
+                // la firma HMAC (X-Signature-V2) y no lleva CSRF.
+                .requestMatchers("/api/webhooks/didit").permitAll()
                 .anyRequest().authenticated()
             )
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/stripe/webhooks"))
+            .csrf(csrf -> csrf.ignoringRequestMatchers(
+                    "/api/stripe/webhooks", "/api/webhooks/didit"))
             .formLogin(form -> form
                 .loginPage("/login")
                 .defaultSuccessUrl("/feed", true)

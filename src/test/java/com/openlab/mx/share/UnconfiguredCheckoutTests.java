@@ -1,6 +1,7 @@
 package com.openlab.mx.share;
 
 import com.openlab.mx.share.experience.dto.ExperienceFormRequest;
+import org.springframework.context.annotation.Import;
 import com.openlab.mx.share.experience.dto.ScheduleEntryRequest;
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.entity.RecurrenceType;
@@ -41,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(com.openlab.mx.share.shared.TestIdentityGateConfig.class)
 class UnconfiguredCheckoutTests {
 
     @Autowired

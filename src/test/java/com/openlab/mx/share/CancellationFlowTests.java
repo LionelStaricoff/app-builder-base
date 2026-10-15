@@ -42,7 +42,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(com.openlab.mx.share.shared.TestGatewayConfig.class)
+@Import({com.openlab.mx.share.shared.TestGatewayConfig.class,
+        com.openlab.mx.share.shared.TestIdentityGateConfig.class})
 class CancellationFlowTests {
 
     @Autowired

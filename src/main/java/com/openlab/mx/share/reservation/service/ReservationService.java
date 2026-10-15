@@ -29,9 +29,14 @@ public class ReservationService {
 
     private final ExperienceInstanceRepository instanceRepository;
     private final ReservationRepository reservationRepository;
+    private final com.openlab.mx.share.identity.service.RequireVerifiedIdentityService
+            requireVerifiedIdentityService;
 
     @Transactional
     public Reservation reserve(Long instanceId, int attendees, User u) {
+        // KYC (Didit): reservar exige identidad verificada; si no, el
+        // GlobalExceptionHandler redirige a /verificacion.
+        requireVerifiedIdentityService.requireVerified(u == null ? null : u.getId());
         ExperienceInstance instance = instanceRepository.findById(instanceId)
                 .orElseThrow(() -> new DomainException("Fecha no encontrada"));
         if (isPast(instance)) {

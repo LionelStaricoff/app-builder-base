@@ -44,6 +44,8 @@ public class ExperienceService {
     private final ExperienceInstanceRepository instanceRepository;
     private final InstanceGenerationService generationService;
     private final GeocodingService geocodingService;
+    private final com.openlab.mx.share.identity.service.RequireVerifiedIdentityService
+            requireVerifiedIdentityService;
 
     /** País/ciudad vacíos en las paradas se guardan como "—" si ni el form ni Nominatim los dan. */
     private static final String PLACEHOLDER = "—";
@@ -56,6 +58,8 @@ public class ExperienceService {
     @Transactional
     public Experience create(ExperienceFormRequest request, User creator,
                              String currencyCode, List<ExperienceStopDTO> stops) {
+        // KYC (Didit): publicar una experiencia exige identidad verificada.
+        requireVerifiedIdentityService.requireVerified(creator == null ? null : creator.getId());
         validate(request);
         if (request.images() == null || request.images().isEmpty()) {
             throw new DomainException("Debe incluir al menos una imagen");

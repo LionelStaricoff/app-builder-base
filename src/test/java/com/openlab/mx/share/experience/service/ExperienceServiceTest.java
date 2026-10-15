@@ -11,7 +11,9 @@ import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceScheduleRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
+import com.openlab.mx.share.identity.service.RequireVerifiedIdentityService;
 import com.openlab.mx.share.shared.exception.NotOwnerException;
+import com.openlab.mx.share.shared.exception.UnverifiedIdentityException;
 import com.openlab.mx.share.shared.location.GeocodingService;
 import com.openlab.mx.share.user.entity.User;
 import org.junit.jupiter.api.Test;
@@ -51,6 +53,8 @@ class ExperienceServiceTest {
     private ExperienceInstanceRepository instanceRepository;
     @Mock
     private InstanceGenerationService generationService;
+    @Mock
+    private RequireVerifiedIdentityService requireVerifiedIdentityService;
 
     @InjectMocks
     private ExperienceService experienceService;
@@ -74,6 +78,15 @@ class ExperienceServiceTest {
                 List.of(new ScheduleEntryRequest(LocalDate.of(2026, 12, 1), null,
                         LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
                 images);
+    }
+
+    @Test
+    void testCreateSinIdentidadVerificadaSeBloquea() {
+        org.mockito.Mockito.doThrow(new UnverifiedIdentityException())
+                .when(requireVerifiedIdentityService).requireVerified(2L);
+
+        org.junit.jupiter.api.Assertions.assertThrows(UnverifiedIdentityException.class,
+                () -> experienceService.create(request(List.of()), user(2L)));
     }
 
     @Test

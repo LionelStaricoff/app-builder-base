@@ -37,6 +37,14 @@ public class CurrentUser {
 
     /** Path local del request actual (para PRG de regreso), o fallback. */
     public static String backOr(String fallback) {
+        return "redirect:" + refererPathOr(fallback);
+    }
+
+    /**
+     * Path+query del header Referer si es un path local, o fallback.
+     * Rechaza referers externos (path que no empieza con / o que empieza //).
+     */
+    public static String refererPathOr(String fallback) {
         if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attrs) {
             HttpServletRequest request = attrs.getRequest();
             String referer = request.getHeader("Referer");
@@ -46,13 +54,13 @@ public class CurrentUser {
                     String path = uri.getPath();
                     if (path != null && path.startsWith("/") && !path.startsWith("//")) {
                         String query = uri.getRawQuery() != null ? "?" + uri.getRawQuery() : "";
-                        return "redirect:" + path + query;
+                        return path + query;
                     }
                 } catch (IllegalArgumentException ignored) {
                     // referer inválido: fallback
                 }
             }
         }
-        return "redirect:" + fallback;
+        return fallback;
     }
 }

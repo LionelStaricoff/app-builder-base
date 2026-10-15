@@ -4,12 +4,14 @@ import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.entity.InstanceStatus;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
+import com.openlab.mx.share.identity.service.RequireVerifiedIdentityService;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.shared.exception.CupoAgotadoException;
 import com.openlab.mx.share.shared.exception.InstancePastException;
 import com.openlab.mx.share.shared.exception.NotOwnerException;
+import com.openlab.mx.share.shared.exception.UnverifiedIdentityException;
 import com.openlab.mx.share.user.entity.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +39,8 @@ class ReservationServiceTest {
     private ExperienceInstanceRepository instanceRepository;
     @Mock
     private ReservationRepository reservationRepository;
+    @Mock
+    private RequireVerifiedIdentityService requireVerifiedIdentityService;
 
     @InjectMocks
     private ReservationService reservationService;
@@ -75,6 +80,17 @@ class ReservationServiceTest {
      * Spec §5-6: reservar ya no retiene pago (HELD); el Payment lo crea
      * StripeCheckoutService al armar la Checkout Session.
      */
+    @Test
+    void testReservaSinIdentidadVerificadaSeBloquea() {
+        org.mockito.Mockito.doThrow(new UnverifiedIdentityException())
+                .when(requireVerifiedIdentityService).requireVerified(2L);
+
+        assertThrows(UnverifiedIdentityException.class,
+                () -> reservationService.reserve(5L, 1, user(2L)));
+
+        verify(reservationRepository, never()).save(any(Reservation.class));
+    }
+
     @Test
     void testReservaHappyPathSoloCreaLaReserva() {
         when(instanceRepository.findById(5L)).thenReturn(

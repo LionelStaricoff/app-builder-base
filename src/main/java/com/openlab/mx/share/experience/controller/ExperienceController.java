@@ -73,6 +73,10 @@ public class ExperienceController {
             Experience experience = experienceService.create(request, currentUser(),
                     currencyCode, toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
             return "redirect:/experiences/" + experience.getId();
+        } catch (com.openlab.mx.share.shared.exception.UnverifiedIdentityException e) {
+            // KYC (Didit): no se traga con el catch de DomainException de
+            // abajo; el GlobalExceptionHandler redirige a /verificacion.
+            throw e;
         } catch (DomainException e) {
             model.addAttribute("error", e.getMessage());
             repopulateForm(model, currencyCode,
