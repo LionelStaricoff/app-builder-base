@@ -7,10 +7,12 @@ import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.entity.ExperienceStatus;
 import com.openlab.mx.share.experience.entity.InstanceStatus;
+import com.openlab.mx.share.experience.entity.UserViewedExperience;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
+import com.openlab.mx.share.experience.repository.UserViewedExperienceRepository;
 import com.openlab.mx.share.favorite.repository.FavoriteRepository;
 import com.openlab.mx.share.shared.JacksonHelper;
 import com.openlab.mx.share.shared.location.GeocodingService;
@@ -21,12 +23,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -49,6 +53,7 @@ public class FeedService {
     private final ExperienceStopRepository stopRepository;
     private final ExperienceInstanceRepository instanceRepository;
     private final FavoriteRepository favoriteRepository;
+    private final UserViewedExperienceRepository viewedExperienceRepository;
     private final JacksonHelper jacksonHelper;
     private final GeocodingService geocodingService;
 
@@ -94,10 +99,37 @@ public class FeedService {
         }
 
         LocalDate today = LocalDate.now();
-        List<Entry> entries = experiences.stream()
-                .map(e -> new Entry(e, nextDateOf(e, today)))
+
+        // Cargar experiencias ya vistas por este usuario (si userId es null, no hay vistas previas)
+        Set<Long> viewedExperienceIds = Set.of();
+        if (userId != null) {
+            viewedExperienceRepository.findExperienceIdsByUserId(userId).forEach(viewedExperienceIds::add);
+        }
+
+        // Separar experiencias vistas y no vistas
+        List<Entry> noViewed = new java.util.ArrayList<>();
+        List<Entry> viewed = new java.util.ArrayList<>();
+        for (Experience exp : experiences) {
+            boolean isViewed = viewedExperienceIds.contains(exp.getId());
+            Entry entry = new Entry(exp, nextDateOf(exp, today));
+            if (isViewed) {
+                viewed.add(entry);
+            } else {
+                noViewed.add(entry);
+            }
+        }
+
+        // Ordenar las no vistas con el comparador normal, y las vistas van al final ordenadas por fecha
+        noViewed = noViewed.stream()
                 .sorted(comparator(userCity, lat, lng))
                 .toList();
+        viewed = viewed.stream()
+                .sorted((a, b) -> b.nextDate().compareTo(a.nextDate()))
+                .toList();
+
+        List<Entry> entries = new java.util.ArrayList<>();
+        entries.addAll(noViewed);
+        entries.addAll(viewed);
 
         int from = pageNumber * PAGE_SIZE;
         if (from >= entries.size()) {
@@ -239,6 +271,17 @@ public class FeedService {
     /** DTO público con próxima fecha calculada (usado por favoritos). */
     public ExperienceFeedDTO dtoFor(Experience experience, Long userId) {
         return toDto(experience, nextDateOf(experience, LocalDate.now()), userId);
+    }
+
+    /** Marca una experiencia como vista para el usuario actual. */
+    public void markAsViewed(Long userId, Long experienceId) {
+        if (userId == null || experienceId == null) return;
+        UserViewedExperience viewed = UserViewedExperience.builder()
+                .userId(userId)
+                .experienceId(experienceId)
+                .viewedAt(LocalDateTime.now())
+                .build();
+        viewedExperienceRepository.save(viewed);
     }
 
     private int bucket(Experience experience, String userCity) {
