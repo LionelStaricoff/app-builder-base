@@ -30,7 +30,7 @@
         <form id="location-manual-form" class="location-manual">
             <input type="text" id="location-manual-input" list="country-options"
                    placeholder="Buscar por país y/o ciudad…" aria-label="Buscar experiencias por país y/o ciudad"
-                   th:value="${searchedQuery}" autocomplete="off">
+                   th:value="${searchedQuery}" autocomplete="off" class="form-input">
             <datalist id="country-options">
                 <option th:each="c : ${countries}" th:value="${c}"></option>
             </datalist>
@@ -64,7 +64,7 @@
     </div>
 
     <div id="feed-list">
-        <div class="card" th:each="dto : ${feedPage.content}" th:id="'card-' + ${dto.id}">
+        <div class="card" th:each="dto : ${feedPage.content}" th:id="'card-' + ${dto.id}" style="margin-bottom:1rem">
             <div class="carousel" data-carousel
                  th:if="${dto.images != null and not #lists.isEmpty(dto.images)}">
                 <div class="carousel-track" data-carousel-track>

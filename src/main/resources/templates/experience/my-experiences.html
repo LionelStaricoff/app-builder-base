@@ -23,7 +23,7 @@
         <a class="btn-primary" th:href="@{/experiences/new}">Crear la primera</a>
     </div>
 
-    <div class="card" th:each="e : ${experiencias}" style="padding:0">
+    <div class="card" th:each="e : ${experiencias}">
         <div class="carousel" data-carousel
              th:if="${covers != null and covers[e.id] != null and not #lists.isEmpty(covers[e.id])}">
             <div class="carousel-track" data-carousel-track>

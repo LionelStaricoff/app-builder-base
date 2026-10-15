@@ -8,17 +8,17 @@
         <p class="brand-name">Shared</p>
         <p class="brand-tag">Viví experiencias únicas cerca tuyo</p>
     </div>
-    <div class="auth-card">
+    <div class="auth-card" style="max-width:420px; width:100%">
         <h2>Iniciar sesión</h2>
         <div class="auth-error" th:if="${param.error}">Usuario o contraseña incorrectos</div>
         <div class="auth-error" th:if="${param.logout}">Cerraste sesión correctamente</div>
         <form th:action="@{/login}" method="post">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <label>Usuario
-                <input type="text" name="username" required autofocus autocomplete="username">
+                <input type="text" name="username" required autofocus autocomplete="username" class="form-input">
             </label>
             <label>Contraseña
-                <input type="password" name="password" required autocomplete="current-password">
+                <input type="password" name="password" required autocomplete="current-password" class="form-input">
             </label>
             <button type="submit" class="btn-primary btn-block">Entrar</button>
         </form>

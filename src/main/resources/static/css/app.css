@@ -6,8 +6,42 @@
   --surface: #FFFFFF;
   --text: #212121;
   --star: #FFC107;
-  --radius: 16px;
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --radius: 20px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --style: 1;
+}
+
+/* Visual Style 1: Light (default) */
+[data-style="1"] {
+  --bg: #F8F9FA;
+  --surface: #FFFFFF;
+  --text: #212121;
+  --color-primary: #E91E63;
+  --color-secondary: #D81B60;
+  --color-accent: #FF4081;
+  --star: #FFC107;
+}
+
+/* Visual Style 2: Purple Theme */
+[data-style="2"] {
+  --bg: #F0E6FF;
+  --surface: #E8D5E9;
+  --text: #4A148C;
+  --color-primary: #AA00FF;
+  --color-secondary: #6A00A0;
+  --color-accent: #E040FB;
+  --star: #FFD60A;
+}
+
+/* Dark Mode (config toggle) */
+[data-style="3"] {
+  --bg: #212121;
+  --surface: #2B2B2B;
+  --text: #E0E0E0;
+  --color-primary: #F48FB1;
+  --color-secondary: #EC407A;
+  --color-accent: #FF8A65;
+  --star: #FFAB91;
 }
 
 * { box-sizing: border-box; }
@@ -36,6 +70,7 @@ h1, h2, h3, .brand-name {
   box-shadow: var(--shadow);
   overflow: hidden;
   margin-bottom: 1rem;
+  text-align: center;
 }
 
 .bottom-nav {
@@ -174,12 +209,11 @@ h1, h2, h3, .brand-name {
 .btn-secondary { background: var(--surface); border: 1px solid #ccc; border-radius: var(--radius); padding: .5rem 1rem; cursor: pointer; }
 .field-error, span.error, div.error { color: var(--color-primary); font-size: .85rem; }
 label { display: block; margin: .75rem 0; font-size: .9rem; }
-input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], select, textarea { width: 100%; padding: .65rem .75rem; border: 1.5px solid #e2e2e6; border-radius: 10px; font-size: 1rem; background: var(--surface); transition: border-color 0.15s ease, box-shadow 0.15s ease; }
-input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=number]:focus, input[type=date]:focus, input[type=time]:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15);
-}
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], select, textarea { width: 100%; padding: .65rem .75rem; border: 1.5px solid #e2e2e6; border-radius: 10px; font-size: 1rem; background: var(--surface); transition: border-color 0.15s ease, box-shadow 0.15s ease; }.form-input { border: 1.5px solid #e2e2e6; border-radius: 10px; padding: .65rem .75rem; font-size: 1rem; background: var(--surface); width: 100%; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.form-input::placeholder { color: #777; opacity: 1; }
+.form-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15); }
+input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=number]:focus, input[type=date]:focus, input[type=time]:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15); }
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], select, textarea { -webkit-appearance: none; }
 
 .confirm-screen {
   min-height: 100vh;
@@ -323,6 +357,7 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+.rate-form { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 
 /* Estado vacío con ilustración local */
 .empty-illustration {
@@ -602,10 +637,34 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 }
 
 /* Login: botón secundario + foco visible */
+.avatar-ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--color-primary);
+}
+
 .auth-card input:focus {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
   border-color: var(--color-accent);
+}
+
+/* Accessibility: focus-visible for keyboard navigation */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support for all animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 .btn-ghost {
   display: block;
@@ -729,3 +788,20 @@ input.missing, select.missing, textarea.missing {
 /* Mini-mapa del feed */
 .feed-route { margin-top: 0.6rem; }
 .feed-route-map { height: 180px; }
+
+/* NOTA: no agregar otro :root con --bg/--surface/--text/--color-* debajo de
+   las reglas [data-style]: tiene la misma especificidad (0,1,0) y al venir
+   después en cascada las pisa, matando los estilos 2 y 3. El default light
+   ya vive en el :root de arriba + [data-style="1"]. */
+
+/* Selector de estilo visual (Config) */
+.visual-selector { padding: 1rem 0; margin: 1rem 0; }
+.visual-selector h3 { margin: 0 0 1rem; font-size: 1rem; color: var(--text); }
+.visual-selector-options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.visual-selector-options .btn-secondary { flex: 1; min-width: 120px; }
+.visual-selector-options .btn-secondary.active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15);
+  font-weight: 600;
+}

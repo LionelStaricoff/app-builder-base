@@ -8,30 +8,30 @@
         <p class="brand-name">Shared</p>
         <p class="brand-tag">Creá tu cuenta y empezá a vivir</p>
     </div>
-    <div class="auth-card">
+    <div class="auth-card" style="max-width:420px; width:100%">
         <h2>Crear cuenta</h2>
         <div class="auth-error" th:if="${error}" th:text="${error}">Error</div>
         <form th:action="@{/register}" th:object="${registerRequest}" method="post">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <label>Usuario
-                <input type="text" th:field="*{username}" required autocomplete="username">
+                <input type="text" th:field="*{username}" required autocomplete="username" class="form-input">
             </label>
             <p th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Error</p>
             <label>Email
-                <input type="email" th:field="*{email}" required autocomplete="email">
+                <input type="email" th:field="*{email}" required autocomplete="email" class="form-input">
             </label>
             <p th:if="${#fields.hasErrors('email')}" th:errors="*{email}">Error</p>
             <label>Contraseña (mínimo 8 caracteres)
-                <input type="password" th:field="*{password}" required autocomplete="new-password">
+                <input type="password" th:field="*{password}" required autocomplete="new-password" class="form-input">
             </label>
             <p th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Error</p>
             <label>Fecha de nacimiento (debes tener 18 años o más)
-                <input type="date" th:field="*{birthDate}" required>
+                <input type="date" th:field="*{birthDate}" required class="form-input">
             </label>
             <p th:if="${#fields.hasErrors('birthDate')}" th:errors="*{birthDate}">Error</p>
             <div class="form-grid">
                 <label>País
-                    <select th:field="*{country}" id="country-select" required>
+                    <select th:field="*{country}" id="country-select" required class="form-input">
                         <option value="">Elegí tu país</option>
                         <option value="México">México</option>
                         <option value="Argentina">Argentina</option>
@@ -45,7 +45,7 @@
                     </select>
                 </label>
                 <label>Moneda
-                    <select th:field="*{currencyCode}" id="currency-select" required>
+                    <select th:field="*{currencyCode}" id="currency-select" required class="form-input">
                         <option value="">Moneda</option>
                         <option value="MXN">MXN — Peso mexicano</option>
                         <option value="ARS">ARS — Peso argentino</option>

@@ -18,7 +18,7 @@
 
     <section th:if="${!#lists.isEmpty(pendientes)}">
         <h3>Esperando tu confirmación</h3>
-        <div class="card" th:each="r : ${pendientes}" style="padding:1rem">
+        <div class="card" th:each="r : ${pendientes}">
             <p>
                 <strong th:text="${r.instance.experience.name}">Experiencia</strong>
                 · <span th:text="${r.user.username}">usuario</span>
@@ -40,7 +40,7 @@
         <a class="btn-primary" th:href="@{/feed}">Ver experiencias</a>
     </div>
 
-    <div class="card" th:each="r : ${reservations}" style="padding:1rem">
+    <div class="card" th:each="r : ${reservations}">
         <p>
             <strong th:text="${r.instance.experience.name}">Experiencia</strong>
             · <span th:text="${r.instance.date}">01/11/2026</span>
@@ -55,15 +55,14 @@
         </form>
 
         <form th:if="${r.status.name() == 'CONFIRMADA'}"
-              th:action="@{/instances/{id}/rate(id=${r.instance.id})}" method="post"
-              style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+              th:action="@{/instances/{id}/rate(id=${r.instance.id})}" method="post" class="rate-form">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <label class="hint">Estrellas
                 <select name="stars">
                     <option th:each="s : ${#numbers.sequence(1,5)}" th:value="${s}" th:text="${s}">5</option>
                 </select>
             </label>
-            <label class="hint" style="flex:1;min-width:12rem">Comentario
+            <label class="hint" style="flex:1">Comentario
                 <input name="text" placeholder="¿Qué tal estuvo?">
             </label>
             <button type="submit" class="btn-primary">Evaluar</button>

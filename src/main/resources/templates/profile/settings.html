@@ -6,11 +6,19 @@
     <div class="empty" th:if="${ok}" th:text="${ok}">OK</div>
     <div class="empty" th:if="${error}" th:text="${error}">Error</div>
 
-    <div class="card" style="padding:1rem;text-align:center">
+    <section class="visual-selector card" style="padding:1rem">
+        <h3>Estilo Visual</h3>
+        <div class="visual-selector-options">
+            <button type="button" class="btn-secondary" data-visual-style="1">🌸 Claro</button>
+            <button type="button" class="btn-secondary" data-visual-style="2">💜 Violeta</button>
+            <button type="button" class="btn-secondary" data-visual-style="3">🌙 Oscuro</button>
+        </div>
+    </section>
+
+    <div class="card" style="padding:1rem">
         <img th:if="${user.avatarBase64 != null}" alt="Avatar"
              th:src="'data:image/jpeg;base64,' + ${user.avatarBase64}"
-             class="avatar-ring"
-             style="width:88px;height:88px;border-radius:50%;object-fit:cover">
+             class="avatar-ring">
         <p><strong th:text="${user.username}">usuario</strong></p>
         <p class="meta"><strong th:text="${user.spPoints} + ' SP'">0 SP</strong></p>
     </div>
@@ -19,18 +27,18 @@
           class="card" style="padding:1rem;display:flex;flex-direction:column;gap:.8rem">
         <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <label>Nombre
-            <input name="username" th:value="${user.username}" required>
+            <input name="username" th:value="${user.username}" required class="form-input">
         </label>
         <div class="form-grid">
             <label>País
-                <select name="country" id="settings-country">
+                <select name="country" id="settings-country" class="form-input">
                     <option th:each="c : ${ {'México','Argentina','Colombia','Chile','Perú','Uruguay','España','Estados Unidos','Brasil'} }"
                             th:value="${c}" th:text="${c}"
                             th:selected="${user.country == c}">País</option>
                 </select>
             </label>
             <label>Moneda
-                <select name="currencyCode" id="settings-currency">
+                <select name="currencyCode" id="settings-currency" class="form-input">
                     <option th:each="m : ${ {'MXN','ARS','COP','CLP','PEN','UYU','EUR','USD','BRL'} }"
                             th:value="${m}" th:text="${m}"
                             th:selected="${user.currencyCode == m}">MXN</option>
@@ -70,6 +78,23 @@
             if (sugerida) currency.value = sugerida;
         });
     })();
+
+    // Marca el botón activo al entrar y delega clicks (Theme global vive en layout).
+    document.addEventListener('DOMContentLoaded', function() {
+        var apply = window.Theme ? window.Theme.set : window.setStyle;
+        if (!apply) return;
+        var saved = null;
+        try { saved = localStorage.getItem('visualStyle'); } catch (e) { /* storage no disponible */ }
+        apply(saved || 1);
+    });
+    document.querySelector('.visual-selector-options').addEventListener('click', function (ev) {
+        var btn = ev.target.closest('[data-visual-style]');
+        if (!btn) return;
+        var apply = window.Theme ? window.Theme.set : window.setStyle;
+        if (!apply) return;
+        apply(btn.getAttribute('data-visual-style'));
+    });
+
 </script>
 <script th:src="@{/js/image-picker.js}"></script>
 </body>

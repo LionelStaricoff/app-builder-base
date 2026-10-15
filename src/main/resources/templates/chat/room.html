@@ -27,7 +27,7 @@
           style="display:flex;gap:.5rem;margin-top:1rem">
         <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <input id="chat-text" name="text" placeholder="Escribí un mensaje…" required
-               style="flex:1;padding:.6rem;border-radius:8px;border:1px solid #ddd">
+               class="form-input">
         <button type="submit" class="btn-primary">Enviar</button>
     </form>
 </main>
