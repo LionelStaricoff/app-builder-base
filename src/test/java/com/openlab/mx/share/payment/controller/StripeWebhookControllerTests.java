@@ -46,7 +46,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * eventos implemented: completed→HELD, expired→FAILED+reserva CANCELADO,
  * payment_failed→FAILED; desconocidos 200 sin efecto.
  */
-@SpringBootTest(properties = "stripe.webhook-secret=whsec_test")
+// OJO: sin @SpringBootTest(properties=...) — ese extra cambiaba la clave de caché
+// del contexto y creaba un SEGUNDO contexto (con su propio FakePaymentGateway cuya
+// secuencia arranca de nuevo en cs_fake_1). Todos los contextos comparten la misma
+// H2 de test, así que los session ids se pisaban entre contextos y rompía
+// PaymentSuccessFlowTests (findFirstByStripeSessionId devolvía la fila de otro test).
+// El secret vive en src/test/resources/application.properties (compartido).
+@SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestGatewayConfig.class)
 @WithMockUser("demo_user")

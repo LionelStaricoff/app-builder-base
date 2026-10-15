@@ -104,7 +104,12 @@ class PaymentSuccessFlowTests {
                 .andExpect(redirectedUrl("/confirmation"));
         Payment held = pago(instanceId, "demo_user");
         assertEquals(PaymentStatus.HELD, held.getStatus());
-        assertEquals("pi_fake_1", held.getStripePaymentIntentId());
+        // Prefijo, no "pi_fake_1": con el contexto compartido la secuencia del
+        // FakePaymentGateway sigue avanzando (CancellationFlow/E2e/webhook ya
+        // crearon sesiones antes que este test en el suite completo).
+        org.junit.jupiter.api.Assertions.assertTrue(
+                held.getStripePaymentIntentId().startsWith("pi_fake_"),
+                "paymentIntent del fake, pero era: " + held.getStripePaymentIntentId());
         assertNotNull(held.getHeldAt());
     }
 

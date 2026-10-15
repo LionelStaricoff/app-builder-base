@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -41,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(com.openlab.mx.share.shared.TestGatewayConfig.class)
 class CancellationFlowTests {
 
     @Autowired
@@ -77,7 +79,19 @@ class CancellationFlowTests {
     @Test
     void participanteCancelaSuReservaConReembolso() throws Exception {
         Long instanceId = fechaFutura();
-        Reservation reserva = reservationService.reserve(instanceId, 1, usuario("demo_user"));
+        // Flujo Stripe nuevo: checkout crea PENDIENTE + payment, exito lo pone HELD.
+        mockMvc.perform(post("/checkout/" + instanceId)
+                        .with(user("demo_user")).with(csrf()).param("attendees", "1"))
+                .andExpect(status().is3xxRedirection());
+        Reservation reserva = reservationRepository
+                .findFirstByInstanceIdAndUserIdAndStatus(
+                        instanceId, usuario("demo_user").getId(), ReservationStatus.PENDIENTE)
+                .orElseThrow();
+        String sessionId = paymentRepository.findByReservationId(reserva.getId())
+                .orElseThrow().getStripeSessionId();
+        mockMvc.perform(get("/pago/exito").param("session_id", sessionId)
+                        .with(user("demo_user")))
+                .andExpect(status().is3xxRedirection());
 
         mockMvc.perform(post("/reservations/" + reserva.getId() + "/cancel")
                         .with(user("demo_user")).with(csrf()))
@@ -112,16 +126,10 @@ class CancellationFlowTests {
     void reservarYConfirmarGeneranNotificaciones() throws Exception {
         Long instanceId = fechaFutura();
 
-        mockMvc.perform(post("/reservations/" + instanceId)
-                        .with(user("demo_user")).with(csrf()).param("attendees", "1"))
-                .andExpect(status().is3xxRedirection());
-
-        // Sin pago no hay reserva ni notificación: solo se reserva al pagar.
+        // Flujo Stripe nuevo: el checkout crea la PENDIENTE + notifica al creador.
         mockMvc.perform(post("/checkout/" + instanceId)
                         .with(user("demo_user")).with(csrf())
-                        .param("attendees", "1")
-                        .param("cardNumber", "123456789012")
-                        .param("holder", "Demo User"))
+                        .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
 
         mockMvc.perform(get("/notifications").with(user("demo_creator")))

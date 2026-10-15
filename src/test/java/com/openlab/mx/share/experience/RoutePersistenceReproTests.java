@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,6 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /** Reproducción del reporte: paradas/fechas que no se guardan ni se muestran, edición que pierde datos. */
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(com.openlab.mx.share.shared.TestGatewayConfig.class)
 class RoutePersistenceReproTests {
 
     @Autowired
@@ -305,17 +307,10 @@ class RoutePersistenceReproTests {
         Long expId = experience.getId();
         Long instanceId = instanceRepository.findByExperienceIdOrderByDateAsc(expId).get(0).getId();
 
-        // demo_user reserva la fecha y paga (sin pago no hay reserva vigente).
-        mockMvc.perform(post("/reservations/" + instanceId)
-                        .with(user("demo_user")).with(csrf())
-                        .param("attendees", "1"))
-                .andExpect(status().is3xxRedirection());
-
+        // demo_user reserva la fecha y paga con Stripe (PENDIENTE -> HELD).
         mockMvc.perform(post("/checkout/" + instanceId)
                         .with(user("demo_user")).with(csrf())
-                        .param("attendees", "1")
-                        .param("cardNumber", "123456789012")
-                        .param("holder", "Demo User"))
+                        .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
 
         // demo_creator edita todo (descripción + imagen nueva) con la misma agenda.
