@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Verificación de identidad')}"></head>
+<body>
+<main class="app-main">
+    <div class="page-hero">
+        <h1>Verificación de identidad</h1>
+        <p>Un paso corto para reservar y publicar experiencias</p>
+    </div>
+
+    <div class="card" th:if="${status == 'VERIFIED'}">
+        <p><strong>✅ Tu identidad está verificada</strong></p>
+        <p class="hint" th:if="${verifiedAt != null}"
+           th:text="'Verificada el ' + ${#temporals.format(verifiedAt, 'dd/MM/yyyy HH:mm')}"></p>
+        <a class="btn-primary" th:href="${returnUrl}">Continuar</a>
+    </div>
+
+    <div class="card" th:if="${status != 'VERIFIED'}">
+        <p th:if="${status == 'NOT_STARTED'}">
+            Para reservar o publicar experiencias necesitamos verificar tu identidad.
+            El proceso toma unos minutos y lo completás con Didit, nuestro proveedor de identidad.
+        </p>
+        <p th:if="${status == 'IN_PROGRESS'}">
+            Tenés una verificación en curso. Podés empezar de nuevo si perdiste la pestaña.
+        </p>
+        <p th:if="${status == 'REJECTED'}">
+            Tu verificación anterior fue rechazada. Podés intentarlo de nuevo.
+        </p>
+        <p th:if="${status == 'EXPIRED'}">
+            Tu verificación expiró. Podés intentarlo de nuevo.
+        </p>
+        <p th:if="${status == 'PENDING_MANUAL'}">
+            Tu verificación está en revisión manual. Si querés, también podés empezar una nueva.
+        </p>
+
+        <input type="hidden" id="return-url" th:value="${returnUrl}">
+        <button id="start-verification" class="btn-primary" type="button">Verificar mi identidad</button>
+        <p class="hint">Vas a ser redirigido a un sitio externo (Didit) y al terminar volvés acá.</p>
+    </div>
+</main>
+<script th:src="@{/js/didit-verification.js}"></script>
+<nav th:replace="~{fragments/layout :: nav('feed')}"></nav>
+</body>
+</html>

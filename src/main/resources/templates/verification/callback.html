@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Procesando verificación')}"></head>
+<body>
+<main class="app-main">
+    <div class="page-hero">
+        <h1>Procesando tu verificación…</h1>
+        <p>Estamos esperando la confirmación del servidor. No cierres esta página.</p>
+    </div>
+
+    <div class="card">
+        <p id="callback-status">Verificando estado…</p>
+        <input type="hidden" id="return-url" th:value="${returnUrl}">
+        <a id="back-link" class="btn-primary" th:href="${returnUrl}" style="display:none;">Volver</a>
+    </div>
+</main>
+<script th:src="@{/js/didit-verification.js}"></script>
+</body>
+</html>
