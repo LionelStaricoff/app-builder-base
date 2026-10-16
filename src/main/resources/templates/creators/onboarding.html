@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Configurar cobros')}"></head>
+<body>
+<main class="app-main">
+    <div class="page-hero">
+        <h1>Configurar cobros</h1>
+        <p>Un paso corto para recibir tus ganancias</p>
+    </div>
+
+    <div class="card">
+        <p th:if="${status.status == 'NOT_STARTED'}">
+            Para recibir tus ganancias necesitás configurar una cuenta Stripe Connect.
+            El proceso toma unos minutos y lo completás con Stripe, nuestro proveedor de pagos.
+        </p>
+        <p th:if="${status.status == 'ONBOARDING_INCOMPLETE'}">
+            Tenés una configuración en curso. Podés completarla ahora.
+        </p>
+        <p th:if="${status.status == 'RESTRICTED'}">
+            Tu cuenta fue restringida por Stripe. Contactá a soporte para más información.
+        </p>
+
+        <button id="start-onboarding" class="btn-primary" type="button"
+                th:if="${status.status != 'RESTRICTED'}">Configurar cuenta</button>
+        <p class="hint">Vas a ser redirigido a un sitio externo (Stripe) y al terminar volvés acá.</p>
+    </div>
+</main>
+<script th:src="@{/js/creators-onboarding.js}"></script>
+<nav th:replace="~{fragments/layout :: nav('mine')}"></nav>
+</body>
+</html>

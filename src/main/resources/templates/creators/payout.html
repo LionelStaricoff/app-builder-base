@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tus Cobros')}"></head>
+<body>
+<main class="app-main">
+    <div class="page-hero">
+        <h1>Tus Cobros</h1>
+        <p>Consultá tu saldo y reclamá tus ganancias</p>
+    </div>
+
+    <!-- Estado de cuenta Connect -->
+    <div class="card" th:if="${status.hasConnectedAccount}">
+        <div class="card-head">
+            <h3>Cuenta Stripe Connect</h3>
+            <span class="chip" th:text="${status.status}">ACTIVE</span>
+        </div>
+        <p class="meta" th:if="${status.payoutsEnabled}">
+            Tu cuenta está habilitada para recibir pagos.
+        </p>
+        <p class="meta" th:if="${!status.payoutsEnabled}">
+            Tu cuenta aún no está habilitada. Completá el onboarding para recibir pagos.
+        </p>
+        <a class="btn-primary" th:if="${status.onboardingRequired}"
+           th:href="@{/creators/onboarding}">Configurar cuenta</a>
+    </div>
+
+    <div class="card" th:if="${!status.hasConnectedAccount}">
+        <p><strong>No tenés cuenta Stripe Connect configurada</strong></p>
+        <p class="meta">Necesitás configurar una cuenta para recibir tus ganancias.</p>
+        <a class="btn-primary" th:href="@{/creators/onboarding}">Configurar cuenta</a>
+    </div>
+
+    <!-- Monto pendiente -->
+    <div class="card" th:if="${pendingAmount > 0}">
+        <p><strong>Tenés <span th:text="${pendingAmount}">$0.00"></span> para reclamar</strong></p>
+        <p class="meta">Cuando estés listo, presioná el botón y el dinero va a tu cuenta bancaria.</p>
+        <button id="reclamar-btn" class="btn-primary" type="button">Reclamar</button>
+        <p class="hint" id="reclamar-status"></p>
+    </div>
+
+    <div class="card" th:if="${pendingAmount == 0}">
+        <p><strong>No tenés fondos para reclamar</strong></p>
+        <p class="meta">Cuando completes un viaje y se libere el escrow, el dinero va a aparecer acá.</p>
+    </div>
+
+    <!-- Historial -->
+    <div class="card">
+        <div class="card-head">
+            <h3>Historial de cobros</h3>
+        </div>
+        <p class="meta">Los transfers aparecen acá cuando los reclamás.</p>
+    </div>
+</main>
+<nav th:replace="~{fragments/layout :: nav('mine')}"></nav>
+<script th:src="@{/js/creators-payout.js}"></script>
+</body>
+</html>
