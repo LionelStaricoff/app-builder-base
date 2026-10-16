@@ -41,6 +41,9 @@ public class ConnectPayoutService {
     /**
      * El creador reclama todos sus pagos pendientes.
      * Ejecuta un transfer batch a su cuenta Connect.
+     *
+     * Idempotencia: si ya existe un payout para cualquiera de los pagos pendientes,
+     * se rechaza la solicitud para evitar transfers duplicados.
      */
     @Transactional
     public Map<String, Object> requestPayout() {
@@ -60,14 +63,27 @@ public class ConnectPayoutService {
             throw new DomainException("No hay fondos disponibles para reclamar");
         }
 
-        // 3. Calcular total y crear registro de payout
+        // 3. Verificación de idempotencia: si ya existe un payout para cualquiera
+        //    de estos pagos, rechazar para evitar transfer duplicado
+        for (Payment payment : pendingPayments) {
+            if (connectPayoutRepository.existsByPaymentId(payment.getId())) {
+                throw new DomainException("Ya existe una solicitud de payout para uno de estos pagos. Verifica tu historial.");
+            }
+        }
+
+        // 4. Calcular total
         BigDecimal totalAmount = pendingPayments.stream()
                 .map(Payment::getPayout)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        String idempotencyKey = UUID.randomUUID().toString();
+        // 5. Clave de idempotencia determinística: mismo usuario + mismos pagos = misma clave
+        String idempotencyKey = "payout-" + creator.getId() + "-" + pendingPayments.stream()
+                .map(p -> String.valueOf(p.getId()))
+                .sorted()
+                .reduce((a, b) -> a + ":" + b)
+                .orElse("");
 
-        // 4. Ejecutar transfer batch a la cuenta conectada
+        // 6. Ejecutar transfer batch a la cuenta conectada
         String transferId;
         try {
             transferId = gateway.transferToConnectedAccount(
@@ -95,7 +111,7 @@ public class ConnectPayoutService {
             throw new DomainException("No se pudo ejecutar el transfer. Reintenta en unos minutos.");
         }
 
-        // 5. Registrar payouts exitosos y actualizar pagos
+        // 7. Registrar payouts exitosos y actualizar pagos
         for (Payment payment : pendingPayments) {
             ConnectPayout payout = ConnectPayout.builder()
                     .creator(creator)
