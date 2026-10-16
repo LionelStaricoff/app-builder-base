@@ -270,7 +270,13 @@ h1, h2, h3, .brand-name {
 .btn-secondary { background: var(--surface); border: 1px solid #ccc; border-radius: var(--radius); padding: .5rem 1rem; cursor: pointer; }
 .field-error, span.error, div.error { color: var(--color-primary); font-size: .85rem; }
 label { display: block; margin: .75rem 0; font-size: .9rem; }
-input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], select, textarea { width: 100%; padding: .65rem .75rem; border: 1.5px solid #e2e2e6; border-radius: 10px; font-size: 1rem; background: var(--surface); transition: border-color 0.15s ease, box-shadow 0.15s ease; }.form-input { border: 1.5px solid #e2e2e6; border-radius: 10px; padding: .65rem .75rem; font-size: 1rem; background: var(--surface); width: 100%; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], textarea { width: 100%; padding: .65rem .75rem; border: 1.5px solid #e2e2e6; border-radius: 10px; font-size: 1rem; background: #fff; color: #111827; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+input[type=date] { color-scheme: light; }
+select { width: 100%; padding: .65rem .75rem; border: 1.5px solid #e2e2e6; border-radius: 10px; font-size: 1rem; background: #fff; color: #111827; transition: border-color 0.15s ease, box-shadow 0.15s ease; -webkit-appearance: none; appearance: none; }
+select option { background: #fff; color: #111827; }
+.form-input { border: 1.5px solid #e2e2e6; border-radius: 10px; padding: .65rem .75rem; font-size: 1rem; background: #fff; color: #111827; width: 100%; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+select.form-input, select { background: #fff; color: #111827; }
+select.form-input option, select option { background: #fff; color: #111827; }
 .form-input::placeholder { color: #777; opacity: 1; }
 .form-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15); }
 input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=number]:focus, input[type=date]:focus, input[type=time]:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15); }
@@ -706,10 +712,22 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
   border: 3px solid var(--color-primary);
 }
 
-.auth-card input:focus {
+.auth-card input,
+.auth-card select,
+.auth-card .form-input {
+  background: #fff !important;
+  color: #111827 !important;
+}
+.auth-card input:focus,
+.auth-card select:focus,
+.auth-card .form-input:focus {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
   border-color: var(--color-accent);
+}
+.auth-card select option {
+  background: #fff;
+  color: #111827;
 }
 
 /* Accessibility: focus-visible for keyboard navigation */
