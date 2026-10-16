@@ -35,7 +35,7 @@
         function current() { return read(KEY) || '1'; }
         function set(styleNum) {
           var s = String(styleNum);
-          if (s !== '1' && s !== '2' && s !== '3') { s = '1'; }
+          if (s !== '1' && s !== '2' && s !== '3' && s !== '4' && s !== '5' && s !== '6') { s = '1'; }
           document.documentElement.setAttribute('data-style', s);
           write(KEY, s);
           markActive(s);

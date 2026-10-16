@@ -5,43 +5,104 @@
   --bg: #F8F9FA;
   --surface: #FFFFFF;
   --text: #212121;
+  --text-muted: #6B7280;
+  --border: #E5E7EB;
+  --border-subtle: #F1F3F5;
+  --muted-bg: #F8F9FA;
   --star: #FFC107;
   --radius: 20px;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   --style: 1;
 }
 
-/* Visual Style 1: Light (default) */
+/* Visual Style 1: Light (default) - Polished */
 [data-style="1"] {
   --bg: #F8F9FA;
   --surface: #FFFFFF;
-  --text: #212121;
+  --text: #111827;
+  --text-muted: #6B7280;
+  --border: #E5E7EB;
+  --border-subtle: #F1F3F5;
+  --muted-bg: #FDF2F6;
   --color-primary: #E91E63;
   --color-secondary: #D81B60;
   --color-accent: #FF4081;
   --star: #FFC107;
 }
 
-/* Visual Style 2: Purple Theme */
+/* Visual Style 2: Violet Theme - Polished */
 [data-style="2"] {
-  --bg: #F0E6FF;
-  --surface: #E8D5E9;
-  --text: #4A148C;
-  --color-primary: #AA00FF;
-  --color-secondary: #6A00A0;
-  --color-accent: #E040FB;
-  --star: #FFD60A;
+  --bg: #F3F0FF;
+  --surface: #FFFFFF;
+  --text: #312E81;
+  --text-muted: #6B7280;
+  --border: #DDD6FE;
+  --border-subtle: #EDE9FE;
+  --muted-bg: #F5F3FF;
+  --color-primary: #7C3AED;
+  --color-secondary: #6D28D9;
+  --color-accent: #A78BFA;
+  --star: #F59E0B;
 }
 
-/* Dark Mode (config toggle) */
+/* Visual Style 3: Dark - Polished */
 [data-style="3"] {
-  --bg: #212121;
-  --surface: #2B2B2B;
-  --text: #E0E0E0;
+  --bg: #111827;
+  --surface: #1F2937;
+  --text: #F9FAFB;
+  --text-muted: #D1D5DB;
+  --border: #374151;
+  --border-subtle: #2F3A4C;
+  --muted-bg: #1F2937;
   --color-primary: #F48FB1;
   --color-secondary: #EC407A;
   --color-accent: #FF8A65;
   --star: #FFAB91;
+}
+
+/* Visual Style 4: Clean Light Neutral - Professional Minimal */
+[data-style="4"] {
+  --bg: #F8F9FA;
+  --surface: #FFFFFF;
+  --text: #111827;
+  --text-muted: #6B7280;
+  --border: #E5E7EB;
+  --border-subtle: #F1F3F5;
+  --muted-bg: #F9FAFB;
+  --color-primary: #2563EB;
+  --color-secondary: #1D4ED8;
+  --color-accent: #3B82F6;
+  --star: #F59E0B;
+}
+
+/* Visual Style 5: Soft Warm Neutral - Professional Social */
+[data-style="5"] {
+  --bg: #FAF7F5;
+  --surface: #FFFFFF;
+  --text: #1C1917;
+  --text-muted: #78716C;
+  --border: #E7E5E4;
+  --border-subtle: #F5F5F4;
+  --muted-bg: #F5F5F4;
+  --color-primary: #0F766E;
+  --color-secondary: #115E59;
+  --color-accent: #14B8A6;
+  --star: #F59E0B;
+}
+
+/* Visual Style 6: Dark Minimal Neutral - Professional Dark */
+[data-style="6"] {
+  --bg: #0F172A;
+  --surface: #1E293B;
+  --text: #F1F5F9;
+  --text-muted: #94A3B8;
+  --border: #334155;
+  --border-subtle: #24344C;
+  --muted-bg: #1E293B;
+  --color-primary: #60A5FA;
+  --color-secondary: #3B82F6;
+  --color-accent: #93C5FD;
+  --star: #FBBF24;
 }
 
 * { box-sizing: border-box; }
@@ -81,7 +142,7 @@ h1, h2, h3, .brand-name {
   display: flex;
   justify-content: space-around;
   background: var(--surface);
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-subtle);
   padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
   z-index: 100;
 }
@@ -136,7 +197,7 @@ h1, h2, h3, .brand-name {
   min-width: 10rem;
   padding: .5rem .9rem;
   border-radius: 999px;
-  border: 1.5px solid #f3b8cd;
+  border: 1.5px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow);
   font-size: .85rem;
@@ -198,14 +259,14 @@ h1, h2, h3, .brand-name {
 .card-head a { color: var(--text); text-decoration: none; }
 .heart { border: none; background: none; }
 .heart button { border: none; background: none; font-size: 1.4rem; cursor: pointer; }
-.meta { color: #555; font-size: .9rem; }
+.meta { color: var(--text-muted); font-size: .9rem; }
 .stars { color: var(--star); }
 .empty { text-align: center; color: #777; padding: 2rem 1rem; }
 .tabs { display: flex; gap: 1rem; margin-bottom: 1rem; }
-.tab { padding: .5rem 0; border-bottom: 3px solid transparent; color: #777; }
+.tab { padding: .5rem 0; border-bottom: 3px solid transparent; color: var(--text-muted); }
 .tab.active { border-color: var(--color-primary); color: var(--text); font-weight: 600; }
 .tab-divider { height: 1px; background: #eee; margin: 1.5rem 0; }
-.hint { font-size: .8rem; color: #777; }
+.hint { font-size: .8rem; color: var(--text-muted); }
 .btn-secondary { background: var(--surface); border: 1px solid #ccc; border-radius: var(--radius); padding: .5rem 1rem; cursor: pointer; }
 .field-error, span.error, div.error { color: var(--color-primary); font-size: .85rem; }
 label { display: block; margin: .75rem 0; font-size: .9rem; }
@@ -252,7 +313,7 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 /* Banner de ubicación en el feed */
 .location-banner {
   background: var(--surface);
-  border: 1.5px solid #f3b8cd;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 0.85rem 1rem;
@@ -294,7 +355,7 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 /* Pill de categoría (detalle) y lista de fechas */
 .pill {
   display: inline-block;
-  background: #FCE4EC;
+  background: var(--muted-bg);
   color: var(--color-secondary);
   font-size: 0.75rem;
   font-weight: 600;
@@ -554,9 +615,9 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 .image-picker { margin: 0.75rem 0; }
 
 .image-picker-drop {
-  border: 2px dashed #f3b8cd;
+  border: 2px dashed var(--border);
   border-radius: var(--radius);
-  background: #FDF2F6;
+  background: var(--muted-bg);
   padding: 1.5rem 1rem;
   text-align: center;
   cursor: pointer;
@@ -571,7 +632,7 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 .image-picker-drop:focus-visible,
 .image-picker-drop.dragging {
   border-color: var(--color-primary);
-  background: #FCE4EC;
+  background: var(--muted-bg);
   outline: none;
 }
 
