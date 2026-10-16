@@ -143,10 +143,14 @@ class FeedAndFavoritesControllerTests {
     @Test
     @WithMockUser("demo_user")
     void feedApiDevuelveJsonConUnaTarjeta() throws Exception {
+        vaciar(ExperienceCategory.SOCIAL);
+        createExperience("API Exp " + UUID.randomUUID(), ExperienceCategory.SOCIAL);
+
         mockMvc.perform(get("/feed/api").param("page", "0"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.size").value(1));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.page.size").isNumber());
     }
 
     @Test
