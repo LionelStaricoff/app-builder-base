@@ -1,4 +1,6 @@
+
 package com.openlab.mx.share.user;
+import org.junit.jupiter.api.Disabled;
 
 import com.openlab.mx.share.user.entity.Role;
 import com.openlab.mx.share.user.entity.User;

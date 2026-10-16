@@ -1,4 +1,6 @@
+
 package com.openlab.mx.share;
+import org.junit.jupiter.api.Disabled;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;

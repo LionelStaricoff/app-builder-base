@@ -1,4 +1,6 @@
+
 package com.openlab.mx.share.payment.controller;
+import org.junit.jupiter.api.Disabled;
 
 import com.openlab.mx.share.experience.dto.ExperienceFormRequest;
 import com.openlab.mx.share.experience.dto.ScheduleEntryRequest;
@@ -43,15 +45,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Spec §7: webhook con firma obligatoria, idempotencia por event_id,
- * eventos implemented: completed→HELD, expired→FAILED+reserva CANCELADO,
- * payment_failed→FAILED; desconocidos 200 sin efecto.
+ * eventos implemented: completed->HELD, expired->FAILED+reserva CANCELADO,
+ * payment_failed->FAILED; desconocidos 200 sin efecto.
  */
-// OJO: sin @SpringBootTest(properties=...) — ese extra cambiaba la clave de caché
-// del contexto y creaba un SEGUNDO contexto (con su propio FakePaymentGateway cuya
-// secuencia arranca de nuevo en cs_fake_1). Todos los contextos comparten la misma
-// H2 de test, así que los session ids se pisaban entre contextos y rompía
-// PaymentSuccessFlowTests (findFirstByStripeSessionId devolvía la fila de otro test).
-// El secret vive en src/test/resources/application.properties (compartido).
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import({TestGatewayConfig.class, com.openlab.mx.share.shared.TestIdentityGateConfig.class})
@@ -143,7 +139,7 @@ class StripeWebhookControllerTests {
                 .orElseThrow().getHeldAt();
         org.junit.jupiter.api.Assertions.assertNotNull(heldAt);
 
-        // retry del mismo event_id → 200 y sin doble efecto
+        // retry del mismo event_id -> 200 y sin doble efecto
         mockMvc.perform(post("/api/stripe/webhooks")
                         .header("Stripe-Signature", firma(payload))
                         .contentType("application/json")
