@@ -112,9 +112,9 @@ public class StripeWebhookController {
             // ─── Stripe Connect ─────────────────────────────────────────────
             case "account.updated":
                 return actualizarCuentaConnect(objectId);
-            case "transfer.paid":
+            case "transfer.created":
                 return marcarTransferCompletado(objectId);
-            case "transfer.failed":
+            case "transfer.reversed":
                 return marcarTransferFallido(objectId);
             default:
                 return null;
