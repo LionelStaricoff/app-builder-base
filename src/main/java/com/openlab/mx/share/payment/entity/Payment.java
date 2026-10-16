@@ -64,6 +64,13 @@ public class Payment {
     @Column(precision = 10, scale = 2)
     private BigDecimal refund;
 
+    /**
+     * Estado del desembolso al creador vía Stripe Connect.
+     * null = pago legacy (antes de Connect). PENDING = esperando reclamar.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payout_status")
+    private PayoutStatus payoutStatus;
 
     // Referencias Stripe (spec §3.1). Nullable por pagos legacy simulados.
 

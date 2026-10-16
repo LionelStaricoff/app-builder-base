@@ -10,6 +10,7 @@ import com.openlab.mx.share.experience.repository.CommentRepository;
 import com.openlab.mx.share.experience.repository.RatingRepository;
 import com.openlab.mx.share.payment.entity.Payment;
 import com.openlab.mx.share.payment.entity.PaymentStatus;
+import com.openlab.mx.share.payment.entity.PayoutStatus;
 import com.openlab.mx.share.payment.repository.PaymentRepository;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
@@ -78,6 +79,8 @@ public class EscrowService {
         payment.setStatus(PaymentStatus.RELEASED);
         payment.setReleasedAt(LocalDateTime.now());
         payment.setPayout(payment.getAmount().subtract(payment.getCommission()));
+        // Marcar como pendiente de payout al creador (Stripe Connect)
+        payment.setPayoutStatus(PayoutStatus.PENDING);
         paymentRepository.save(payment);
         // Spec §4: RELEASED aplica el dinero real (capture) tras la persistencia
         // (DB source of truth). Legacy sin pi: solo contable.

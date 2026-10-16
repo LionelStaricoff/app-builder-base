@@ -26,4 +26,26 @@ public interface PaymentGateway {
 
     /** Cancela la autorización sin capturar (refund del 100%). */
     void cancel(String paymentIntentId);
+
+    // ─── Stripe Connect ───────────────────────────────────────────────────
+
+    /** Crea una cuenta Connect (Express) para un creador. Devuelve el acct_id. */
+    String createConnectAccount(String country, String email);
+
+    /** Genera un Account Link temporal para Hosted Onboarding. */
+    String createAccountLink(String stripeAccountId, String refreshUrl, String returnUrl);
+
+    /** Consulta el estado real de una cuenta Connect desde Stripe. */
+    ConnectAccountInfo retrieveConnectAccount(String stripeAccountId);
+
+    /** Ejecuta un transfer de la plataforma a una cuenta conectada. */
+    String transferToConnectedAccount(String stripeAccountId, BigDecimal amount, String currency, String idempotencyKey);
+
+    /** Información relevante de una cuenta Connect para decidir si puede recibir pagos. */
+    record ConnectAccountInfo(
+            String id,
+            boolean chargesEnabled,
+            boolean payoutsEnabled,
+            String disabledReason
+    ) {}
 }

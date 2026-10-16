@@ -38,4 +38,26 @@ public class UnconfiguredPaymentGateway implements PaymentGateway {
     public void cancel(String paymentIntentId) {
         throw noDisponible();
     }
+
+    // ─── Stripe Connect ───────────────────────────────────────────────────
+
+    @Override
+    public String createConnectAccount(String country, String email) {
+        throw noDisponible();
+    }
+
+    @Override
+    public String createAccountLink(String stripeAccountId, String refreshUrl, String returnUrl) {
+        throw noDisponible();
+    }
+
+    @Override
+    public ConnectAccountInfo retrieveConnectAccount(String stripeAccountId) {
+        throw noDisponible();
+    }
+
+    @Override
+    public String transferToConnectedAccount(String stripeAccountId, BigDecimal amount, String currency, String idempotencyKey) {
+        throw noDisponible();
+    }
 }

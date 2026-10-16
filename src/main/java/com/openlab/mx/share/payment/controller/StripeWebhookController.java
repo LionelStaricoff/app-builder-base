@@ -1,11 +1,18 @@
 package com.openlab.mx.share.payment.controller;
 
+import com.openlab.mx.share.payment.entity.ConnectAccount;
+import com.openlab.mx.share.payment.entity.ConnectAccountStatus;
+import com.openlab.mx.share.payment.entity.ConnectPayout;
 import com.openlab.mx.share.payment.entity.Payment;
 import com.openlab.mx.share.payment.entity.PaymentStatus;
+import com.openlab.mx.share.payment.entity.PayoutStatus;
 import com.openlab.mx.share.payment.entity.StripeEvent;
+import com.openlab.mx.share.payment.repository.ConnectAccountRepository;
+import com.openlab.mx.share.payment.repository.ConnectPayoutRepository;
 import com.openlab.mx.share.payment.repository.PaymentRepository;
 import com.openlab.mx.share.payment.repository.StripeEventRepository;
 import com.openlab.mx.share.payment.service.StripeCheckoutService;
+import com.openlab.mx.share.payment.service.StripeConnectService;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
@@ -39,6 +46,9 @@ public class StripeWebhookController {
     private final StripeEventRepository stripeEventRepository;
     private final PaymentRepository paymentRepository;
     private final StripeCheckoutService stripeCheckoutService;
+    private final ConnectAccountRepository connectAccountRepository;
+    private final ConnectPayoutRepository connectPayoutRepository;
+    private final StripeConnectService stripeConnectService;
 
     @Value("${stripe.webhook-secret:}")
     private String webhookSecret = "";
@@ -99,6 +109,13 @@ public class StripeWebhookController {
                 return true;
             case "payment_intent.payment_failed":
                 return marcarFailed(objectId);
+            // ─── Stripe Connect ─────────────────────────────────────────────
+            case "account.updated":
+                return actualizarCuentaConnect(objectId);
+            case "transfer.paid":
+                return marcarTransferCompletado(objectId);
+            case "transfer.failed":
+                return marcarTransferFallido(objectId);
             default:
                 return null;
         }
@@ -111,6 +128,50 @@ public class StripeWebhookController {
             log.warn("checkout.session.completed sobre session_id conocido pero no en DB: {}", e.getMessage());
             throw e;
         }
+    }
+
+    // ─── Stripe Connect webhooks ─────────────────────────────────────────
+
+    /** account.updated: sincroniza el estado de la cuenta Connect. */
+    private Boolean actualizarCuentaConnect(String stripeAccountId) {
+        var account = connectAccountRepository.findByStripeAccountId(stripeAccountId)
+                .orElse(null);
+        if (account == null) {
+            return false; // cuenta no conocida: no-op
+        }
+        // Re-sincronizar desde Stripe
+        stripeConnectService.syncAccountStatus(account.getUser());
+        return true;
+    }
+
+    /** transfer.paid: marca el payout como completado. */
+    private Boolean marcarTransferCompletado(String transferId) {
+        var payout = connectPayoutRepository.findAll().stream()
+                .filter(p -> transferId.equals(p.getStripeTransferId()))
+                .findFirst()
+                .orElse(null);
+        if (payout == null) {
+            return false;
+        }
+        payout.setStatus(PayoutStatus.COMPLETED);
+        payout.setCompletedAt(java.time.LocalDateTime.now());
+        connectPayoutRepository.save(payout);
+        return true;
+    }
+
+    /** transfer.failed: marca el payout como fallido. */
+    private Boolean marcarTransferFallido(String transferId) {
+        var payout = connectPayoutRepository.findAll().stream()
+                .filter(p -> transferId.equals(p.getStripeTransferId()))
+                .findFirst()
+                .orElse(null);
+        if (payout == null) {
+            return false;
+        }
+        payout.setStatus(PayoutStatus.FAILED);
+        payout.setFailureReason("Stripe transfer failed");
+        connectPayoutRepository.save(payout);
+        return true;
     }
 
     private Long stripeUser(String sessionId) {

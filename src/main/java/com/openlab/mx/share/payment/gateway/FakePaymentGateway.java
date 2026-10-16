@@ -57,6 +57,45 @@ public class FakePaymentGateway implements PaymentGateway {
         operations.put(paymentIntentId, "cancel");
     }
 
+    // ─── Stripe Connect ───────────────────────────────────────────────────
+
+    private final Map<String, ConnectAccountInfo> connectAccounts = new ConcurrentHashMap<>();
+
+    @Override
+    public String createConnectAccount(String country, String email) {
+        String accountId = "acct_fake_" + secuencia.incrementAndGet();
+        connectAccounts.put(accountId, new ConnectAccountInfo(accountId, false, false, null));
+        return accountId;
+    }
+
+    @Override
+    public String createAccountLink(String stripeAccountId, String refreshUrl, String returnUrl) {
+        return "https://connect.stripe.com/fake/onboarding/" + stripeAccountId;
+    }
+
+    @Override
+    public ConnectAccountInfo retrieveConnectAccount(String stripeAccountId) {
+        return connectAccounts.getOrDefault(stripeAccountId,
+                new ConnectAccountInfo(stripeAccountId, true, true, null));
+    }
+
+    @Override
+    public String transferToConnectedAccount(String stripeAccountId, BigDecimal amount, String currency, String idempotencyKey) {
+        String transferId = "tr_fake_" + secuencia.incrementAndGet();
+        operations.put(transferId, "transfer:" + stripeAccountId + ":" + amount.toPlainString() + ":" + currency);
+        return transferId;
+    }
+
+    /** Helper de test: simula que una cuenta Connect fue activada por onboarding. */
+    public void markAccountActive(String stripeAccountId) {
+        connectAccounts.put(stripeAccountId, new ConnectAccountInfo(stripeAccountId, true, true, null));
+    }
+
+    /** Helper de test: estado de una cuenta Connect. */
+    public ConnectAccountInfo connectAccountInfo(String stripeAccountId) {
+        return connectAccounts.get(stripeAccountId);
+    }
+
     /** Helper de test: operación registrada ("capture|cancel|capturePartial:<monto>") o null. */
     public String operationOf(String paymentIntentId) {
         return operations.get(paymentIntentId);

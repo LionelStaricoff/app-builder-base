@@ -1,11 +1,17 @@
 package com.openlab.mx.share.payment.gateway;
 
 import com.stripe.exception.StripeException;
+import com.stripe.model.Account;
+import com.stripe.model.AccountLink;
 import com.stripe.model.checkout.Session;
 import com.stripe.model.PaymentIntent;
+import com.stripe.model.Transfer;
 import com.stripe.net.RequestOptions;
+import com.stripe.param.AccountCreateParams;
+import com.stripe.param.AccountLinkCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.param.PaymentIntentCaptureParams;
+import com.stripe.param.TransferCreateParams;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,6 +120,73 @@ public class StripePaymentGateway implements PaymentGateway {
             pi.cancel(options);
         } catch (StripeException e) {
             throw new IllegalStateException("El pago no se canceló en Stripe", e);
+        }
+    }
+
+    // ─── Stripe Connect ───────────────────────────────────────────────────
+
+    @Override
+    public String createConnectAccount(String country, String email) {
+        try {
+            Account account = Account.create(AccountCreateParams.builder()
+                    .setType(AccountCreateParams.Type.EXPRESS)
+                    .setCountry(country)
+                    .setEmail(email)
+                    .setCapabilities(AccountCreateParams.Capabilities.builder()
+                            .setTransfers(AccountCreateParams.Capabilities.Transfers.builder()
+                                    .setRequested(true)
+                                    .build())
+                            .build())
+                    .build(), opciones(null));
+            log.info("Cuenta Connect creada: {}", account.getId());
+            return account.getId();
+        } catch (StripeException e) {
+            throw new IllegalStateException("No se pudo crear la cuenta Connect en Stripe", e);
+        }
+    }
+
+    @Override
+    public String createAccountLink(String stripeAccountId, String refreshUrl, String returnUrl) {
+        try {
+            AccountLink link = AccountLink.create(AccountLinkCreateParams.builder()
+                    .setAccount(stripeAccountId)
+                    .setRefreshUrl(refreshUrl)
+                    .setReturnUrl(returnUrl)
+                    .setType(AccountLinkCreateParams.Type.ACCOUNT_ONBOARDING)
+                    .build(), opciones(null));
+            return link.getUrl();
+        } catch (StripeException e) {
+            throw new IllegalStateException("No se pudo generar el enlace de onboarding", e);
+        }
+    }
+
+    @Override
+    public ConnectAccountInfo retrieveConnectAccount(String stripeAccountId) {
+        try {
+            Account account = Account.retrieve(stripeAccountId, opciones(null));
+            return new ConnectAccountInfo(
+                    account.getId(),
+                    Boolean.TRUE.equals(account.getChargesEnabled()),
+                    Boolean.TRUE.equals(account.getPayoutsEnabled()),
+                    account.getRequirements() != null ? account.getRequirements().getDisabledReason() : null
+            );
+        } catch (StripeException e) {
+            throw new IllegalStateException("No se pudo consultar la cuenta Connect en Stripe", e);
+        }
+    }
+
+    @Override
+    public String transferToConnectedAccount(String stripeAccountId, BigDecimal amount, String currency, String idempotencyKey) {
+        try {
+            Transfer transfer = Transfer.create(TransferCreateParams.builder()
+                    .setAmount(toCents(amount))
+                    .setCurrency(currency.toLowerCase())
+                    .setDestination(stripeAccountId)
+                    .build(), opciones(idempotencyKey));
+            log.info("Transfer creado: {} a {}", transfer.getId(), stripeAccountId);
+            return transfer.getId();
+        } catch (StripeException e) {
+            throw new IllegalStateException("No se pudo ejecutar el transfer a la cuenta conectada", e);
         }
     }
 
