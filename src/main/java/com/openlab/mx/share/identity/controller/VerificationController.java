@@ -3,6 +3,7 @@ package com.openlab.mx.share.identity.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.openlab.mx.share.identity.client.DiditSession;
+import com.openlab.mx.share.identity.client.DiditApiException;
 import com.openlab.mx.share.identity.dto.VerificationStatusResponse;
 import com.openlab.mx.share.identity.service.VerificationSessionService;
 import com.openlab.mx.share.shared.CurrentUser;
@@ -42,13 +43,24 @@ public class VerificationController {
         } catch (VerificationAlreadyCompletedException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(new ApiError(CODE_ALREADY_VERIFIED, e.getMessage()));
+        } catch (DiditApiException e) {
+            log.error("Error de Didit al crear sesión: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiError("didit_error", e.getMessage()));
         }
     }
 
     @GetMapping("/api/didit/status")
-    public VerificationStatusResponse status() {
-        log.info("Consultando estado de verificación Didit para usuario");
-        return sessionService.getStatus(currentUser.require());
+    public ResponseEntity<VerificationStatusResponse> status() {
+        try {
+            log.info("Consultando estado de verificación Didit para usuario");
+            VerificationStatusResponse response = sessionService.getStatus(currentUser.require());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error consultando estado Didit: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
     }
 
     public record ApiError(String code, String message) {
