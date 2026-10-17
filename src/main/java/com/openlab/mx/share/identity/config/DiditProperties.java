@@ -1,5 +1,6 @@
 package com.openlab.mx.share.identity.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
@@ -19,21 +20,29 @@ public class DiditProperties {
     private static final Logger log = LoggerFactory.getLogger(DiditProperties.class);
 
     @Value("${didit.api-key}")
-    private String apiKey = "";
+    private String apiKey;
 
     @Value("${didit.workflow-id}")
-    private String workflowId = "";
+    private String workflowId;
 
     @Value("${didit.webhook-secret}")
-    private String webhookSecret = "";
+    private String webhookSecret;
 
-    @Value("${didit.base-url:https://verification.didit.me}")
-    private String baseUrl = "https://verification.didit.me";
+    @Value("${didit.base-url}")
+    private String baseUrl;
 
     @Value("${didit.callback-url}")
-    private String callbackUrl = "";
+    private String callbackUrl;
 
-    public DiditProperties() {
-        log.info("DiditProperties cargado - apiKey: '{}', workflowId: '{}', baseUrl: '{}', callbackUrl: '{}'", apiKey, workflowId, baseUrl, callbackUrl);
+    /**
+     * Log DESPUÉS de la inyección de @Value: en el constructor los campos
+     * todavía están en su inicializador (vacíos), por eso un log ahí siempre
+     * mostraba workflowId y callbackUrl vacíos.
+     */
+    @PostConstruct
+    void logResuelto() {
+        log.info("DiditProperties resuelto - apiKey: {}, workflowId: '{}', baseUrl: '{}', callbackUrl: '{}'",
+                (apiKey == null || apiKey.isBlank()) ? "<VACÍA>" : "<seteada>",
+                workflowId, baseUrl, callbackUrl);
     }
 }

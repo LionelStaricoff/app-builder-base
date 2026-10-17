@@ -1,5 +1,6 @@
 package com.openlab.mx.share.identity.client;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.slf4j.Logger;
@@ -23,6 +24,8 @@ public class DiditRestSessionsClient implements DiditSessionsClient {
 
     private static final Logger log = LoggerFactory.getLogger(DiditRestSessionsClient.class);
 
+    private static final Gson GSON = new Gson();
+
     private final RestClient restClient;
 
     public DiditRestSessionsClient(RestClient.Builder builder, String baseUrl, String apiKey) {
@@ -42,12 +45,19 @@ public class DiditRestSessionsClient implements DiditSessionsClient {
         log.info("Creando sesión Didit - body: {}", body);
         log.info("Creando sesión Didit - workflow_id: {}, vendor_data: {}, callback: {}", workflowId, userId, callbackUrl);
 
+        // El body va serializado a JSON String (longitud conocida => Content-Length):
+        // mandar el Map directo hace que el request salga con Transfer-Encoding:
+        // chunked (sin longitud), y en ese framing Didit recibe el body vacío y
+        // responde 400 {"workflow_id":["This field is required."]} de forma
+        // intermitente (verificado contra su API: mismos bytes con Content-Length => 201).
+        String requestJson = GSON.toJson(body);
+
         String raw;
         try {
             raw = restClient.post()
                     .uri("/v3/session/")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body(body)
+                    .body(requestJson)
                     .retrieve()
                     .toEntity(String.class)
                     .getBody();
