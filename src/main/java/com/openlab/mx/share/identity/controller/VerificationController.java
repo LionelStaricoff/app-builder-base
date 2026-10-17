@@ -47,6 +47,10 @@ public class VerificationController {
             log.error("Error de Didit al crear sesión: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiError("didit_error", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error inesperado al iniciar verificación Didit para usuario {}: {}", user.getId(), e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiError("internal_error", "Error interno al iniciar verificación"));
         }
     }
 
@@ -57,7 +61,7 @@ public class VerificationController {
             VerificationStatusResponse response = sessionService.getStatus(currentUser.require());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("Error consultando estado Didit: {}", e.getMessage());
+            log.error("Error consultando estado Didit: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
         }
