@@ -36,6 +36,7 @@ public class VerificationSessionService {
     @Transactional
     public DiditSession start(User user) {
         log.info("Iniciando verificación Didit para usuario: {}", user.getId());
+        log.info("DiditProperties - workflowId: '{}', callbackUrl: '{}'", properties.getWorkflowId(), properties.getCallbackUrl());
         DiditVerification verification = repository.findByUserId(user.getId()).orElse(null);
         if (verification != null && verification.isVerified()) {
             throw new VerificationAlreadyCompletedException();

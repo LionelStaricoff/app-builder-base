@@ -2,6 +2,8 @@ package com.openlab.mx.share.identity.client;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -19,6 +21,8 @@ import java.util.Map;
  */
 public class DiditRestSessionsClient implements DiditSessionsClient {
 
+    private static final Logger log = LoggerFactory.getLogger(DiditRestSessionsClient.class);
+
     private final RestClient restClient;
 
     public DiditRestSessionsClient(RestClient.Builder builder, String baseUrl, String apiKey) {
@@ -35,6 +39,9 @@ public class DiditRestSessionsClient implements DiditSessionsClient {
         body.put("vendor_data", String.valueOf(userId));
         body.put("callback", callbackUrl);
 
+        log.info("Creando sesión Didit - body: {}", body);
+        log.info("Creando sesión Didit - workflow_id: {}, vendor_data: {}, callback: {}", workflowId, userId, callbackUrl);
+
         String raw;
         try {
             raw = restClient.post()
@@ -45,6 +52,7 @@ public class DiditRestSessionsClient implements DiditSessionsClient {
                     .toEntity(String.class)
                     .getBody();
         } catch (RestClientResponseException e) {
+            log.error("Didit respondió con error HTTP {}: {}", e.getStatusCode().value(), e.getResponseBodyAsString());
             throw mapStatus(e.getStatusCode().value());
         } catch (RestClientException e) {
             throw new DiditApiException("No se pudo contactar a Didit", e);

@@ -30,7 +30,7 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
             .csrf(csrf -> csrf.ignoringRequestMatchers(
-                    "/api/stripe/webhooks", "/api/webhooks/didit"))
+                    "/api/stripe/webhooks", "/api/webhooks/didit", "/api/didit/sessions"))
             .formLogin(form -> form
                 .loginPage("/login")
                 .defaultSuccessUrl("/feed", true)
