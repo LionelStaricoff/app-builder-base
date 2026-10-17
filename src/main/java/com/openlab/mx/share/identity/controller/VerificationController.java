@@ -1,5 +1,7 @@
 package com.openlab.mx.share.identity.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.openlab.mx.share.identity.client.DiditSession;
 import com.openlab.mx.share.identity.dto.VerificationStatusResponse;
 import com.openlab.mx.share.identity.service.VerificationSessionService;
@@ -23,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class VerificationController {
 
+    private static final Logger log = (Logger) LoggerFactory.getLogger(VerificationController.class);
+
     public static final String CODE_ALREADY_VERIFIED = "IDENTITY_ALREADY_VERIFIED";
 
     private final VerificationSessionService sessionService;
@@ -32,6 +36,7 @@ public class VerificationController {
     public ResponseEntity<?> createSession() {
         User user = currentUser.require();
         try {
+            log.info("Iniciando sesión de verificación Didit para usuario: {}", user.getId());
             DiditSession session = sessionService.start(user);
             return ResponseEntity.ok(session);
         } catch (VerificationAlreadyCompletedException e) {
@@ -42,6 +47,7 @@ public class VerificationController {
 
     @GetMapping("/api/didit/status")
     public VerificationStatusResponse status() {
+        log.info("Consultando estado de verificación Didit para usuario");
         return sessionService.getStatus(currentUser.require());
     }
 

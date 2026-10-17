@@ -2,7 +2,8 @@ package com.openlab.mx.share.identity.service;
 
 import com.openlab.mx.share.identity.client.DiditSession;
 import com.openlab.mx.share.identity.client.DiditSessionsClient;
-import com.openlab.mx.share.identity.config.DiditProperties;
+import com.openlab.mx.share.identity.config.DiditProperties;import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.openlab.mx.share.identity.dto.VerificationStatusResponse;
 import com.openlab.mx.share.identity.entity.DiditVerification;
 import com.openlab.mx.share.identity.repository.DiditVerificationRepository;
@@ -21,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class VerificationSessionService {
 
+    private static final Logger log = (Logger) LoggerFactory.getLogger(VerificationSessionService.class);
+
     private final DiditVerificationRepository repository;
     private final DiditSessionsClient sessionsClient;
     private final DiditProperties properties;
@@ -32,6 +35,7 @@ public class VerificationSessionService {
      */
     @Transactional
     public DiditSession start(User user) {
+        log.info("Iniciando verificación Didit para usuario: {}", user.getId());
         DiditVerification verification = repository.findByUserId(user.getId()).orElse(null);
         if (verification != null && verification.isVerified()) {
             throw new VerificationAlreadyCompletedException();
@@ -46,6 +50,7 @@ public class VerificationSessionService {
             verification.restart(session.sessionId());
             repository.save(verification);
         }
+        log.info("Sesión Didit guardada con ID: {}", session.sessionId());
         return session;
     }
 
