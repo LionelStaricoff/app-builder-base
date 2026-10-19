@@ -6,6 +6,7 @@ import com.openlab.mx.share.payment.gateway.PaymentGateway;
 import com.openlab.mx.share.payment.repository.ConnectAccountRepository;
 import com.openlab.mx.share.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.Map;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StripeConnectService {
 
     private final ConnectAccountRepository connectAccountRepository;
@@ -34,6 +36,11 @@ public class StripeConnectService {
     @Transactional
     public ConnectAccount getOrCreateAccount(User creator) {
         return connectAccountRepository.findByUser(creator)
+                .map(existing -> {
+                    log.info("[connect] cuenta existente id={} stripeId={} status={}",
+                            existing.getId(), existing.getStripeAccountId(), existing.getStatus());
+                    return existing;
+                })
                 .orElseGet(() -> createAccount(creator));
     }
 
@@ -46,7 +53,11 @@ public class StripeConnectService {
         ConnectAccount account = getOrCreateAccount(creator);
         String refreshUrl = baseUrl + "/onboarding/refresh";
         String returnUrl = baseUrl + "/onboarding/complete";
-        return gateway.createAccountLink(account.getStripeAccountId(), refreshUrl, returnUrl);
+        log.info("[connect] creando account link — stripeId={} refresh={} return={}",
+                account.getStripeAccountId(), refreshUrl, returnUrl);
+        String link = gateway.createAccountLink(account.getStripeAccountId(), refreshUrl, returnUrl);
+        log.info("[connect] account link OK (long={})", link != null ? link.length() : 0);
+        return link;
     }
 
     /**
@@ -56,7 +67,10 @@ public class StripeConnectService {
     @Transactional
     public ConnectAccount syncAccountStatus(User creator) {
         ConnectAccount account = getOrCreateAccount(creator);
+        log.info("[connect] sincronizando estado desde el gateway — stripeId={}", account.getStripeAccountId());
         PaymentGateway.ConnectAccountInfo info = gateway.retrieveConnectAccount(account.getStripeAccountId());
+        log.info("[connect] gateway respondió payoutsEnabled={} chargesEnabled={} disabledReason={}",
+                info.payoutsEnabled(), info.chargesEnabled(), info.disabledReason());
 
         if (info.payoutsEnabled() && info.chargesEnabled()) {
             account.setStatus(ConnectAccountStatus.ACTIVE);
@@ -84,6 +98,7 @@ public class StripeConnectService {
     public Map<String, Object> getStatus(User creator) {
         ConnectAccount account = connectAccountRepository.findByUser(creator).orElse(null);
         if (account == null) {
+            log.info("[connect] getStatus: sin cuenta Connect (NOT_STARTED)");
             return Map.of(
                     "hasConnectedAccount", false,
                     "status", ConnectAccountStatus.NOT_STARTED.name(),
@@ -93,6 +108,9 @@ public class StripeConnectService {
         }
         // Sincronizar con Stripe antes de devolver
         ConnectAccount synced = syncAccountStatus(creator);
+        log.info("[connect] getStatus: cuenta {} → status={} payoutsEnabled={}",
+                synced.getStripeAccountId(), synced.getStatus(),
+                synced.getStatus() == ConnectAccountStatus.ACTIVE);
         return Map.of(
                 "hasConnectedAccount", true,
                 "stripeAccountId", synced.getStripeAccountId(),
@@ -104,7 +122,10 @@ public class StripeConnectService {
 
     private ConnectAccount createAccount(User creator) {
         String country = mapCountryToIso(creator.getCountry());
+        log.info("[connect] creando cuenta Connect en el gateway — country={} email={} (¿Stripe configurado?){}",
+                country, creator.getEmail(), gateway.getClass().getSimpleName());
         String stripeAccountId = gateway.createConnectAccount(country, creator.getEmail());
+        log.info("[connect] cuenta Connect creada stripeId={}", stripeAccountId);
         ConnectAccount account = ConnectAccount.builder()
                 .user(creator)
                 .stripeAccountId(stripeAccountId)

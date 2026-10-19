@@ -13,6 +13,7 @@ import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ConnectPayoutService {
 
     private final ConnectPayoutRepository connectPayoutRepository;
@@ -48,18 +50,26 @@ public class ConnectPayoutService {
     @Transactional
     public Map<String, Object> requestPayout() {
         User creator = currentUser.require();
+        log.info("[payout] paso 1: buscando cuenta Connect de usuario={}", creator.getId());
 
         // 1. Verificar cuenta Connect activa
         ConnectAccount account = connectAccountRepository.findByUser(creator)
-                .orElseThrow(() -> new DomainException("No tienes una cuenta Connect configurada"));
+                .orElseThrow(() -> {
+                    log.warn("[payout] paso 1 FALLÓ: sin cuenta Connect para usuario={}", creator.getId());
+                    return new DomainException("No tienes una cuenta Connect configurada");
+                });
 
+        log.info("[payout] cuenta encontrada status={} stripeId={}", account.getStatus(), account.getStripeAccountId());
         if (account.getStatus() != ConnectAccountStatus.ACTIVE) {
+            log.warn("[payout] paso 1 FALLÓ: cuenta no ACTIVE (status={})", account.getStatus());
             throw new DomainException("Tu cuenta Connect no está habilitada para recibir pagos");
         }
 
         // 2. Buscar pagos pendientes de payout
         List<Payment> pendingPayments = paymentRepository.findPendingPayoutsByCreator(creator);
+        log.info("[payout] paso 2: {} pagos pendientes", pendingPayments.size());
         if (pendingPayments.isEmpty()) {
+            log.warn("[payout] paso 2 FALLÓ: sin fondos pendientes");
             throw new DomainException("No hay fondos disponibles para reclamar");
         }
 
@@ -75,15 +85,13 @@ public class ConnectPayoutService {
         BigDecimal totalAmount = pendingPayments.stream()
                 .map(Payment::getPayout)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        log.info("[payout] paso 4: total={} idempotencyKey={}", totalAmount, idempotencyKey(pendingPayments, creator));
 
         // 5. Clave de idempotencia determinística: mismo usuario + mismos pagos = misma clave
-        String idempotencyKey = "payout-" + creator.getId() + "-" + pendingPayments.stream()
-                .map(p -> String.valueOf(p.getId()))
-                .sorted()
-                .reduce((a, b) -> a + ":" + b)
-                .orElse("");
+        String idempotencyKey = idempotencyKey(pendingPayments, creator);
 
         // 6. Ejecutar transfer batch a la cuenta conectada
+        log.info("[payout] paso 6: transferiendo total={} a stripeId={}", totalAmount, account.getStripeAccountId());
         String transferId;
         try {
             transferId = gateway.transferToConnectedAccount(
@@ -92,7 +100,9 @@ public class ConnectPayoutService {
                     pendingPayments.get(0).getReservation().getInstance().getExperience().getCurrencyCode(),
                     idempotencyKey
             );
+            log.info("[payout] paso 6 OK: transferId={}", transferId);
         } catch (Exception e) {
+            log.error("[payout] paso 6 FALLÓ: {} — registrando payouts FAILED", e.getMessage());
             // Registrar el fallo para auditoría
             for (Payment payment : pendingPayments) {
                 ConnectPayout failedPayout = ConnectPayout.builder()
@@ -132,12 +142,21 @@ public class ConnectPayoutService {
             paymentRepository.save(payment);
         }
 
+        log.info("[payout] paso 7 OK: {} payouts COMPLETED por total={}", pendingPayments.size(), totalAmount);
         return Map.of(
                 "status", "COMPLETED",
                 "amount", totalAmount,
                 "transferId", transferId,
                 "paymentsProcessed", pendingPayments.size()
         );
+    }
+
+    private String idempotencyKey(List<Payment> pendingPayments, User creator) {
+        return "payout-" + creator.getId() + "-" + pendingPayments.stream()
+                .map(p -> String.valueOf(p.getId()))
+                .sorted()
+                .reduce((a, b) -> a + ":" + b)
+                .orElse("");
     }
 
     /**

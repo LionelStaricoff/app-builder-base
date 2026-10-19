@@ -3,6 +3,8 @@
 <head th:replace="~{fragments/layout :: head('Configurar cobros')}"></head>
 <body>
 <main class="app-main">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <div class="page-hero">
         <h1>Configurar cobros</h1>
         <p>Un paso corto para recibir tus ganancias</p>

@@ -4,6 +4,7 @@ import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.notification.entity.NotificationType;
 import com.openlab.mx.share.notification.service.NotificationService;
+import com.openlab.mx.share.payment.dto.CheckoutPayRequest;
 import com.openlab.mx.share.payment.gateway.GatewaySession;
 import com.openlab.mx.share.payment.service.StripeCheckoutService;
 import com.openlab.mx.share.reservation.entity.Reservation;
@@ -12,10 +13,13 @@ import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.user.entity.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -59,9 +63,11 @@ public class CheckoutController {
 
     @PostMapping("/checkout/{instanceId}")
     public String pay(@PathVariable Long instanceId,
-                      @RequestParam(defaultValue = "1") int attendees,
+                      @Valid @ModelAttribute CheckoutPayRequest request,
+                      BindingResult bindingResult,
                       RedirectAttributes redirectAttributes) {
-        int cupos = sanitize(attendees);
+        // Cupos fuera de 1..20 → se corrige al límite más cercano (como el GET).
+        int cupos = bindingResult.hasErrors() ? 1 : sanitize(request.attendees());
         User user = currentUser.require();
         boolean nuevaReserva = pendiente(instanceId, user) == null;
         GatewaySession session;

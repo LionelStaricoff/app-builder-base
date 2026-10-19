@@ -31,6 +31,7 @@ import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -97,6 +98,23 @@ class IdentityGateFlowTests {
                         .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrlPattern("/verificacion*"));
+    }
+
+    @Test
+    void reserva_sin_verificar_xhr_recibe_409_json() throws Exception {
+        User creador = usuarioNuevo();
+        Long instanceId = instanciaFuturaComo(creador);
+        User participante = usuarioNuevo(); // sin verificar
+
+        // Los fetch (XHR) reciben JSON con el código del gate, no un redirect HTML
+        // (un fetch sigue el redirect y res.json() recibiría HTML → error de parseo).
+        mockMvc.perform(post("/reservations/" + instanceId)
+                        .with(user(participante.getUsername()))
+                        .with(csrf())
+                        .header("X-Requested-With", "XMLHttpRequest")
+                        .param("attendees", "1"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("IDENTITY_NOT_VERIFIED"));
     }
 
     @Test

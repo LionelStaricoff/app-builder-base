@@ -2,15 +2,19 @@ package com.openlab.mx.share.user.controller;
 
 import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.shared.exception.DomainException;
+import com.openlab.mx.share.user.dto.ProfileUpdateRequest;
 import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
@@ -38,12 +42,20 @@ public class ProfileController {
     }
 
     @PostMapping("/settings/update")
-    public String update(@RequestParam String username,
-                         @RequestParam(required = false) String country,
-                         @RequestParam(required = false) String currencyCode,
-                         @RequestParam(required = false) MultipartFile avatar,
+    public String update(@Valid @ModelAttribute ProfileUpdateRequest request,
+                         BindingResult bindingResult,
                          RedirectAttributes redirectAttributes) throws IOException {
         User user = currentUser.require();
+        // Campos fuera de rango (nombre > 30, país > 60, moneda > 3) → no se guarda nada.
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Revisá los datos: nombre máximo 30 caracteres, país 60 y moneda 3");
+            return "redirect:/settings";
+        }
+        String username = request.username();
+        String country = request.country();
+        String currencyCode = request.currencyCode();
+        MultipartFile avatar = request.avatar();
         String nuevo = username == null ? "" : username.trim();
 
         // FASE 1 — validar todo sin persistir nada (el form es atómico:

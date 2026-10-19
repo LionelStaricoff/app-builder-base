@@ -1,18 +1,21 @@
 package com.openlab.mx.share.chat.controller;
 
+import com.openlab.mx.share.chat.dto.ChatMessageRequest;
 import com.openlab.mx.share.chat.entity.ChatMessage;
 import com.openlab.mx.share.chat.service.ChatAuthorizationService;
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.user.entity.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * Chat por instancia (spec §5.6): lista de grupos, sala con historial y
@@ -45,9 +48,15 @@ public class ChatController {
     }
 
     @PostMapping("/chats/{instanceId}/send")
-    public String send(@PathVariable Long instanceId, @RequestParam String text) {
+    public String send(@PathVariable Long instanceId,
+                       @Valid @ModelAttribute ChatMessageRequest request,
+                       BindingResult bindingResult) {
         User user = currentUser.require();
-        ChatMessage message = authorization.sendMessage(instanceId, user, text);
+        // Texto vacío o de más de 2000 caracteres → no se envía.
+        if (bindingResult.hasErrors()) {
+            return "redirect:/chats/" + instanceId;
+        }
+        ChatMessage message = authorization.sendMessage(instanceId, user, request.text());
         messagingTemplate.convertAndSend("/topic/instances/" + instanceId,
                 payload(user.getUsername(), message.getText()));
         return "redirect:/chats/" + instanceId;

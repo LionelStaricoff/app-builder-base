@@ -5,6 +5,7 @@ import com.openlab.mx.share.payment.service.StripeConnectService;
 import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import java.util.Map;
  */
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class CreatorPayoutPageController {
 
     private final StripeConnectService stripeConnectService;
@@ -30,8 +32,11 @@ public class CreatorPayoutPageController {
     @GetMapping("/creators/payouts")
     public String payoutPage(Model model) {
         User user = currentUser.require();
+        log.info("[payouts] GET /creators/payouts — usuario={}", user.getUsername());
         Map<String, Object> status = stripeConnectService.getStatus(user);
         BigDecimal pendingAmount = connectPayoutService.getPendingAmount();
+        log.info("[payouts] estado={} payoutsEnabled={} pendiente={}",
+                status.get("status"), status.get("payoutsEnabled"), pendingAmount);
 
         model.addAttribute("status", status);
         model.addAttribute("pendingAmount", pendingAmount);
@@ -45,13 +50,17 @@ public class CreatorPayoutPageController {
     @GetMapping("/creators/onboarding")
     public String onboarding(Model model) {
         User user = currentUser.require();
+        log.info("[onboarding] GET /creators/onboarding — usuario={}", user.getUsername());
         Map<String, Object> status = stripeConnectService.getStatus(user);
+        log.info("[onboarding] estado={} payoutsEnabled={}", status.get("status"), status.get("payoutsEnabled"));
 
         if (Boolean.TRUE.equals(status.get("payoutsEnabled"))) {
+            log.info("[onboarding] payouts ya habilitados → redirect /creators/payouts");
             return "redirect:/creators/payouts";
         }
 
         model.addAttribute("status", status);
+        log.info("[onboarding] renderizando creators/onboarding");
         return "creators/onboarding";
     }
 
@@ -60,6 +69,7 @@ public class CreatorPayoutPageController {
      */
     @GetMapping("/onboarding/complete")
     public String onboardingComplete() {
+        log.info("[onboarding] GET /onboarding/complete — redirect /creators/payouts");
         return "redirect:/creators/payouts";
     }
 
@@ -68,6 +78,7 @@ public class CreatorPayoutPageController {
      */
     @GetMapping("/onboarding/refresh")
     public String onboardingRefresh() {
+        log.info("[onboarding] GET /onboarding/refresh — redirect /creators/onboarding");
         return "redirect:/creators/onboarding";
     }
 }

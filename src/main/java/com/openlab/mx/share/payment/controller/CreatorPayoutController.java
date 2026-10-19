@@ -5,6 +5,7 @@ import com.openlab.mx.share.payment.service.ConnectPayoutService;
 import com.openlab.mx.share.payment.service.StripeConnectService;
 import com.openlab.mx.share.shared.CurrentUser;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,6 +21,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/creators")
 @RequiredArgsConstructor
+@Slf4j
 public class CreatorPayoutController {
 
     private final StripeConnectService stripeConnectService;
@@ -31,7 +33,11 @@ public class CreatorPayoutController {
      */
     @GetMapping("/payout-account/status")
     public Map<String, Object> getStatus() {
-        return stripeConnectService.getStatus(currentUser.require());
+        var user = currentUser.require();
+        log.info("[api] GET /payout-account/status — usuario={}", user.getUsername());
+        Map<String, Object> status = stripeConnectService.getStatus(user);
+        log.info("[api] status response={}", status);
+        return status;
     }
 
     /**
@@ -40,7 +46,11 @@ public class CreatorPayoutController {
      */
     @PostMapping("/payout-account/onboarding-link")
     public Map<String, String> generateOnboardingLink() {
-        String url = stripeConnectService.generateOnboardingLink(currentUser.require());
+        var user = currentUser.require();
+        log.info("[api] POST /payout-account/onboarding-link — usuario={}", user.getUsername());
+        String url = stripeConnectService.generateOnboardingLink(user);
+        log.info("[api] account link generado (long={}) url={}...", url.length(),
+                url.substring(0, Math.min(url.length(), 60)));
         return Map.of("url", url);
     }
 
@@ -50,7 +60,11 @@ public class CreatorPayoutController {
      */
     @PostMapping("/payouts/request")
     public Map<String, Object> requestPayout() {
-        return connectPayoutService.requestPayout();
+        var user = currentUser.require();
+        log.info("[api] POST /payouts/request — usuario={}", user.getUsername());
+        Map<String, Object> result = connectPayoutService.requestPayout();
+        log.info("[api] payout result={}", result);
+        return result;
     }
 
     /**

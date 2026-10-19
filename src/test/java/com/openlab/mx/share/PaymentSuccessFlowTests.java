@@ -37,6 +37,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -161,5 +162,15 @@ class PaymentSuccessFlowTests {
         // DomainException → PRG con flash (no 500)
         mockMvc.perform(get("/pago/exito").param("session_id", "cs_fantasma"))
                 .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void sessionIdDesconocidoXhrRecibe409Json() throws Exception {
+        // DomainException + XHR → JSON 409 con mensaje (un fetch no entiende PRG)
+        mockMvc.perform(get("/pago/exito").param("session_id", "cs_fantasma")
+                        .header("X-Requested-With", "XMLHttpRequest"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").exists());
     }
 }
