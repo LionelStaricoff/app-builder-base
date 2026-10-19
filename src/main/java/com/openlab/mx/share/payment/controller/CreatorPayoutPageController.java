@@ -60,6 +60,11 @@ public class CreatorPayoutPageController {
         }
 
         model.addAttribute("status", status);
+        // Selector de país de cobro: solo países donde Stripe permite cuentas.
+        model.addAttribute("payoutCountries", stripeConnectService.supportedPayoutCountries());
+        model.addAttribute("selectedCountry", stripeConnectService.resolvePayoutCountry(user));
+        model.addAttribute("payoutCountryName",
+                stripeConnectService.countryName((String) status.get("country")));
         log.info("[onboarding] renderizando creators/onboarding");
         return "creators/onboarding";
     }

@@ -1,8 +1,9 @@
 /**
  * Flujo de onboarding de Stripe Connect.
  *
- * - Inicio: POST /api/creators/payout-account/onboarding-link
- *   El backend genera un Account Link temporal y redirige a Stripe.
+ * - Inicio: POST /api/creators/payout-account/onboarding-link?country=XX
+ *   El backend valida el país contra la lista blanca de Stripe, genera un
+ *   Account Link temporal y redirige a Stripe.
  */
 (function () {
     'use strict';
@@ -11,14 +12,37 @@
     var startBtn = document.getElementById('start-onboarding');
     if (!startBtn) { return; }
 
+    var countrySelect = document.getElementById('payout-country');
+    var countryError = document.getElementById('payout-country-error');
+
     var csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
     var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
+    function showCountryError(msg) {
+        if (countryError) {
+            countryError.textContent = msg;
+            countryError.style.display = 'block';
+        }
+    }
+
     startBtn.addEventListener('click', function () {
-        console.log(TAG, 'click en "Configurar cuenta" — csrf presente:', !!csrfToken);
+        var country = countrySelect ? countrySelect.value : '';
+        // Solo si el selector está visible (cuenta nueva) el país es obligatorio.
+        if (countrySelect && countrySelect.offsetParent !== null && !country) {
+            console.warn(TAG, 'sin país seleccionado');
+            showCountryError('Elegí el país de tu cuenta bancaria para continuar.');
+            return;
+        }
+        if (countryError) { countryError.style.display = 'none'; }
+
+        console.log(TAG, 'click en "Configurar cuenta" — country=' + country +
+            ' | csrf presente:' + !!csrfToken);
         startBtn.disabled = true;
 
-        fetch('/api/creators/payout-account/onboarding-link', {
+        var url = '/api/creators/payout-account/onboarding-link' +
+            (country ? '?country=' + encodeURIComponent(country) : '');
+
+        fetch(url, {
             method: 'POST',
             headers: Object.assign(
                 { 'X-Requested-With': 'XMLHttpRequest' },
@@ -55,6 +79,7 @@
             }
         }).catch(function (e) {
             console.error(TAG, 'falló:', e.message);
+            showCountryError(e.message);
             alert(e.message);
             startBtn.disabled = false;
         });

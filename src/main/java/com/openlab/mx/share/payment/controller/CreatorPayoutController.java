@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -43,12 +44,19 @@ public class CreatorPayoutController {
     /**
      * Genera un link temporal de Hosted Onboarding para que el creador
      * configure su cuenta Connect. Si ya tiene cuenta, regenera el link.
+     *
+     * @param country ISO del país elegido por el creador en el selector
+     *                (solo países de la lista blanca de Stripe; si la cuenta
+     *                ya existe se ignora). Si falta o no está soportado →
+     *                400 COUNTRY_UNSUPPORTED (UnsupportedPayoutCountryException).
      */
     @PostMapping("/payout-account/onboarding-link")
-    public Map<String, String> generateOnboardingLink() {
+    public Map<String, String> generateOnboardingLink(
+            @RequestParam(value = "country", required = false) String country) {
         var user = currentUser.require();
-        log.info("[api] POST /payout-account/onboarding-link — usuario={}", user.getUsername());
-        String url = stripeConnectService.generateOnboardingLink(user);
+        log.info("[api] POST /payout-account/onboarding-link — usuario={} country={}",
+                user.getUsername(), country);
+        String url = stripeConnectService.generateOnboardingLink(user, country);
         log.info("[api] account link generado (long={}) url={}...", url.length(),
                 url.substring(0, Math.min(url.length(), 60)));
         return Map.of("url", url);

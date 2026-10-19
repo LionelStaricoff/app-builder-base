@@ -68,6 +68,21 @@ public class GlobalExceptionHandler {
         return "redirect:/verificacion";
     }
 
+    /**
+     * País de cobro no soportado por Stripe (ej. Colombia, ver stripe.com/global).
+     * El selector del front solo muestra países de la lista blanca, así que un
+     * 400 acá es un intento directo a la API o una lista desactualizada.
+     * Siempre JSON: el consumidor es el endpoint /api/creators/*.
+     */
+    @ExceptionHandler(UnsupportedPayoutCountryException.class)
+    public ResponseEntity<Map<String, String>> unsupportedPayoutCountry(
+            UnsupportedPayoutCountryException e, HttpServletRequest request) {
+        log.warn("[stripe] país de cobro no soportado en {}: {}",
+                request.getRequestURI(), e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("code", "COUNTRY_UNSUPPORTED", "message", e.getMessage()));
+    }
+
     @ExceptionHandler(DomainException.class)
     public Object domain(DomainException e, RedirectAttributes redirectAttributes, HttpServletRequest request) {
         if (isXhr(request)) {
