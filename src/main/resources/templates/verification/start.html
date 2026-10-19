@@ -8,17 +8,56 @@
         <p>Un paso corto para reservar y publicar experiencias</p>
     </div>
 
-    <div class="card" th:if="${status == 'VERIFIED'}">
+    <div class="card" style="padding:1rem" th:if="${status == 'VERIFIED'}">
         <p><strong>✅ Tu identidad está verificada</strong></p>
         <p class="hint" th:if="${verifiedAt != null}"
            th:text="'Verificada el ' + ${#temporals.format(verifiedAt, 'dd/MM/yyyy HH:mm')}"></p>
-        <a class="btn-primary" th:href="${returnUrl}">Continuar</a>
+        <a class="btn-primary btn-block" th:href="${returnUrl}">Continuar</a>
     </div>
 
-    <div class="card" th:if="${status != 'VERIFIED'}">
+    <!-- Qué vas a necesitar: documento + selfie (explicación visual) -->
+    <div class="card" style="padding:1rem" th:if="${status != 'VERIFIED'}">
+        <h3>¿Qué necesitás tener a mano?</h3>
+        <p class="meta">Tu documento de identidad y unos minutos con buena luz.</p>
+        <div class="verify-steps">
+            <div class="verify-step">
+                <svg viewBox="0 0 80 60" role="img" aria-label="Frente del documento">
+                    <rect x="4" y="8" width="72" height="44" rx="6" fill="var(--muted-bg)" stroke="var(--color-primary)" stroke-width="2"/>
+                    <rect x="11" y="16" width="20" height="26" rx="3" fill="var(--color-primary)" opacity=".2"/>
+                    <circle cx="21" cy="24" r="4.5" fill="var(--color-primary)" opacity=".8"/>
+                    <path d="M13.5 38c1.6-4.2 4.3-6 7.5-6s5.9 1.8 7.5 6z" fill="var(--color-primary)" opacity=".8"/>
+                    <rect x="39" y="18" width="28" height="4" rx="2" fill="var(--color-primary)" opacity=".7"/>
+                    <rect x="39" y="27" width="22" height="3.5" rx="1.75" fill="var(--color-primary)" opacity=".4"/>
+                    <rect x="39" y="35" width="16" height="3.5" rx="1.75" fill="var(--color-primary)" opacity=".4"/>
+                </svg>
+                <span>Frente del documento</span>
+            </div>
+            <div class="verify-step">
+                <svg viewBox="0 0 80 60" role="img" aria-label="Dorso del documento">
+                    <rect x="4" y="8" width="72" height="44" rx="6" fill="var(--muted-bg)" stroke="var(--color-primary)" stroke-width="2"/>
+                    <rect x="6" y="17" width="68" height="11" fill="var(--color-primary)" opacity=".75"/>
+                    <rect x="11" y="36" width="34" height="9" rx="2" fill="var(--color-primary)" opacity=".25"/>
+                    <rect x="14" y="39.5" width="20" height="2.5" rx="1.25" fill="var(--color-primary)" opacity=".7"/>
+                    <circle cx="62" cy="40.5" r="6.5" fill="var(--color-primary)" opacity=".3"/>
+                    <circle cx="62" cy="40.5" r="3" fill="var(--color-primary)" opacity=".6"/>
+                </svg>
+                <span>Dorso del documento</span>
+            </div>
+            <div class="verify-step">
+                <svg viewBox="0 0 80 60" role="img" aria-label="Tu rostro">
+                    <rect x="4" y="8" width="72" height="44" rx="6" fill="var(--muted-bg)" stroke="var(--color-primary)" stroke-width="2" stroke-dasharray="5 4"/>
+                    <circle cx="40" cy="26" r="8.5" fill="var(--color-primary)" opacity=".85"/>
+                    <path d="M25 50c2.2-8.5 7.8-12 15-12s12.8 3.5 15 12z" fill="var(--color-primary)" opacity=".85"/>
+                </svg>
+                <span>Tu rostro (selfie)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:1rem" th:if="${status != 'VERIFIED'}">
         <p th:if="${status == 'NOT_STARTED'}">
             Para reservar o publicar experiencias necesitamos verificar tu identidad.
-            El proceso toma unos minutos y lo completás con Didit, nuestro proveedor de identidad.
+            El proceso toma unos minutos.
         </p>
         <p th:if="${status == 'IN_PROGRESS'}">
             Tenés una verificación en curso. Podés empezar de nuevo si perdiste la pestaña.
@@ -34,8 +73,7 @@
         </p>
 
         <input type="hidden" id="return-url" th:value="${returnUrl}">
-        <button id="start-verification" class="btn-primary" type="button">Verificar mi identidad</button>
-        <p class="hint">Vas a ser redirigido a un sitio externo (Didit) y al terminar volvés acá.</p>
+        <button id="start-verification" class="btn-primary btn-block" type="button">Verificar mi identidad</button>
     </div>
 </main>
 <script th:src="@{/js/didit-verification.js}"></script>

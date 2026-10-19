@@ -381,6 +381,18 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 .slot-list .picker { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; width: 100%; }
 .slot-list .picker .btn-primary { width: 100%; }
 
+/* Verificación de identidad: pasos visuales (frente, dorso, selfie) */
+.verify-steps { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.verify-step { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+.verify-step svg { width: 100%; height: auto; }
+.verify-step span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.25;
+}
+
 /* Chips: mejor feedback táctil */
 .chip { transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease; }
 .chip:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12); }
