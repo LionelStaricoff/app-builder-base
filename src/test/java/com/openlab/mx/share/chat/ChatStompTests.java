@@ -3,6 +3,7 @@ package com.openlab.mx.share.chat;
 import org.junit.jupiter.api.Disabled;
 
 import com.openlab.mx.share.chat.controller.ChatController;
+import com.openlab.mx.share.chat.dto.ChatMessageRequest;
 import com.openlab.mx.share.experience.dto.ExperienceFormRequest;
 import com.openlab.mx.share.experience.dto.ScheduleEntryRequest;
 import com.openlab.mx.share.experience.entity.Experience;
@@ -32,6 +33,7 @@ import org.springframework.messaging.simp.stomp.StompSession;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
@@ -184,7 +186,10 @@ class ChatStompTests {
         // el SUBSCRIBE viaja asíncrono: damos tiempo a que quede registrado
         Thread.sleep(500);
 
-        chatController.send(instanceId, "hola desde el test");
+        // Llamada directa al controller: BindingResult vacío simula un binding válido
+        var mensajeReq = new ChatMessageRequest("hola desde el test");
+        chatController.send(instanceId, mensajeReq,
+                new BeanPropertyBindingResult(mensajeReq, "mensajeReq"));
 
         String mensaje;
         try {
@@ -204,6 +209,10 @@ class ChatStompTests {
         cancellationService.cancelByCreator(instanceId, usuario("demo_creator"));
 
         assertThrows(AccessDeniedException.class,
-                () -> chatController.send(instanceId, "no debería pasar"));
+                () -> {
+                    var rechazado = new ChatMessageRequest("no debería pasar");
+                    chatController.send(instanceId, rechazado,
+                            new BeanPropertyBindingResult(rechazado, "rechazado"));
+                });
     }
 }
