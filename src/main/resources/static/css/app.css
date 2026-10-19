@@ -369,8 +369,17 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
   border-radius: 999px;
 }
 
-.slot-list { display: flex; flex-direction: column; gap: 0.6rem; }
-.slot-list .slot { margin-bottom: 0; }
+.slot-list { display: flex; flex-direction: column; gap: 0.9rem; }
+.slot-list .slot {
+  margin-bottom: 0;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+.slot-list .picker { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; width: 100%; }
+.slot-list .picker .btn-primary { width: 100%; }
 
 /* Chips: mejor feedback táctil */
 .chip { transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease; }
