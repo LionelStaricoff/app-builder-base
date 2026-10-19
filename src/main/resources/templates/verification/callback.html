@@ -8,7 +8,7 @@
         <p>Estamos esperando la confirmación del servidor. No cierres esta página.</p>
     </div>
 
-    <div class="card">
+    <div class="card" style="padding:1rem">
         <p id="callback-status">Verificando estado…</p>
         <input type="hidden" id="return-url" th:value="${returnUrl}">
         <a id="back-link" class="btn-primary" th:href="${returnUrl}" style="display:none;">Volver</a>

@@ -20,7 +20,7 @@
         <a class="btn-primary" th:href="@{/feed}">Buscar experiencias</a>
     </div>
 
-    <a class="card" th:each="g : ${grupos}" th:href="@{/chats/{id}(id=${g.id})}">
+    <a class="card" style="padding:1rem" th:each="g : ${grupos}" th:href="@{/chats/{id}(id=${g.id})}">
         <strong th:text="${g.experience.name}">Experiencia</strong>
         <p class="meta">
             📅 <span th:text="${g.date}">01/11/2026</span>

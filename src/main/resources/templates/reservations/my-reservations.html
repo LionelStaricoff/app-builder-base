@@ -18,7 +18,7 @@
 
     <section th:if="${!#lists.isEmpty(pendientes)}">
         <h3>Esperando tu confirmación</h3>
-        <div class="card" th:each="r : ${pendientes}">
+        <div class="card" style="padding:1rem" th:each="r : ${pendientes}">
             <p>
                 <strong th:text="${r.instance.experience.name}">Experiencia</strong>
                 · <span th:text="${r.user.username}">usuario</span>
@@ -40,7 +40,7 @@
         <a class="btn-primary" th:href="@{/feed}">Ver experiencias</a>
     </div>
 
-    <div class="card" th:each="r : ${reservations}">
+    <div class="card" style="padding:1rem" th:each="r : ${reservations}">
         <p>
             <strong th:text="${r.instance.experience.name}">Experiencia</strong>
             · <span th:text="${r.instance.date}">01/11/2026</span>
