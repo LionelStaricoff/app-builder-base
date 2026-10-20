@@ -1,12 +1,14 @@
 # Spec — Pago de experiencias con Stripe Checkout
 
-**Fecha:** 2026-10-14 · **Estado:** aprobada en chat por el usuario (diseño íntegro) · **Base:** `docs/superpowers/specs/2026-10-07-shared-web-core-design.md` (§5.3 pago simulado, §5.4 cancelaciones)
+**Fecha:** 2026-10-14 · **Actualizado:** 2026-10-20 (§1 Connect, §3 esquema) · **Estado:** aprobada en chat por el usuario (diseño íntegro) · **Base:** `docs/superpowers/specs/2026-10-07-shared-web-core-design.md` (§5.3 pago simulado, §5.4 cancelaciones)
 
 ## 1. Objetivo
 
 Reemplazar el checkout simulado (formulario de tarjeta que solo valida formato) por pagos reales con **Stripe Checkout Sessions** en modo **manual capture**. El dominio de escrow existente (`Payment`/`PaymentStatus`, comisión 5%, ventana de liberación, reembolsos por cancelación) **no cambia**: Stripe pasa a ser el mecanismo por el que el dinero entra, se retiene y se devuelve.
 
-Fuera de alcance: Stripe Connect (payouts reales al creador), facturación, live mode, PayPal/MercadoPago.
+Fuera de alcance: facturación, live mode, PayPal/MercadoPago.
+
+**Actualización 2026-10-20 — Stripe Connect ya está implementado** (dejó de estar "fuera de alcance"): cuentas Connect del creador con onboarding alojado (`StripeConnectService`, `ConnectAccount`, `ConnectPayout`, página `creators/onboarding`) y payout al creador con comisión del 5%. El país de cobro se valida contra la lista blanca de Stripe (`app.stripe.payout-countries`): Stripe Connect no soporta todos los países. Sigue fuera de alcance la **live mode**.
 
 ## 2. Decisión de modo (aprobada por el usuario)
 
@@ -16,7 +18,9 @@ Fuera de alcance: Stripe Connect (payouts reales al creador), facturación, live
 
 ## 3. Datos
 
-El proyecto usa `spring.jpa.hibernate.ddl-auto=update` (no hay Flyway): Hibernate agrega las columnas nuevas al esquema. Compatibilidad con filas existentes (pagos simulados): las columnas de Stripe quedan `nullable`.
+El proyecto usa **Flyway** como gestor del esquema (`db/migration`) con `ddl-auto=validate`: Hibernate no crea ni altera nada, solo comprueba que el esquema coincida con las entidades y falla al arrancar si hay drift. Las migraciones de Stripe son `V2__stripe_connect.sql` (tablas `connect_accounts` / `connect_payouts`, columna `payments.payout_status` e índices) y son **idempotentes** (`IF NOT EXISTS` en todo), porque se aplicaron también sobre bases donde las tablas ya existían. Compatibilidad con filas existentes (pagos simulados): las columnas de Stripe quedan `nullable`.
+
+> **OJO — Spring Boot 4 y Flyway.** La autoconfiguración de Flyway vive en el módulo aparte `spring-boot-flyway`: con solo `flyway-core` en el pom **nadie dispara las migraciones** y el esquema queda en manos de Hibernate (que fue lo que pasaba antes de este cambio). El índice de `payments.payout_status` es **normal, no parcial**: era `WHERE payout_status = 'PENDING'` y H2 no soporta índices filtrados, así que las migraciones tienen que correr también contra el H2 de los tests.
 
 ### 3.1 `Payment` (modificar)
 
@@ -73,7 +77,7 @@ Webhooks: Stripe no tiene CSRF ni sesión → `SecurityConfig` debe `permitAll()
 
 - Leer body crudo (`@RequestBody String payload`).
 - `Webhook.constructEvent(payload, sigHeader, webhookSecret)` — firma inválida → **400**.
-- Idempotencia por `event_id`: si el evento ya se procesó, responder 200 sin duplicar efecto. Implementación definitiva: entidad `StripeEvent` (`event_id` PK, `type`, `processedAt`) sobre tabla `stripe_event` — Hibernate la crea con `ddl-auto=update`;
+- Idempotencia por `event_id`: si el evento ya se procesó, responder 200 sin duplicar efecto. Implementación definitiva: entidad `StripeEvent` (`event_id` PK, `type`, `processedAt`) sobre tabla `stripe_event` — la crea la migración `V1__baseline.sql`;
 - Eventos implementados: `checkout.session.completed` (→ HELD), `checkout.session.expired` (→ FAILED + reserva CANCELADO), `payment_intent.payment_failed` (→ HELD|PENDING → FAILED). El resto de eventos → 200 sin efecto.
 - El job `EscrowReleaseService` existente sigue liberando solo HELD con ventana vencida (ahora con capture real).
 

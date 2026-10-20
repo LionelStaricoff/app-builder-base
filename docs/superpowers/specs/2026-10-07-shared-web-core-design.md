@@ -1,8 +1,13 @@
 # Shared — Diseño de la Etapa B (Núcleo + Comunicación)
 
-**Fecha:** 2026-10-07
+**Fecha:** 2026-10-07 · **Actualizado:** 2026-10-20 (§2 persistencia, §7 consola H2, §9 tests, §10 seed)
 **Estado:** Aprobado por el usuario (diseño conversacional + adiciones confirmadas)
 **Alcance:** Experiencias, Feed, Favoritos, Reservas con escrow, Notificaciones, Chat STOMP, Configuración.
+
+> Los **specs son el contrato de diseño vivo**: el código los cita (`spec §N`).
+> Los *plans* de implementación se borraron: eran scripts TDD de una única
+> ejecución, con checklists que seguían marcando "pendiente" trabajo ya
+> terminado, y uno filtraba una credencial en claro.
 
 ---
 
@@ -31,7 +36,7 @@ Construir la aplicación web **Shared** (plataforma de experiencias) como monoli
 |---|---|
 | Framework | Spring Boot **4.1.1**, Java **25** |
 | Vistas | Thymeleaf (server-side), layout con fragments |
-| Persistencia | JPA + **H2** (file-based); migrable a **Postgres** sin SQL específico (evitar `CLOB`, funciones H2) |
+| Persistencia | JPA + **Postgres** (URL/usuario/password por env var `SPRING_DATASOURCE_*`); **H2 en memoria solo en los tests** (`src/test/resources/application.properties` shadowea al de main). El **esquema lo administra Flyway** (`db/migration`) y Hibernate solo lo valida (`ddl-auto=validate`), en dev, prod y tests por igual. Sin SQL específico de motor (evitar `CLOB`, funciones H2) |
 | Seguridad | **Spring Security** (form login + registro, BCrypt, sesiones HTTP, CSRF activo) |
 | Tiempo real | **WebSocket STOMP** (`spring-boot-starter-websocket`) |
 | Validación | DTOs = **Java `record`** + `jakarta.validation` (`@Valid`) |
@@ -158,7 +163,7 @@ Adicionales: `checkout.html`, pantallas de confirmación con degradado rosa (`PA
 - BCrypt; form login/registro propios; `th:sec` en menú; logout limpia sesión.
 - `/login`, `/register` públicos; resto autenticado.
 - Autorización: solo dueño edita/borra/cancela (Caso 2); solo inscritos confirmados ven su chat/notificaciones; favoritos/reservas siempre del usuario en sesión (nunca `user_id` del form).
-- CSRF activo (Thymeleaf lo inyecta); consola H2 solo en dev y tras Security.
+- CSRF activo (Thymeleaf lo inyecta). No hay consola H2 expuesta: el único H2 es el **en memoria de los tests** y ahí la consola está deshabilitada.
 - Validación doble: `jakarta.validation` en records DTO + reglas de negocio en services.
 
 ---
@@ -186,12 +191,18 @@ Adicionales: `checkout.html`, pantallas de confirmación con degradado rosa (`PA
 - Flujo encadenado reserva → checkout → confirmación.
 - Chat: test de cliente **STOMP real** (`@SpringBootTest`).
 - `ShareApplicationTests.contextLoads` con seed.
+- **Los tests corren contra H2 en memoria** (propiedades propias en `src/test/resources`, que shadowean las de main), con **el esquema creado por las mismas migraciones que dev/prod** y validado por Hibernate. Es la única razón por la que existe el seed de datos demo: los tests de integración dependen de `demo_creator` / `demo_user`.
 
 ---
 
 ## 10. Seed y datos
 
-- `DataSeeder` (solo si DB vacía): **2 usuarios demo** (creador + participante) con credenciales fijas y avatares base64; ciudad semilla: **CDMX** (coordenadas 19.4326, -99.1332).
+- `DataSeeder`: **2 usuarios demo** (creador + participante) con avatares base64; ciudad semilla: **CDMX** (coordenadas 19.4326, -99.1332).
+- **Solo contra H2.** Es una condición de bean (`H2DatasourceCondition`): contra Postgres el bean **no se crea**, así que ningún despliegue puede sembrar cuentas demo en la base real. La regla no depende de recordar un flag: es estructural.
+  - Contraseña por variable de entorno: `app.demo.password` (env `DEMO_PASSWORD`). Si viene vacía, el seeder **aborta** (no crea usuarios con contraseña vacía).
+  - Kill switch opcional: `app.demo.enabled` (env `APP_DEMO_ENABLED`).
+  - Es **idempotente-perdón**: si los demos faltan, los recrea. Por eso rotar la contraseña del demo no alcanza — hay que apagar el seeder o borrar los usuarios.
+  - En dev contra Postgres **no** hay usuarios demo: se registran a mano.
 - El usuario carga las experiencias a mano para probar el CRUD.
 - Categorías enum iniciales: **Aventura, Gastronomía, Cultural, Deportiva, Social** (ajustables).
 
@@ -222,5 +233,4 @@ Cada paso compila y trae sus tests:
 ## 13. Fuera de alcance confirmado
 
 - Lógica de SP (solo campo y vista).
-- Migración Postgres (solo compatibilidad, sin configurarla ahora).
 - Spring Security OAuth, moderación, mapa de calor de cupos.
