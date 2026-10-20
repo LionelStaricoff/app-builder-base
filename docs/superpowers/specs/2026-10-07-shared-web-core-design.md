@@ -121,7 +121,7 @@ Form con fecha de nacimiento → validación en DTO + service: **menor de 18 →
 
 | Caso | Efectos |
 |---|---|
-| **1. Participante** | Evento sigue. `Reservation → CANCELADO`; **cupo +1 inmediato**; notificación al creador; **reembolso por política**: >24h anticipación = 100%, <24h = parcial o sin reembolso; **removido del chat** |
+| **1. Participante** | Evento sigue. `Reservation → CANCELADO`; **cupo +1 inmediato**; notificación al creador; **reembolso por política** (escalera por anticipación, `refund.tiers`): >24h = 90% (la plataforma retiene el 10%), ≤24h = 50%; **removido del chat** |
 | **2. Creador (fecha)** | Instancia → `CANCELADO` e inhabilitada en calendario; **notificación masiva** a todos los inscritos; `Payment → REFUNDED_FULL` (100%); **chat archivado** |
 | **3. Cupo mínimo** | Job `@Scheduled` al vencer hora límite con asistentes < `minCapacity` (**+ botón manual** del creador) → igual que Caso 2 |
 

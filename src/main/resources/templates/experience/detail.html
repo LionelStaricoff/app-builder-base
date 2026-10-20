@@ -54,13 +54,14 @@
             </div>
 
             <h3>Próximas fechas</h3>
+            <div th:replace="~{fragments/refund-notice :: notice}"></div>
             <div class="slot-list">
                 <div th:if="${#lists.isEmpty(instances)}" class="empty">No hay fechas disponibles</div>
                 <div class="card slot" th:each="inst : ${instances}">
                 <p>
                     <strong th:text="${#temporals.format(inst.date, 'dd/MM/yyyy')} + ' — ' + ${#temporals.format(inst.startTime, 'HH:mm')}">01/11/2026 — 10:00</strong>
                 </p>
-                <div th:replace="~{experience/picker-modal :: picker(${inst.id})}"></div>
+                <div th:replace="~{experience/picker-modal :: picker(${inst.id}, ${refundPercentByInstance[inst.id]})}"></div>
                 <form th:if="${esDueno}"
                       th:action="@{/instances/{id}/cancel(id=${inst.id})}" method="post"
                       onsubmit="return confirm('¿Cancelar esta fecha? Se reembolsa el 100% a los inscritos.');">

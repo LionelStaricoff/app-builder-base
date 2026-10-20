@@ -10,6 +10,7 @@ import com.openlab.mx.share.payment.service.StripeCheckoutService;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
+import com.openlab.mx.share.reservation.service.RefundPolicy;
 import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.user.entity.User;
@@ -41,6 +42,7 @@ public class CheckoutController {
     private final ExperienceInstanceRepository instanceRepository;
     private final NotificationService notificationService;
     private final CurrentUser currentUser;
+    private final RefundPolicy refundPolicy;
 
     @GetMapping("/checkout/{instanceId}")
     public String form(@PathVariable Long instanceId,
@@ -58,6 +60,10 @@ public class CheckoutController {
         model.addAttribute("total", total);
         model.addAttribute("currencyCode", instance.getExperience().getCurrencyCode() == null
                 ? "MXN" : instance.getExperience().getCurrencyCode());
+        // Política de reembolso visible antes de pagar (cartel) + el % que
+        // corresponde a esta fecha si se cancela.
+        model.addAttribute("refundPolicyLines", refundPolicy.lines());
+        model.addAttribute("refundPercent", refundPolicy.percentFor(instance));
         return "checkout";
     }
 

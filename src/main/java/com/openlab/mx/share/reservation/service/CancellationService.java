@@ -8,6 +8,7 @@ import com.openlab.mx.share.notification.service.NotificationService;
 import com.openlab.mx.share.payment.entity.Payment;
 import com.openlab.mx.share.payment.entity.PaymentStatus;
 import com.openlab.mx.share.payment.repository.PaymentRepository;
+import com.openlab.mx.share.reservation.dto.CancellationResult;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
@@ -15,18 +16,18 @@ import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.shared.exception.NotOwnerException;
 import com.openlab.mx.share.user.entity.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Los 3 casos de cancelación (spec §5.4):
- * 1. participante cancela → cupo libre ya, reembolso 100% (>24h) o parcial (≤24h).
+ * 1. participante cancela → cupo libre ya, reembolso por anticipación
+ *    (según {@link RefundPolicy}: 90% con más de 24h, 50% con 24h o menos).
  * 2. creador cancela la fecha → refund 100% a todos, notificación masiva, chat archivado.
  * 3. cupo mínimo → mismo efecto que el caso 2.
  */
@@ -39,27 +40,25 @@ public class CancellationService {
     private final ExperienceInstanceRepository instanceRepository;
     private final NotificationService notificationService;
     private final com.openlab.mx.share.payment.gateway.PaymentGateway gateway;
-
-    @Value("${partial-refund-rate}")
-    private BigDecimal partialRefundRate = new BigDecimal("0.5");
+    private final RefundPolicy refundPolicy;
 
     /** Caso 1. */
     @Transactional
-    public Reservation cancelByParticipant(Long reservationId, User u) {
+    public CancellationResult cancelByParticipant(Long reservationId, User u) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new DomainException("Reserva no encontrada"));
         if (u == null || reservation.getUser() == null
                 || !reservation.getUser().getId().equals(u.getId())) {
             throw new NotOwnerException();
         }
+        BigDecimal tasa = refundPolicy.rateFor(reservation.getInstance());
         if (reservation.getStatus() == ReservationStatus.CANCELADO) {
-            return reservation;
+            return new CancellationResult(reservation, tasa);
         }
 
-        boolean reembolsoTotal = masDe24Horas(reservation.getInstance());
         reservation.setStatus(ReservationStatus.CANCELADO);
         reservationRepository.save(reservation);
-        reembolsar(reservation, reembolsoTotal);
+        reembolsar(reservation, tasa);
 
         User creador = reservation.getInstance().getExperience().getCreator();
         if (creador != null) {
@@ -68,7 +67,7 @@ public class CancellationService {
                             + reservation.getInstance().getExperience().getName(),
                     "/reservations");
         }
-        return reservation;
+        return new CancellationResult(reservation, tasa);
     }
 
     /** Caso 2: solo el dueño de la experiencia. */
@@ -102,7 +101,7 @@ public class CancellationService {
         for (Reservation reservation : reservas) {
             reservation.setStatus(ReservationStatus.CANCELADO);
             reservationRepository.save(reservation);
-            reembolsar(reservation, true);
+            reembolsar(reservation, BigDecimal.ONE);
             User participante = reservation.getUser();
             if (participante != null && inscritos.stream()
                     .noneMatch(x -> x.getId().equals(participante.getId()))) {
@@ -113,19 +112,22 @@ public class CancellationService {
                 "La fecha de " + instance.getExperience().getName() + " fue cancelada", "/feed");
     }
 
-    private void reembolsar(Reservation reservation, boolean total) {
+    /**
+     * Aplica el reembolso. {@code tasa} es lo que se devuelve al participante;
+     * el resto queda retenido por la plataforma (spec §4). 100% → cancel de la
+     * autorización; parcial → capture parcial por lo retenido.
+     */
+    private void reembolsar(Reservation reservation, BigDecimal tasa) {
         paymentRepository.findByReservationId(reservation.getId()).ifPresent(payment -> {
             if (payment.getStatus() != PaymentStatus.HELD) {
                 return;
             }
-            if (total) {
-                payment.setStatus(PaymentStatus.REFUNDED_FULL);
-                payment.setRefund(payment.getAmount());
-            } else {
-                payment.setStatus(PaymentStatus.REFUNDED_PARTIAL);
-                payment.setRefund(payment.getAmount().multiply(partialRefundRate)
-                        .setScale(2, java.math.RoundingMode.HALF_UP));
-            }
+            BigDecimal monto = payment.getAmount();
+            BigDecimal devuelto = monto.multiply(tasa).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal retenido = monto.subtract(devuelto);
+            boolean total = devuelto.compareTo(monto) >= 0;
+            payment.setStatus(total ? PaymentStatus.REFUNDED_FULL : PaymentStatus.REFUNDED_PARTIAL);
+            payment.setRefund(devuelto);
             paymentRepository.save(payment);
             // Spec §4: el reembolso aplica dinero real solo con pi conocido
             // (pagos Stripe); legacy sin referencia Stripe queda contable.
@@ -133,16 +135,10 @@ public class CancellationService {
                 if (total) {
                     gateway.cancel(payment.getStripePaymentIntentId());
                 } else {
-                    gateway.capturePartial(payment.getStripePaymentIntentId(), payment.getRefund());
+                    gateway.capturePartial(payment.getStripePaymentIntentId(), retenido);
                 }
             }
         });
-    }
-
-    /** >24h para el inicio → reembolso 100%; ≤24h → parcial. */
-    private boolean masDe24Horas(ExperienceInstance instance) {
-        LocalDateTime inicio = LocalDateTime.of(instance.getDate(), instance.getStartTime());
-        return LocalDateTime.now().isBefore(inicio.minusHours(24));
     }
 
     private ExperienceInstance instance(Long instanceId) {

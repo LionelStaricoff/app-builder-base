@@ -51,7 +51,10 @@
         <form th:if="${r.status.name() != 'CANCELADO'}"
               th:action="@{/reservations/{id}/cancel(id=${r.id})}" method="post">
             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-            <button type="submit" class="btn-secondary">Cancelar reserva</button>
+            <button type="submit" class="btn-secondary"
+                    th:text="${'Cancelar reserva · devuelve ' + (refundPercent[r.id] ?: '—') + '%'}">
+                Cancelar reserva · devuelve 90%
+            </button>
         </form>
 
         <form th:if="${r.status.name() == 'CONFIRMADA'}"

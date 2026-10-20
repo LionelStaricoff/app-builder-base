@@ -6,6 +6,7 @@ import com.openlab.mx.share.reservation.dto.ReservationRequest;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
+import com.openlab.mx.share.reservation.service.RefundPolicy;
 import com.openlab.mx.share.reservation.service.ReservationService;
 import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.user.entity.User;
@@ -35,6 +36,7 @@ public class ReservationController {
     private final CurrentUser currentUser;
     private final com.openlab.mx.share.identity.service.RequireVerifiedIdentityService
             requireVerifiedIdentityService;
+    private final RefundPolicy refundPolicy;
 
     @Value("${escrow.commission-rate}")
     private java.math.BigDecimal commissionRate = new java.math.BigDecimal("0.05");
@@ -74,11 +76,19 @@ public class ReservationController {
     @GetMapping("/reservations")
     public String myReservations(Model model) {
         User user = currentUser.require();
-        model.addAttribute("reservations",
-                reservationRepository.findByUserIdOrderByCreatedAtDesc(user.getId()));
+        var reservas = reservationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        model.addAttribute("reservations", reservas);
         model.addAttribute("pendientes",
                 reservationRepository.findByInstanceExperienceCreatorIdAndStatus(
                         user.getId(), ReservationStatus.PENDIENTE));
+        // % a devolver por reserva: el botón de cancelar lo dice antes de aplicar.
+        java.util.Map<Long, Integer> reembolso = new java.util.HashMap<>();
+        for (Reservation reserva : reservas) {
+            if (reserva.getInstance() != null) {
+                reembolso.put(reserva.getId(), refundPolicy.percentFor(reserva.getInstance()));
+            }
+        }
+        model.addAttribute("refundPercent", reembolso);
         return "reservations/my-reservations";
     }
 

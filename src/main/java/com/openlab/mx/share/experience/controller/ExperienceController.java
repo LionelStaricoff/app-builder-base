@@ -11,6 +11,7 @@ import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
+import com.openlab.mx.share.reservation.service.RefundPolicy;
 import com.openlab.mx.share.shared.JacksonHelper;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.user.entity.User;
@@ -44,6 +45,7 @@ public class ExperienceController {
     private final ExperienceInstanceRepository instanceRepository;
     private final com.openlab.mx.share.experience.repository.ExperienceScheduleRepository scheduleRepository;
     private final JacksonHelper jacksonHelper;
+    private final RefundPolicy refundPolicy;
 
     @GetMapping("/experiences/new")
     public String form(Model model) {
@@ -101,6 +103,14 @@ public class ExperienceController {
         model.addAttribute("stopsJson", jacksonHelper.toJson(stops));
         model.addAttribute("images", images);
         model.addAttribute("instances", instances);
+        // Política de reembolso visible ANTES de reservar (cartel) y el % que
+        // corresponde a cada fecha.
+        model.addAttribute("refundPolicyLines", refundPolicy.lines());
+        java.util.Map<Long, Integer> reembolso = new java.util.HashMap<>();
+        for (ExperienceInstance instance : instances) {
+            reembolso.put(instance.getId(), refundPolicy.percentFor(instance));
+        }
+        model.addAttribute("refundPercentByInstance", reembolso);
         var usuario = currentUser();
         model.addAttribute("esDueno", usuario != null && experience.getCreator() != null
                 && usuario.getId().equals(experience.getCreator().getId()));

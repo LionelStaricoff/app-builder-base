@@ -13,6 +13,8 @@
         </p>
         <p class="hint">El pago queda retenido en garantía hasta que la experiencia termine.</p>
 
+        <div th:replace="~{fragments/refund-notice :: notice}"></div>
+
         <div class="empty" th:if="${error}" th:text="${error}">Error</div>
 
         <form th:action="@{/checkout/{id}(id=${instance.id})}" method="post">

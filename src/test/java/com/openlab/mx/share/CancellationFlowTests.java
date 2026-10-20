@@ -6,10 +6,12 @@ import com.openlab.mx.share.experience.dto.ExperienceFormRequest;
 import com.openlab.mx.share.experience.dto.ScheduleEntryRequest;
 import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
+import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.entity.InstanceStatus;
 import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
+import com.openlab.mx.share.payment.entity.Payment;
 import com.openlab.mx.share.payment.entity.PaymentStatus;
 import com.openlab.mx.share.payment.repository.PaymentRepository;
 import com.openlab.mx.share.reservation.entity.Reservation;
@@ -28,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -68,15 +71,32 @@ class CancellationFlowTests {
     }
 
     private Long fechaFutura() {
+        return instanceRepository.findByExperienceIdOrderByDateAsc(crearExperiencia().getId())
+                .get(0).getId();
+    }
+
+    /** Fecha que empieza dentro de 24h → tramo de 50%. */
+    private Long fechaEnMenosDe24h() {
+        LocalDateTime inicio = LocalDateTime.now().plusHours(2);
+        ExperienceInstance instance = ExperienceInstance.builder()
+                .experience(crearExperiencia())
+                .date(inicio.toLocalDate())
+                .startTime(inicio.toLocalTime())
+                .endTime(inicio.toLocalTime().plusHours(1))
+                .status(InstanceStatus.SCHEDULED)
+                .build();
+        return instanceRepository.save(instance).getId();
+    }
+
+    private Experience crearExperiencia() {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
-        Experience experience = experienceService.create(new ExperienceFormRequest(
+        return experienceService.create(new ExperienceFormRequest(
                 "Cancel Exp " + UUID.randomUUID(), "Desc", 120, 1, 4, BigDecimal.valueOf(100),
                 ExperienceCategory.CULTURAL, RecurrenceType.UNIQUE,
                 19.4326, -99.1332,
                 List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(20), null,
                         LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
                 List.of(image)), usuario("demo_creator"));
-        return instanceRepository.findByExperienceIdOrderByDateAsc(experience.getId()).get(0).getId();
     }
 
     @Test
@@ -99,13 +119,42 @@ class CancellationFlowTests {
         mockMvc.perform(post("/reservations/" + reserva.getId() + "/cancel")
                         .with(user("demo_user")).with(csrf()))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(flash().attributeExists("ok"));
+                .andExpect(flash().attribute("ok", containsString("90%")));
 
         Reservation guardada = reservationRepository.findById(reserva.getId()).orElseThrow();
         assertEquals(ReservationStatus.CANCELADO, guardada.getStatus());
-        PaymentStatus estadoPago = paymentRepository.findByReservationId(reserva.getId())
-                .orElseThrow().getStatus();
-        assertEquals(PaymentStatus.REFUNDED_FULL, estadoPago, "faltan más de 24h: 100%");
+        Payment pago = paymentRepository.findByReservationId(reserva.getId()).orElseThrow();
+        assertEquals(PaymentStatus.REFUNDED_PARTIAL, pago.getStatus(),
+                "faltan más de 24h: se devuelve el 90% y la plataforma retiene el 10%");
+        assertEquals(0, pago.getRefund().compareTo(
+                pago.getAmount().multiply(new BigDecimal("0.90")).setScale(2, java.math.RoundingMode.HALF_UP)));
+    }
+
+    @Test
+    void participanteCancelaConMenosDe24hDevuelve50() throws Exception {
+        Long instanceId = fechaEnMenosDe24h();
+        mockMvc.perform(post("/checkout/" + instanceId)
+                        .with(user("demo_user")).with(csrf()).param("attendees", "1"))
+                .andExpect(status().is3xxRedirection());
+        Reservation reserva = reservationRepository
+                .findFirstByInstanceIdAndUserIdAndStatus(
+                        instanceId, usuario("demo_user").getId(), ReservationStatus.PENDIENTE)
+                .orElseThrow();
+        String sessionId = paymentRepository.findByReservationId(reserva.getId())
+                .orElseThrow().getStripeSessionId();
+        mockMvc.perform(get("/pago/exito").param("session_id", sessionId)
+                        .with(user("demo_user")))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/reservations/" + reserva.getId() + "/cancel")
+                        .with(user("demo_user")).with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("ok", containsString("50%")));
+
+        Payment pago = paymentRepository.findByReservationId(reserva.getId()).orElseThrow();
+        assertEquals(PaymentStatus.REFUNDED_PARTIAL, pago.getStatus());
+        assertEquals(0, pago.getRefund().compareTo(
+                pago.getAmount().multiply(new BigDecimal("0.50")).setScale(2, java.math.RoundingMode.HALF_UP)));
     }
 
     @Test

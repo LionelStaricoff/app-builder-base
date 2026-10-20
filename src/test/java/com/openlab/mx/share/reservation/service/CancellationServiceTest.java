@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -51,6 +52,9 @@ class CancellationServiceTest {
     private NotificationService notificationService;
     @Mock
     private com.openlab.mx.share.payment.gateway.PaymentGateway paymentGateway;
+    /** Política real (no mock): los tramos son parte del comportamiento probado. */
+    @Spy
+    private RefundPolicy refundPolicy = new RefundPolicy("24:0.90,0:0.50");
 
     @InjectMocks
     private CancellationService cancellationService;
@@ -122,7 +126,7 @@ class CancellationServiceTest {
     }
 
     @Test
-    void testCaso1ReembolsoTotalMasDe24h() {
+    void testCaso1Reembolsa90YRetiene10MasDe24h() {
         ExperienceInstance instancia = instance(10L, LocalDate.now().plusDays(10), LocalTime.of(10, 0));
         Reservation reserva = reserva(1L, instancia, 200L);
         Payment pago = pago();
@@ -131,10 +135,12 @@ class CancellationServiceTest {
 
         cancellationService.cancelByParticipant(1L, user(200L));
 
-        assertEquals(PaymentStatus.REFUNDED_FULL, pago.getStatus());
-        assertEquals(0, pago.getRefund().compareTo(pago.getAmount()), "reembolso del 100%");
-        // refund total de autorización no capturada = cancel en Stripe (spec §4)
-        verify(paymentGateway).cancel("pi_cancel_1");
+        assertEquals(PaymentStatus.REFUNDED_PARTIAL, pago.getStatus());
+        assertEquals(0, pago.getRefund().compareTo(new BigDecimal("342.00")),
+                "con más de 24h se devuelve el 90% de 380");
+        // capture parcial = la plataforma retiene el 10% (spec §4)
+        verify(paymentGateway).capturePartial("pi_cancel_1", new BigDecimal("38.00"));
+        verify(paymentGateway, never()).cancel(any());
     }
 
     @Test
@@ -165,7 +171,8 @@ class CancellationServiceTest {
 
         cancellationService.cancelByParticipant(1L, user(200L));
 
-        assertEquals(PaymentStatus.REFUNDED_FULL, pago.getStatus());
+        assertEquals(PaymentStatus.REFUNDED_PARTIAL, pago.getStatus());
+        assertEquals(0, pago.getRefund().compareTo(new BigDecimal("342.00")));
         verify(paymentGateway, never()).cancel(any());
         verify(paymentGateway, never()).capturePartial(any(), any());
     }

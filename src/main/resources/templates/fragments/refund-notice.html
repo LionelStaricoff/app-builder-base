@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Cartel de la política de reembolso: se muestra antes de reservar/pagar.
+     Usa ${refundPolicyLines} (una línea por tramo) y, si la página lo define,
+     ${refundPercent} con el % que corresponde a la fecha en pantalla. -->
+<div th:fragment="notice" class="refund-notice">
+    <p class="refund-notice-title">Política de cancelación</p>
+    <ul class="refund-notice-list">
+        <li th:each="linea : ${refundPolicyLines}" th:text="${linea}">
+            Si cancelás con más de 24 h de anticipación, se devuelve el 90%.
+        </li>
+    </ul>
+    <p class="refund-notice-applies" th:if="${refundPercent != null}"
+       th:text="'Si cancelás esta fecha ahora, te devuelven el ' + ${refundPercent} + '% del monto.'">
+        Si cancelás esta fecha ahora, te devuelven el 90% del monto.
+    </p>
+</div>
+</body>
+</html>

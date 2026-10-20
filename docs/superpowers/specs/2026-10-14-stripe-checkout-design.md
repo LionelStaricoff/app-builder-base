@@ -38,7 +38,7 @@ Invariantes existentes no cambian: `heldAt` se setea al pasar a HELD (desde el r
 | POST /checkout → crear sesión | `SessionCreate` con `capture_method=manual` | Payment `PENDING` |
 | Retorno `payment_status=paid` o webhook `checkout.session.completed` | revalidar con `Session.retrieve` (query param NO confiable) | `PENDING → HELD` (guarda `pi_id`) |
 | `EscrowService` libera (todos evaluaron / ventana vencida) / `EscrowReleaseService` job | `PaymentIntent.capture` (con Idempotency-Key) | `RELEASED` (payout contable, sin Connect) |
-| Cancelación >24h (refund 100%) | `PaymentIntent.cancel` (autorización sin capturar) | `REFUNDED_FULL`, `refund=amount` |
+| Cancelación >24h (refund 90%) | `PaymentIntent.capture(amount=10%)` | `REFUNDED_PARTIAL`, `refund=90%` (la plataforma retiene el 10%) |
 | Cancelación ≤24h (refund 50%) | `PaymentIntent.capture(amount=50%)` | `REFUNDED_PARTIAL`, `refund=50%` (la penalidad queda en la plataforma) |
 | Cancelación de fecha por creador / cupo mínimo | `PaymentIntent.cancel` para cada pago HELD | `REFUNDED_FULL` |
 | Webhook `checkout.session.expired` | — | payment `PENDING → FAILED`, reserva → `CANCELADO` (libera el cupo) |

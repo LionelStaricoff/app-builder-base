@@ -2,6 +2,7 @@ package com.openlab.mx.share.reservation.controller;
 
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.reservation.service.CancellationService;
+import com.openlab.mx.share.reservation.service.RefundPolicy;
 import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.shared.exception.NotOwnerException;
@@ -21,13 +22,14 @@ public class CancellationController {
     private final CancellationService cancellationService;
     private final ExperienceInstanceRepository instanceRepository;
     private final CurrentUser currentUser;
+    private final RefundPolicy refundPolicy;
 
     /** Caso 1: el participante cancela su reserva. */
     @PostMapping("/reservations/{id}/cancel")
     public String cancelByParticipant(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        cancellationService.cancelByParticipant(id, currentUser.require());
-        redirectAttributes.addFlashAttribute("ok",
-                "Reserva cancelada. El reembolso depende de cuánto falte para la fecha.");
+        var resultado = cancellationService.cancelByParticipant(id, currentUser.require());
+        redirectAttributes.addFlashAttribute("ok", "Reserva cancelada. Se devuelve el "
+                + refundPolicy.percentOf(resultado.refundRate()) + "% del monto.");
         return CurrentUser.backOr("/reservations");
     }
 
