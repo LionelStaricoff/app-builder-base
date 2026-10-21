@@ -3,8 +3,8 @@ package com.openlab.mx.share.payment.service;
 import com.openlab.mx.share.payment.entity.ConnectAccount;
 import com.openlab.mx.share.payment.entity.ConnectAccountStatus;
 import com.openlab.mx.share.payment.gateway.PaymentGateway;
-import com.openlab.mx.share.payment.repository.ConnectAccountRepository;
 import com.openlab.mx.share.shared.exception.DomainException;
+import com.openlab.mx.share.shared.exception.UnsupportedPayoutCountryException;
 import com.openlab.mx.share.user.entity.Role;
 import com.openlab.mx.share.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,8 +18,12 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -30,8 +34,8 @@ import static org.mockito.Mockito.when;
 class StripeConnectServiceTest {
 
     private final PaymentGateway gateway = mock(PaymentGateway.class);
-    private final ConnectAccountRepository repository = mock(ConnectAccountRepository.class);
-    private final StripeConnectService service = new StripeConnectService(repository, gateway);
+    private final ConnectAccountService connectAccountService = mock(ConnectAccountService.class);
+    private final StripeConnectService service = new StripeConnectService(connectAccountService, gateway);
 
     private final User creator = User.builder()
             .id(1L)
@@ -50,7 +54,7 @@ class StripeConnectServiceTest {
 
     @Test
     void devuelveElLinkCuandoLaPasarelaResponde() {
-        when(repository.findByUser(creator)).thenReturn(Optional.of(cuenta()));
+        when(connectAccountService.findByUser(creator)).thenReturn(Optional.of(cuenta()));
         when(gateway.createAccountLink(anyString(), anyString(), anyString()))
                 .thenReturn("https://connect.stripe.com/setup/e/abc");
 
@@ -60,7 +64,7 @@ class StripeConnectServiceTest {
 
     @Test
     void unLinkNullCortaConUnErrorDeDominioYNoConNullPointer() {
-        when(repository.findByUser(creator)).thenReturn(Optional.of(cuenta()));
+        when(connectAccountService.findByUser(creator)).thenReturn(Optional.of(cuenta()));
         when(gateway.createAccountLink(anyString(), anyString(), anyString())).thenReturn(null);
 
         DomainException e = assertThrows(DomainException.class,
@@ -70,12 +74,48 @@ class StripeConnectServiceTest {
 
     @Test
     void unLinkVacioCortaConUnErrorDeDominio() {
-        when(repository.findByUser(creator)).thenReturn(Optional.of(cuenta()));
+        when(connectAccountService.findByUser(creator)).thenReturn(Optional.of(cuenta()));
         when(gateway.createAccountLink(anyString(), anyString(), anyString())).thenReturn("   ");
 
         DomainException e = assertThrows(DomainException.class,
                 () -> service.generateOnboardingLink(creator, "MX"));
         assertTrue(e.getMessage().contains("No se pudo generar el enlace"), e.getMessage());
+    }
+
+    @Test
+    void conCuentaYaExistenteNoSeCreaUnaNuevaNiSeValidaElPais() {
+        // El país de una cuenta ya existente está fijo: se ignora el pedido
+        // (incluso si hoy no está en la lista blanca de Stripe).
+        when(connectAccountService.findByUser(creator)).thenReturn(Optional.of(cuenta()));
+        when(gateway.createAccountLink(anyString(), anyString(), anyString()))
+                .thenReturn("https://connect.stripe.com/setup/e/abc");
+
+        assertEquals("https://connect.stripe.com/setup/e/abc",
+                service.generateOnboardingLink(creator, "CO"));
+        verify(connectAccountService, never()).createAccount(any(), anyString());
+    }
+
+    @Test
+    void sinCuentaSeCreaUnaYElPaisDebeEstarEnLaListaBlanca() {
+        when(connectAccountService.findByUser(creator)).thenReturn(Optional.empty());
+        when(connectAccountService.createAccount(any(), anyString())).thenReturn(cuenta());
+        when(gateway.createAccountLink(anyString(), anyString(), anyString()))
+                .thenReturn("https://connect.stripe.com/setup/e/abc");
+
+        assertEquals("https://connect.stripe.com/setup/e/abc",
+                service.generateOnboardingLink(creator, "MX"));
+        verify(connectAccountService).createAccount(any(), eq("MX"));
+    }
+
+    @Test
+    void sinCuentaYConPaisNoSoportadoFallaAntesDeTocarStripe() {
+        when(connectAccountService.findByUser(creator)).thenReturn(Optional.empty());
+
+        UnsupportedPayoutCountryException e = assertThrows(UnsupportedPayoutCountryException.class,
+                () -> service.generateOnboardingLink(creator, "CO"));
+        assertTrue(e.getMessage().contains("Colombia"), e.getMessage());
+        verify(connectAccountService, never()).createAccount(any(), anyString());
+        verify(gateway, never()).createAccountLink(anyString(), anyString(), anyString());
     }
 
     private ConnectAccount cuenta() {

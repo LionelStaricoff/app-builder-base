@@ -3,7 +3,6 @@ package com.openlab.mx.share.payment.service;
 import com.openlab.mx.share.payment.entity.ConnectAccount;
 import com.openlab.mx.share.payment.entity.ConnectAccountStatus;
 import com.openlab.mx.share.payment.gateway.PaymentGateway;
-import com.openlab.mx.share.payment.repository.ConnectAccountRepository;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.shared.exception.UnsupportedPayoutCountryException;
 import com.openlab.mx.share.user.entity.User;
@@ -13,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -35,7 +33,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class StripeConnectService {
 
-    private final ConnectAccountRepository connectAccountRepository;
+    private final ConnectAccountService connectAccountService;
     private final PaymentGateway gateway;
 
     @Value("${app.base-url:http://localhost:8080}")
@@ -68,30 +66,25 @@ public class StripeConnectService {
             Map.entry("PE", "Perú"), Map.entry("EC", "Ecuador"), Map.entry("UY", "Uruguay"));
 
     /**
-     * Obtiene o crea la cuenta Connect del creador.
-     * Si ya existe, se ignora el país pedido (ya está fijo en la cuenta).
-     */
-    @Transactional
-    public ConnectAccount getOrCreateAccount(User creator, String countryIso) {
-        return connectAccountRepository.findByUser(creator)
-                .map(existing -> {
-                    log.info("[connect] cuenta existente id={} stripeId={} status={}",
-                            existing.getId(), existing.getStripeAccountId(), existing.getStatus());
-                    return existing;
-                })
-                .orElseGet(() -> createAccount(creator, requireSupportedCountry(countryIso)));
-    }
-
-    /**
      * Genera un Account Link temporal para Hosted Onboarding.
      * El link expira: no debe almacenarse como permanente.
+     *
+     * <p>La cuenta se busca en {@link ConnectAccountService}: si el creador
+     * todavía no tiene cuenta se crea una nueva (y solo entonces se valida el
+     * país pedido; si ya tiene cuenta, el país está fijo y se ignora).
      *
      * @param countryIso país elegido por el creador (ISO 3166-1 alpha-2);
      *                   solo se usa al crear la cuenta nueva.
      */
     @Transactional
     public String generateOnboardingLink(User creator, String countryIso) {
-        ConnectAccount account = getOrCreateAccount(creator, countryIso);
+        ConnectAccount account = connectAccountService.findByUser(creator)
+                .map(existing -> {
+                    log.info("[connect] cuenta existente id={} stripeId={} status={}",
+                            existing.getId(), existing.getStripeAccountId(), existing.getStatus());
+                    return existing;
+                })
+                .orElseGet(() -> connectAccountService.createAccount(creator, requireSupportedCountry(countryIso)));
         String refreshUrl = baseUrl + "/onboarding/refresh";
         String returnUrl = baseUrl + "/onboarding/complete";
         log.info("[connect] creando account link — stripeId={} refresh={} return={}",
@@ -110,45 +103,17 @@ public class StripeConnectService {
     }
 
     /**
-     * Consulta el estado real de la cuenta Connect desde Stripe
-     * y actualiza el estado local. No crea cuentas: si no existe localmente,
-     * es un error de flujo (la creación requiere un país elegido por el usuario).
-     */
-    @Transactional
-    public ConnectAccount syncAccountStatus(User creator) {
-        ConnectAccount account = connectAccountRepository.findByUser(creator)
-                .orElseThrow(() -> new DomainException(
-                        "No hay cuenta de cobro configurada todavía."));
-        log.info("[connect] sincronizando estado desde el gateway — stripeId={}", account.getStripeAccountId());
-        PaymentGateway.ConnectAccountInfo info = gateway.retrieveConnectAccount(account.getStripeAccountId());
-        log.info("[connect] gateway respondió payoutsEnabled={} chargesEnabled={} disabledReason={}",
-                info.payoutsEnabled(), info.chargesEnabled(), info.disabledReason());
-
-        if (info.payoutsEnabled() && info.chargesEnabled()) {
-            account.setStatus(ConnectAccountStatus.ACTIVE);
-        } else if (info.disabledReason() != null) {
-            account.setStatus(ConnectAccountStatus.RESTRICTED);
-        } else {
-            account.setStatus(ConnectAccountStatus.ONBOARDING_INCOMPLETE);
-        }
-        account.setLastSyncedAt(LocalDateTime.now());
-        return connectAccountRepository.save(account);
-    }
-
-    /**
      * Determina si el creador puede recibir pagos ahora mismo.
      */
     public boolean canReceivePayouts(User creator) {
-        return connectAccountRepository.findByUser(creator)
-                .map(a -> a.getStatus() == ConnectAccountStatus.ACTIVE)
-                .orElse(false);
+        return connectAccountService.canReceivePayouts(creator);
     }
 
     /**
      * Devuelve el estado completo para mostrar en el frontend.
      */
     public Map<String, Object> getStatus(User creator) {
-        ConnectAccount account = connectAccountRepository.findByUser(creator).orElse(null);
+        ConnectAccount account = connectAccountService.findByUser(creator).orElse(null);
         if (account == null) {
             log.info("[connect] getStatus: sin cuenta Connect (NOT_STARTED)");
             return Map.of(
@@ -160,7 +125,7 @@ public class StripeConnectService {
             );
         }
         // Sincronizar con Stripe antes de devolver
-        ConnectAccount synced = syncAccountStatus(creator);
+        ConnectAccount synced = connectAccountService.syncAccountStatus(creator);
         log.info("[connect] getStatus: cuenta {} → status={} payoutsEnabled={}",
                 synced.getStripeAccountId(), synced.getStatus(),
                 synced.getStatus() == ConnectAccountStatus.ACTIVE);
@@ -215,7 +180,7 @@ public class StripeConnectService {
      * soporta; si no, ninguno (el creador debe elegir).
      */
     public String resolvePayoutCountry(User creator) {
-        return connectAccountRepository.findByUser(creator)
+        return connectAccountService.findByUser(creator)
                 .map(ConnectAccount::getCountry)
                 .orElseGet(() -> {
                     String iso = mapCountryToIso(creator.getCountry());
@@ -243,21 +208,6 @@ public class StripeConnectService {
                             + ".");
         }
         return iso;
-    }
-
-    private ConnectAccount createAccount(User creator, String country) {
-        log.info("[connect] creando cuenta Connect en el gateway — country={} email={} (¿Stripe configurado?){}",
-                country, creator.getEmail(), gateway.getClass().getSimpleName());
-        String stripeAccountId = gateway.createConnectAccount(country, creator.getEmail());
-        log.info("[connect] cuenta Connect creada stripeId={}", stripeAccountId);
-        ConnectAccount account = ConnectAccount.builder()
-                .user(creator)
-                .stripeAccountId(stripeAccountId)
-                .country(country)
-                .status(ConnectAccountStatus.ONBOARDING_INCOMPLETE)
-                .createdAt(LocalDateTime.now())
-                .build();
-        return connectAccountRepository.save(account);
     }
 
     /**

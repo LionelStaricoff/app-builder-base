@@ -11,8 +11,8 @@ import com.openlab.mx.share.payment.repository.ConnectAccountRepository;
 import com.openlab.mx.share.payment.repository.ConnectPayoutRepository;
 import com.openlab.mx.share.payment.repository.PaymentRepository;
 import com.openlab.mx.share.payment.repository.StripeEventRepository;
+import com.openlab.mx.share.payment.service.ConnectAccountService;
 import com.openlab.mx.share.payment.service.StripeCheckoutService;
-import com.openlab.mx.share.payment.service.StripeConnectService;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
@@ -48,7 +48,7 @@ public class StripeWebhookController {
     private final StripeCheckoutService stripeCheckoutService;
     private final ConnectAccountRepository connectAccountRepository;
     private final ConnectPayoutRepository connectPayoutRepository;
-    private final StripeConnectService stripeConnectService;
+    private final ConnectAccountService connectAccountService;
 
     @Value("${stripe.webhook-secret:}")
     private String webhookSecret = "";
@@ -140,7 +140,7 @@ public class StripeWebhookController {
             return false; // cuenta no conocida: no-op
         }
         // Re-sincronizar desde Stripe
-        stripeConnectService.syncAccountStatus(account.getUser());
+        connectAccountService.syncAccountStatus(account.getUser());
         return true;
     }
 
