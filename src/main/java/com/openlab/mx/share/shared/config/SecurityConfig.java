@@ -28,12 +28,19 @@ public class SecurityConfig {
                 .requestMatchers("/api/webhooks/didit").permitAll()
                 .anyRequest().authenticated()
             )
-            // Solo los webhooks quedan fuera de CSRF: los dos se autentican
-            // con firma (Stripe / HMAC de Didit), no con sesión.
-            // /api/didit/sessions NO va acá: es un POST de sesión autenticada
-            // y el front manda el token (didit-verification.js).
+            // Solo los webhooks y el canal del chat quedan fuera de CSRF.
+            // Los webhooks se autentican con firma (Stripe / HMAC de Didit), no
+            // con sesión. /api/didit/sessions NO va acá: es un POST de sesión
+            // autenticada y el front manda el token (didit-verification.js).
+            //
+            // /ws/** es el canal STOMP del chat: el cliente solo RECIBE (los
+            // mensajes se mandan por POST HTTP normal, con token). SockJS puede
+            // caer al transporte xhr-streaming, que hace POSTs, y sin esta
+            // excepción el CsrfFilter los rechazaría con 403 y el chat no
+            // conectaría. La autorización la hace WebSocketAuthInterceptor
+            // (sesión + permiso de suscripción).
             .csrf(csrf -> csrf.ignoringRequestMatchers(
-                    "/api/stripe/webhooks", "/api/webhooks/didit"))
+                    "/api/stripe/webhooks", "/api/webhooks/didit", "/ws/**"))
             .formLogin(form -> form
                 .loginPage("/login")
                 .defaultSuccessUrl("/feed", true)
