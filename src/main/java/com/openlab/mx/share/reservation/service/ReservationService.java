@@ -15,9 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 /**
  * Reservas con validación de cupo (spec §5.3). La creación del pago vive
@@ -31,6 +30,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final com.openlab.mx.share.identity.service.RequireVerifiedIdentityService
             requireVerifiedIdentityService;
+    private final Clock clock;
 
     @Transactional
     public Reservation reserve(Long instanceId, int attendees, User u) {
@@ -60,7 +60,7 @@ public class ReservationService {
                 .user(u)
                 .attendees(attendees)
                 .status(ReservationStatus.PENDIENTE)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(clock))
                 .build();
         reservationRepository.save(reservation);
 
@@ -80,11 +80,18 @@ public class ReservationService {
         return reservationRepository.save(reservation);
     }
 
+    /**
+     * Si la fecha de la experiencia ya empezó.
+     *
+     * <p>Se compara el INICIO (fecha + hora de arranque), no la hora de fin:
+     * una experiencia que empieza a las 23:30 y termina a las 00:30 del día
+     * siguiente tiene {@code endTime} menor que {@code startTime}, así que
+     * comparar el endTime contra la hora actual la daba por terminada desde
+     * las 00:00 del mismo día y el checkout rebotaba con "Esa fecha ya pasó".
+     * La fecha que guarda la instancia es siempre la de inicio.
+     */
     private boolean isPast(ExperienceInstance instance) {
-        LocalDate hoy = LocalDate.now();
-        if (instance.getDate().isBefore(hoy)) {
-            return true;
-        }
-        return instance.getDate().equals(hoy) && instance.getEndTime().isBefore(LocalTime.now());
+        LocalDateTime inicio = LocalDateTime.of(instance.getDate(), instance.getStartTime());
+        return inicio.isBefore(LocalDateTime.now(clock));
     }
 }
