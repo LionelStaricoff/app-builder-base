@@ -28,7 +28,7 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class ProfileController {
 
-    private static final long MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+    private static final long MAX_AVATAR_BYTES = 5L * 1024 * 1024;
 
     /** Atributos flash y destino de vuelta de la pagina de ajustes. */
     private static final String FLASH_ERROR = "error";
