@@ -107,6 +107,16 @@
                     </span>
                 </div>
                 <p th:text="${dto.description}">Descripción</p>
+                <div class="card-capacity">
+                    <span>Lugares libres:</span>
+                    <strong class="card-capacity-free" th:text="${dto.availableCapacity}">0</strong>
+                    <span th:if="${dto.reservedCount > 0}" class="card-capacity-reserved">
+                        · <span th:text="${dto.reservedCount} + ' personas ya reservaron'"></span>
+                        <span class="avatar-stack">
+                            <img th:each="av : ${dto.reservedAvatars}" th:src="'data:image/jpeg;base64,' + ${av}" alt="" loading="lazy">
+                        </span>
+                    </span>
+                </div>
                 <p class="meta">
                     📍 <span th:text="${dto.meetingPointLabel}">0, 0</span>
                     · ⏱ <span th:text="${dto.durationMinutes >= 60 ? T(java.lang.Math).floorDiv(dto.durationMinutes, 60) + ' h' + (T(java.lang.Math).floorMod(dto.durationMinutes, 60) > 0 ? ' ' + T(java.lang.Math).floorMod(dto.durationMinutes, 60) + ' min' : '') : dto.durationMinutes + ' min'}">2 h 30 min</span>

@@ -97,7 +97,7 @@ class FavoriteServiceTest {
                         3L, "n", "d", "c", List.of("c"), "1.0, 2.0", 60,
                         java.time.LocalDate.of(2026, 12, 1),
                         java.math.BigDecimal.TEN, 4.5, true, "MXN", List.of(), "[]",
-                        "creador", null));
+                        "creador", null, 5, 2, 3, List.of()));
 
         var result = favoriteService.listFavorites(user());
 

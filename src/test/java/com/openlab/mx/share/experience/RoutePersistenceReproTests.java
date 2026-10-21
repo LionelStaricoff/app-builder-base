@@ -449,7 +449,7 @@ class RoutePersistenceReproTests {
                 999L, "Ruta test", "Desc", "QUJD", List.of("QUJD"), "Mirador del Cerro · —",
                 150, LocalDate.now().plusDays(7), BigDecimal.valueOf(250), 4.5, false,
                 "MXN", paradas, "[{\"placeName\":\"Mirador del Cerro\"}]",
-                "creador-demo", null);
+                "creador-demo", null, 4, 2, 2, List.of());
         var variables = new java.util.HashMap<String, Object>();
         variables.put("feedPage",
                 new org.springframework.data.domain.PageImpl<>(List.of(dto)));

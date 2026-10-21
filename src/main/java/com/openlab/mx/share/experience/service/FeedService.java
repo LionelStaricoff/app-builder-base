@@ -13,6 +13,8 @@ import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.experience.repository.UserViewedExperienceRepository;
+import com.openlab.mx.share.reservation.entity.ReservationStatus;
+import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.favorite.repository.FavoriteRepository;
 import com.openlab.mx.share.shared.JacksonHelper;
 import com.openlab.mx.share.shared.location.GeocodingService;
@@ -52,6 +54,7 @@ public class FeedService {
     private final ExperienceImageRepository imageRepository;
     private final ExperienceStopRepository stopRepository;
     private final ExperienceInstanceRepository instanceRepository;
+    private final ReservationRepository reservationRepository;
     private final FavoriteRepository favoriteRepository;
     private final UserViewedExperienceRepository viewedExperienceRepository;
     private final JacksonHelper jacksonHelper;
@@ -354,7 +357,58 @@ public class FeedService {
                 stops,
                 jacksonHelper.toJson(stops),
                 experience.getCreator() == null ? null : experience.getCreator().getUsername(),
-                experience.getCreator() == null ? null : experience.getCreator().getAvatarBase64()
+                experience.getCreator() == null ? null : experience.getCreator().getAvatarBase64(),
+                experience.getMaxCapacity(),
+                availableCapacityFor(experience),
+                reservedCountFor(experience),
+                reservedAvatarsFor(experience)
         );
+    }
+
+    /** Próxima instancia reservable de la experiencia (la misma que nextDate). */
+    private com.openlab.mx.share.experience.entity.ExperienceInstance nextInstance(Experience experience) {
+        try {
+            return instanceRepository
+                    .findFirstByExperienceIdAndDateGreaterThanEqualAndStatusOrderByDateAsc(
+                            experience.getId(), java.time.LocalDate.now(java.time.ZoneId.systemDefault()),
+                            InstanceStatus.SCHEDULED)
+                    .orElse(null);
+        } catch (Exception _) {
+            return null;
+        }
+    }
+
+    private int reservedCountFor(Experience experience) {
+        var instance = nextInstance(experience);
+        if (instance == null || instance.getId() == null) return 0;
+        try {
+            return (int) reservationRepository.countAttendees(instance.getId());
+        } catch (Exception _) {
+            return 0;
+        }
+    }
+
+    private int availableCapacityFor(Experience experience) {
+        int reserved = reservedCountFor(experience);
+        int max = experience.getMaxCapacity();
+        return Math.max(0, max - reserved);
+    }
+
+    private List<String> reservedAvatarsFor(Experience experience) {
+        var instance = nextInstance(experience);
+        if (instance == null || instance.getId() == null) return List.of();
+        try {
+            var reservations = reservationRepository.findByInstanceIdAndStatusNot(instance.getId(),
+                            ReservationStatus.CANCELADO);
+            if (reservations == null) return List.of();
+            return reservations.stream()
+                    .map(r -> r.getUser() == null ? null : r.getUser().getAvatarBase64())
+                    .filter(a -> a != null && !a.isBlank())
+                    .distinct()
+                    .limit(experience.getMaxCapacity())
+                    .toList();
+        } catch (Exception _) {
+            return List.of();
+        }
     }
 }

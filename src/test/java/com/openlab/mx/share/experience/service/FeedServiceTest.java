@@ -12,6 +12,7 @@ import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
+import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.share.favorite.repository.FavoriteRepository;
 import com.openlab.mx.share.shared.JacksonHelper;
@@ -44,6 +45,8 @@ class FeedServiceTest {
     private ExperienceImageRepository imageRepository;
     @Mock
     private ExperienceInstanceRepository instanceRepository;
+    @Mock
+    private ReservationRepository reservationRepository;
     @Mock
     private FavoriteRepository favoriteRepository;
     @Mock

@@ -82,6 +82,17 @@
             </span>
           </div>
           <p>${escapeHtml(dto.description)}</p>
+          <div class="card-capacity">
+            <span>Lugares libres:</span>
+            <strong class="card-capacity-free">${dto.availableCapacity ?? 0}</strong>
+            ${dto.reservedCount > 0 ? `
+              <span class="card-capacity-reserved">· ${dto.reservedCount} personas ya reservaron
+                <span class="avatar-stack">
+                  ${(Array.isArray(dto.reservedAvatars) ? dto.reservedAvatars : [])
+                    .map((av) => `<img src="data:image/jpeg;base64,${escapeAttr(av)}" alt="" loading="lazy">`).join('')}
+                </span>
+              </span>` : ''}
+          </div>
           <p class="meta">📍 ${escapeHtml(dto.meetingPointLabel)} · ⏱ ${duration} · 📅 ${next} · <strong>${escapeHtml(currency)} ${dto.price}</strong></p>
           ${routeHtml}
           <p class="meta"><span class="stars">★</span> ${(dto.ratingAverage ?? 0).toFixed(1)}</p>
