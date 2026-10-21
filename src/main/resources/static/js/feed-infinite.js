@@ -30,73 +30,126 @@
     const gallery = images.length > 0
       ? `<div class="carousel" data-carousel>
            <div class="carousel-track" data-carousel-track>${slides}</div>
-           <button type="button" class="carousel-btn prev" data-carousel-prev aria-label="Anterior">‹</button>
-           <button type="button" class="carousel-btn next" data-carousel-next aria-label="Siguiente">›</button>
-           <div class="carousel-dots" data-carousel-dots></div>
-           <span class="carousel-counter" data-carousel-counter>1 / 1</span>
+           <div class="carousel-pagination">
+             <button type="button" data-carousel-prev>‹</button>
+             <span data-carousel-counter>1 / ${images.length}</span>
+             <button type="button" data-carousel-next>›</button>
+           </div>
+         </div>`
+      : '';
+    const favoriteForm = `
+      <form class="heart card-favorite-float" action="${heartAction}" method="post">
+        <input type="hidden" name="_csrf" value="${csrfToken || ''}">
+        <button type="submit" class="icon-btn heart-btn">${heart}</button>
+      </form>`;
+    const categoryBadge = category
+      ? `<span class="card-badge card-badge--category">${escapeHtml(category)}</span>`
+      : '';
+    const ratingBadge = `<span class="card-rating-badge">★ ${(dto.ratingAverage ?? 0).toFixed(1)} · Nuevo</span>`;
+    const media = gallery
+      ? `<div class="card-media">
+           <div class="card-media-bar">${categoryBadge}${favoriteForm}</div>
+           <div class="card-media-bottom">${ratingBadge}</div>
+           ${gallery}
          </div>`
       : '';
     const heartAction = dto.favorite
       ? `/favorites/${dto.id}/remove`
       : `/favorites/${dto.id}/add`;
-    const heart = dto.favorite ? '❤️' : '🤍';
-    let creatorAvatar = '<span class="card-creator-fallback" aria-hidden="true">👤</span>';
-    if (dto.creatorAvatar) {
-      creatorAvatar = `<img class="card-creator-avatar" src="data:image/jpeg;base64,${escapeAttr(dto.creatorAvatar)}" alt="" loading="lazy">`;
-    }
+    const heart = dto.favorite ? '♥' : '♡';
+    const creatorAvatar = dto.creatorAvatar
+      ? `<img class="card-creator-avatar" src="data:image/jpeg;base64,${escapeAttr(dto.creatorAvatar)}" alt="" loading="lazy">`
+      : '<span class="card-creator-fallback" aria-hidden="true">✨</span>';
     const creator = dto.creatorName
       ? `<div class="card-creator">
            ${creatorAvatar}
            <span class="card-creator-name">${escapeHtml(dto.creatorName)}</span>
-           <span class="card-creator-tag">· armó este viaje</span>
+           <span class="card-creator-tag">armó este viaje</span>
          </div>`
       : '';
     const next = dto.nextDate || 'Sin fecha';
     const currency = dto.currencyCode || 'MXN';
     const duration = formatDuration(dto.durationMinutes || 60);
-    const stops = Array.isArray(dto.stops) ? dto.stops : [];
-    const lastStop = stops.length > 1
-      ? ' → ' + escapeHtml(stops[stops.length - 1].placeName || '')
+    const reservedCount = Number(dto.reservedCount || 0);
+    const available = Number(dto.availableCapacity ?? 0);
+    const total = available + reservedCount;
+    const reservedPct = total > 0 ? Math.round((reservedCount * 100) / total) : 0;
+    const capacityReserved = reservedCount > 0
+      ? `<span class="card-capacity-reserved">${reservedCount} personas ya reservaron
+          <span class="avatar-stack">
+            ${(Array.isArray(dto.reservedAvatars) ? dto.reservedAvatars : [])
+              .map((av) => `<img src="data:image/jpeg;base64,${escapeAttr(av)}" alt="" loading="lazy">`).join('')}
+          </span></span>`
       : '';
-    const routeHtml = stops.length > 0
-      ? `<div class="feed-route">
-           <div class="map-box feed-route-map" data-map="feed-route" style="height:180px"
-                data-stops='${escapeAttr(JSON.stringify(stops))}'></div>
-           <p class="hint">🗺️ ${stops.length} paradas · ${escapeHtml(stops[0].placeName || '')}${lastStop}</p>
+    const maxCapacity = Number(dto.maxCapacity || 0);
+    const occupiedPct = maxCapacity > 0 ? Math.round((reservedCount * 100) / maxCapacity) : (total > 0 ? Math.round((reservedCount * 100) / total) : 0);
+    const initial = escapeHtml((dto.creatorName || 'A').charAt(0).toUpperCase());
+    const mediaTopBar = `
+      <div class="media-top-bar">
+        <button type="button" class="media-icon-btn" aria-label="Volver" onclick="history.back()">←</button>
+        <div class="media-actions">
+          <button type="button" class="media-icon-btn" title="Compartir viaje" aria-label="Compartir viaje" data-share-experience="${dto.id}">↗</button>
+          <form class="heart media-favorite" action="${heartAction}" method="post">
+            <input type="hidden" name="_csrf" value="${csrfToken || ''}">
+            <button type="submit" class="media-icon-btn heart-btn">${heart}</button>
+          </form>
+        </div>
+      </div>`;
+    const mediaBottomRating = `<div class="rating-badge"><span class="rating-star">★</span><div><span class="rating-number">${(dto.ratingAverage ?? 0).toFixed(1)}</span><span class="rating-sub">Nuevo</span></div></div>`;
+    const media = gallery
+      ? `<div class="card-media group">
+           <div class="media-top-gradient"></div>
+           ${mediaTopBar}
+           ${mediaBottomRating}
+           ${gallery}
          </div>`
       : '';
     return `
       <div class="card" id="card-${dto.id}">
-        ${gallery}
-        <div style="padding:1rem">
-          ${creator}
-          <div class="card-head">
-            <h3><a href="/experiences/${dto.id}">${escapeHtml(dto.name)}</a></h3>
-            <span class="card-head-actions">
-            <button type="button" class="heart share-btn" title="Compartir viaje"
-                    aria-label="Compartir viaje" data-share-experience="${dto.id}">📤</button>
-            <form class="heart" action="${heartAction}" method="post">
-              <input type="hidden" name="_csrf" value="${csrfToken || ''}">
-              <button type="submit">${heart}</button>
-            </form>
-            </span>
+        ${media}
+        <div class="card-body-new">
+          <div class="card-header-row">
+            <h2 class="card-title-new">${escapeHtml(dto.name)}</h2>
+            <button class="save-chip">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Save
+            </button>
           </div>
-          <p>${escapeHtml(dto.description)}</p>
-          <div class="card-capacity">
-            <span>Lugares libres:</span>
-            <strong class="card-capacity-free">${dto.availableCapacity ?? 0}</strong>
-            ${dto.reservedCount > 0 ? `
-              <span class="card-capacity-reserved">· ${dto.reservedCount} personas ya reservaron
-                <span class="avatar-stack">
-                  ${(Array.isArray(dto.reservedAvatars) ? dto.reservedAvatars : [])
-                    .map((av) => `<img src="data:image/jpeg;base64,${escapeAttr(av)}" alt="" loading="lazy">`).join('')}
-                </span>
-              </span>` : ''}
+          ${dto.creatorName ? `<div class="organizer-chip"><span class="avatar-initial">${escapeHtml(dto.creatorName.charAt(0).toUpperCase())}</span><span>Organizado por <strong>${escapeHtml(dto.creatorName)}</strong></span></div>` : ''}
+          <div class="details-3col">
+            <div class="detail-col"><span class="detail-icon">📅</span><strong>${next}</strong></div>
+            <div class="detail-col"><span class="detail-icon">⏱</span><strong>${duration}</strong></div>
+            <div class="detail-col"><span class="detail-icon">📍</span><strong>${escapeHtml(dto.meetingPointLabel || '')}</strong></div>
           </div>
-          <p class="meta">📍 ${escapeHtml(dto.meetingPointLabel)} · ⏱ ${duration} · 📅 ${next} · <strong>${escapeHtml(currency)} ${dto.price}</strong></p>
-          ${routeHtml}
-          <p class="meta"><span class="stars">★</span> ${(dto.ratingAverage ?? 0).toFixed(1)}</p>
-          <a class="btn-primary" href="/experiences/${dto.id}">Reservar</a>
+          <div class="capacity-price-grid">
+            <div class="capacity-block">
+              <div class="cp-head">
+                <span class="cp-title">Lugares libres</span>
+                <span class="cp-total">${maxCapacity} cupos totales</span>
+              </div>
+              <div class="capacity-progress">
+                <div class="capacity-fill" style="width:${occupiedPct}%"></div>
+              </div>
+              <div class="cp-foot">
+                <div class="cp-reserved">
+                  <span class="avatar-stack">
+                    ${(Array.isArray(dto.reservedAvatars) ? dto.reservedAvatars : []).map((av) => `<img src="data:image/jpeg;base64,${escapeAttr(av)}" alt="" loading="lazy">`).join('')}
+                  </span>
+                  <span>${reservedCount} personas reservaron</span>
+                </div>
+                <span class="cp-free">${available} libres</span>
+              </div>
+            </div>
+            <div class="price-block">
+              <span class="price-label">Precio Total</span>
+              <div class="price-value">${escapeHtml(currency)} ${dto.price}</div>
+              <a class="mini-cta" href="/experiences/${dto.id}">CTA</a>
+            </div>
+          </div>
+          <a class="reserve-full" href="/experiences/${dto.id}">
+            <span class="mx-auto">Reservar ahora</span>
+            <span class="reserve-icon">💳</span>
+          </a>
         </div>
       </div>`;
   }

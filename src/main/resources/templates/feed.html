@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head th:replace="~{fragments/layout :: head('Feed')}"></head>
 <body>
@@ -7,18 +7,16 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <div class="location-banner" id="location-banner" hidden
-         th:attr="data-city=${savedCity},data-country=${savedCountry},data-lat=${savedLat},data-lng=${savedLng},data-has-location=${hasLocation}">
+          th:attr="data-city=${savedCity},data-country=${savedCountry},data-lat=${savedLat},data-lng=${savedLng},data-has-location=${hasLocation}">
         <div class="location-banner-row">
             <svg id="location-connected-icon" th:if="${hasLocation}" width="18" height="18"
-                 viewBox="0 0 16 16" role="img" aria-label="Ubicación conectada"
-                 style="vertical-align:-3px">
+                  viewBox="0 0 16 16" role="img" aria-label="Ubicación conectada"
+                  style="vertical-align:-3px">
                 <circle cx="8" cy="8" r="8" fill="#16a34a"/>
                 <path d="M4.8 8.2l2.2 2.2 4.2-4.6" stroke="#fff" stroke-width="1.8" fill="none"
                       stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span id="location-status">Activá tu ubicación para ver primero experiencias cerca tuyo.</span>
-            <!-- El botón es SIEMPRE la acción manual (rojo): pide GPS otra vez para
-                 cambiar de lugar. El estado "guardado" lo dicen el check verde y el texto. -->
             <button type="button" class="btn-secondary location-allow" th:classappend="${hasLocation} ? 'is-on'" id="location-allow">
                 <svg class="location-allow-icon" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true">
                     <path d="M8 1.5a4.5 4.5 0 0 0-4.5 4.5C3.5 9.5 8 14.5 8 14.5S12.5 9.5 12.5 6A4.5 4.5 0 0 0 8 1.5Z" fill="currentColor"/>
@@ -64,76 +62,129 @@
     </div>
 
     <div id="feed-list">
-        <div class="card" th:each="dto : ${feedPage.content}" th:id="'card-' + ${dto.id}" style="margin-bottom:1rem">
-            <div class="carousel" data-carousel
-                 th:if="${dto.images != null and not #lists.isEmpty(dto.images)}">
-                <div class="carousel-track" data-carousel-track>
-                    <figure class="carousel-slide" th:each="imgData : ${dto.images}">
-                        <a th:href="@{/experiences/{id}(id=${dto.id})}">
-                            <img th:src="'data:image/jpeg;base64,' + ${imgData}"
-                                 th:alt="${dto.name}" loading="lazy">
-                        </a>
-                    </figure>
-                </div>
-                <button type="button" class="carousel-btn prev" data-carousel-prev aria-label="Anterior">‹</button>
-                <button type="button" class="carousel-btn next" data-carousel-next aria-label="Siguiente">›</button>
-                <div class="carousel-dots" data-carousel-dots></div>
-                <span class="carousel-counter" data-carousel-counter>1 / 1</span>
+        <div th:each="dto : ${feedPage.content}" th:if="${dto != null}" th:id="'card-' + ${dto.id}" class="card max-w-md mx-auto bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden font-sans mb-6" style="border: 1px solid var(--border-subtle)">
+          
+          <div class="relative h-72 w-full overflow-hidden group">
+            <img th:if="${(dto.images == null or #lists.isEmpty(dto.images)) and dto.coverBase64 != null}"
+                 th:src="'data:image/jpeg;base64,' + ${dto.coverBase64}" 
+                 alt="Experiencia" 
+                 class="w-full h-full object-cover">
+            
+            <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none z-10"></div>
+
+            <div class="absolute top-4 left-4 z-20">
+              <button class="bg-white/90 hover:bg-white text-gray-800 p-2.5 rounded-full backdrop-blur-md shadow-md transition-all active:scale-95 flex items-center justify-center" onclick="history.back()">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
             </div>
-            <img class="cover" th:if="${(dto.images == null or #lists.isEmpty(dto.images)) and dto.coverBase64 != null}"
-                 th:src="'data:image/jpeg;base64,' + ${dto.coverBase64}" th:alt="${dto.name}">
-            <div style="padding:1rem">
-                <div class="card-creator" th:if="${dto.creatorName != null}">
-                    <img class="card-creator-avatar"
-                         th:if="${dto.creatorAvatar != null and !#strings.isEmpty(dto.creatorAvatar)}"
-                         th:src="'data:image/jpeg;base64,' + ${dto.creatorAvatar}" alt="" loading="lazy">
-                    <span class="card-creator-fallback" aria-hidden="true"
-                          th:if="${dto.creatorAvatar == null or #strings.isEmpty(dto.creatorAvatar)}">👤</span>
-                    <span class="card-creator-name" th:text="${dto.creatorName}">Creador</span>
-                    <span class="card-creator-tag">· armó este viaje</span>
-                </div>
-                <div class="card-head">
-                    <h3><a th:href="@{/experiences/{id}(id=${dto.id})}" th:text="${dto.name}">Nombre</a></h3>
-                    <span class="card-head-actions">
-                    <button type="button" class="heart share-btn" title="Compartir viaje"
-                            aria-label="Compartir viaje"
-                            th:attr="data-share-experience=${dto.id}">📤</button>
-                    <form th:action="${dto.favorite}
-                            ? @{/favorites/{id}/remove(id=${dto.id})}
-                            : @{/favorites/{id}/add(id=${dto.id})}" method="post" class="heart">
-                        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-                        <button type="submit" th:text="${dto.favorite} ? '❤️' : '🤍'">❤️</button>
-                    </form>
-                    </span>
-                </div>
-                <p th:text="${dto.description}">Descripción</p>
-                <div class="card-capacity">
-                    <span>Lugares libres:</span>
-                    <strong class="card-capacity-free" th:text="${dto.availableCapacity}">0</strong>
-                    <span th:if="${dto.reservedCount > 0}" class="card-capacity-reserved">
-                        · <span th:text="${dto.reservedCount} + ' personas ya reservaron'"></span>
-                        <span class="avatar-stack">
-                            <img th:each="av : ${dto.reservedAvatars}" th:src="'data:image/jpeg;base64,' + ${av}" alt="" loading="lazy">
-                        </span>
-                    </span>
-                </div>
-                <p class="meta">
-                    📍 <span th:text="${dto.meetingPointLabel}">0, 0</span>
-                    · ⏱ <span th:text="${dto.durationMinutes >= 60 ? T(java.lang.Math).floorDiv(dto.durationMinutes, 60) + ' h' + (T(java.lang.Math).floorMod(dto.durationMinutes, 60) > 0 ? ' ' + T(java.lang.Math).floorMod(dto.durationMinutes, 60) + ' min' : '') : dto.durationMinutes + ' min'}">2 h 30 min</span>
-                    · 📅 <span th:text="${dto.nextDate} ?: 'Sin fecha'">2026-12-01</span>
-                    · <strong th:text="${dto.currencyCode} + ' ' + ${dto.price}">MXN 190</strong>
-                </p>
-                <div th:if="${dto.stops != null and not #lists.isEmpty(dto.stops)}" class="feed-route">
-                    <div class="map-box feed-route-map" data-map="feed-route" style="height:180px"
-                         th:attr="data-stops=${dto.stopsJson}"></div>
-                    <p class="hint">🗺️ <span th:text="${#lists.size(dto.stops)}">3</span> paradas ·
-                        <span th:text="${dto.stops[0].placeName} + (${#lists.size(dto.stops) > 1 ? ' → ' + dto.stops[#lists.size(dto.stops) - 1].placeName : ''})">Inicio → Fin</span>
-                    </p>
-                </div>
-                <p class="meta"><span class="stars">★</span>
-                    <span th:text="${#numbers.formatDecimal(dto.ratingAverage, 1, 1)}">0.0</span></p>
-                <a class="btn-primary" th:href="@{/experiences/{id}(id=${dto.id})}">Reservar</a>
+
+            <div class="absolute top-4 right-4 flex items-center gap-2 z-20">
+              <button class="bg-white/90 hover:bg-white text-gray-800 p-2.5 rounded-full backdrop-blur-md shadow-md transition-all active:scale-95 flex items-center justify-center" th:attr="data-share-experience=${dto.id}">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              </button>
+              <form th:action="${dto.favorite} ? @{/favorites/{id}/remove(id=${dto.id})} : @{/favorites/{id}/add(id=${dto.id})}" method="post" class="inline">
+                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                <button type="submit" class="bg-white/90 hover:bg-white text-gray-800 p-2.5 rounded-full backdrop-blur-md shadow-md transition-all active:scale-95 flex items-center justify-center">
+                  <svg class="w-4 h-4" th:classappend="${dto.favorite} ? 'fill-rose-500 stroke-rose-500' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                </button>
+              </form>
             </div>
+
+            <div class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-lg flex items-center gap-2 z-20 border border-white/40">
+              <span class="text-amber-500 text-base">★</span>
+              <div class="flex flex-col leading-none">
+                <span class="text-xs font-bold text-gray-900" th:text="${dto.ratingAverage > 0 ? #numbers.formatDecimal(dto.ratingAverage, 1, 1) : '0.0'}">0.0</span>
+                <span class="text-[10px] text-gray-500 font-medium" th:text="${dto.ratingAverage > 0 ? '(' + dto.reviewCount + ')' : 'Nuevo'}">Nuevo</span>
+              </div>
+            </div>
+
+            <div class="absolute inset-0 z-10" data-carousel th:if="${dto.images != null and not #lists.isEmpty(dto.images)}">
+                <div class="relative h-full w-full overflow-hidden" data-carousel-track>
+                    <div class="flex h-full transition-transform duration-300 ease-out">
+                        <img th:each="imgData : ${dto.images}" th:src="'data:image/jpeg;base64,' + ${imgData}" 
+                             class="flex-shrink-0 w-full h-full object-cover" th:alt="${dto.name}">
+                    </div>
+                </div>
+                <div class="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs font-medium px-3.5 py-1.5 rounded-full flex items-center gap-3 shadow-lg border border-white/20 z-20">
+                  <button type="button" data-carousel-prev class="hover:text-amber-400 transition-colors font-bold text-sm">‹</button>
+                  <span class="tracking-widest" data-carousel-counter>1 / 5</span>
+                  <button type="button" data-carousel-next class="hover:text-amber-400 transition-colors font-bold text-sm">›</button>
+                </div>
+            </div>
+          </div>
+
+          <div class="p-6 space-y-5">
+            <div class="flex items-start justify-between gap-2">
+              <div class="max-w-[70%]">
+                <h2 class="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2" th:text="${dto.name}">Nombre</h2>
+              </div>
+              <button class="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors shadow-sm">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                Save
+              </button>
+            </div>
+
+            <div class="inline-flex items-center gap-2 bg-gray-100/80 px-3 py-1.5 rounded-full text-xs text-gray-700 font-medium" th:if="${dto.creatorName != null}">
+              <div class="w-5 h-5 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                <img th:if="${dto.creatorAvatar != null and !#strings.isEmpty(dto.creatorAvatar)}"
+                     th:src="'data:image/jpeg;base64,' + ${dto.creatorAvatar}" alt="" class="w-full h-full object-cover">
+                <span th:if="${dto.creatorAvatar == null or #strings.isEmpty(dto.creatorAvatar)}"
+                      th:text="${#strings.substring(dto.creatorName, 0, 1)}">L</span>
+              </div>
+              <span>Organizado por <strong class="text-gray-900" th:text="${dto.creatorName}">Lionel</strong></span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 py-3 text-center text-xs text-gray-600 border-y border-gray-100">
+              <div class="flex flex-col items-center gap-1.5">
+                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span class="font-bold text-gray-900" th:text="${dto.nextDate} ?: 'Sin fecha'">2026-10-24</span>
+              </div>
+              <div class="flex flex-col items-center gap-1.5 border-x border-gray-100 px-2">
+                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="font-bold text-gray-900" th:text="${dto.durationMinutes >= 60 ? T(java.lang.Math).floorDiv(dto.durationMinutes, 60) + ' h' + (T(java.lang.Math).floorMod(dto.durationMinutes, 60) > 0 ? ' ' + T(java.lang.Math).floorMod(dto.durationMinutes, 60) + ' min' : '') : dto.durationMinutes + ' min'}">5 horas</span>
+              </div>
+              <div class="flex flex-col items-center gap-1.5">
+                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                <span class="font-bold text-gray-900 truncate w-full" th:text="${dto.meetingPointLabel}">Recorrido</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-5 gap-3">
+              <div class="col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between space-y-3">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="font-semibold text-gray-800">Lugares libres</span>
+                  <span class="text-gray-400 font-medium text-[11px]" th:text="${dto.maxCapacity != null ? dto.maxCapacity + ' cupos totales' : '0 cupos totales'}">8 cupos totales</span>
+                </div>
+                <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+                  <div class="bg-teal-700 h-full rounded-full transition-all duration-300" th:style="'width:' + ${dto.maxCapacity != null and dto.maxCapacity > 0 ? T(java.lang.Math).round(dto.reservedCount * 100.0 / dto.maxCapacity) : 0} + '%'"></div>
+                </div>
+                <div class="flex items-center justify-between text-[11px] text-gray-500">
+                  <div class="flex items-center gap-1.5">
+                    <div class="flex -space-x-1.5">
+                      <img th:each="av : ${dto.reservedAvatars}" class="w-4 h-4 rounded-full ring-1 ring-white object-cover" th:src="'data:image/jpeg;base64,' + ${av}" alt="">
+                    </div>
+                    <span th:text="${dto.reservedCount} + ' reservaron'">2 reservaron</span>
+                  </div>
+                  <span class="font-bold text-teal-700" th:text="${dto.availableCapacity != null ? dto.availableCapacity + ' libres' : '0 libres'}">6 libres</span>
+                </div>
+              </div>
+              <div class="col-span-2 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between text-center">
+                <span class="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">Precio Total</span>
+                <div class="my-auto">
+                  <div class="text-gray-900 font-black text-sm tracking-tight" th:text="${dto.currencyCode + ' ' + dto.price}">$2.000.000</div>
+                  <span class="text-[10px] font-semibold text-gray-500">COP</span>
+                </div>
+                <a class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-1.5 rounded-xl shadow-md transition-all active:scale-95 block text-center" th:href="@{/experiences/{id}(id=${dto.id})}">CTA</a>
+              </div>
+            </div>
+
+            <a class="w-full bg-gray-100 hover:bg-gray-200 active:scale-[0.99] text-gray-900 font-bold py-3.5 px-5 rounded-2xl flex items-center justify-between border border-gray-200 transition-all shadow-sm" th:href="@{/experiences/{id}(id=${dto.id})}">
+              <span class="mx-auto text-sm">Reservar ahora</span>
+              <div class="flex items-center gap-1.5 opacity-60">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              </div>
+            </a>
+          </div>
         </div>
     </div>
 
