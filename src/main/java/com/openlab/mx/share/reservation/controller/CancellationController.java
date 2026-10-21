@@ -7,6 +7,7 @@ import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.shared.exception.NotOwnerException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +36,7 @@ public class CancellationController {
 
     /** Caso 2: el creador cancela una fecha. */
     @PostMapping("/instances/{id}/cancel")
+    @PreAuthorize("hasRole('CREATOR')")
     public String cancelByCreator(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         cancellationService.cancelByCreator(id, currentUser.require());
         redirectAttributes.addFlashAttribute("ok", "Fecha cancelada y cupos reembolsados");

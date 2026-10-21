@@ -67,7 +67,7 @@ class RoutePersistenceReproTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void crearConParadasPersisteParadasYFechas() throws Exception {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
 
@@ -162,7 +162,7 @@ class RoutePersistenceReproTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void semanalSabadoDomingoGeneraInstancias() throws Exception {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
         // Próximo sábado y domingo dentro del rango.

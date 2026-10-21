@@ -59,7 +59,7 @@ class CreatorPayoutCountryTests {
                 .birthDate(LocalDate.of(1995, 1, 1))
                 .country(pais)
                 .currencyCode("MXN")
-                .role(Role.USER)
+                .role(Role.CREATOR)
                 .spPoints(0)
                 .build());
         return base;

@@ -13,6 +13,7 @@ import com.openlab.mx.share.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -63,6 +64,7 @@ public class ReservationController {
 
     /** El creador confirma la reserva pendiente (spec §5.3). */
     @PostMapping("/reservations/{id}/confirm")
+    @PreAuthorize("hasRole('CREATOR')")
     public String confirm(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         Reservation reservation = reservationService.confirm(id, currentUser.require());
         notificationService.notify(reservation.getUser(), NotificationType.RESERVA_CONFIRMADA,

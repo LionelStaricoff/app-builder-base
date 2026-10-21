@@ -79,7 +79,7 @@ class ExperienceControllerTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void creaExperienciaConMultipartYRedirigeAlDetalle() throws Exception {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
 
@@ -104,7 +104,7 @@ class ExperienceControllerTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void validacionInvalidaVuelveAlFormConErrores() throws Exception {
         mockMvc.perform(multipart("/experiences")
                         .param("name", "")
@@ -123,7 +123,7 @@ class ExperienceControllerTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void misExperienciasRenderiza() throws Exception {
         mockMvc.perform(get("/my-experiences"))
                 .andExpect(status().isOk())
@@ -139,7 +139,7 @@ class ExperienceControllerTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void duenoveFormDeEdicion() throws Exception {
         Long id = createExperience();
 

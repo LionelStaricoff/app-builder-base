@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.startsWith;
@@ -133,7 +134,9 @@ class IdentityGateFlowTests {
 
     @Test
     void publicar_sin_verificar_redirige_a_verificacion() throws Exception {
-        User creador = usuarioNuevo(); // sin verificar
+        User creador = usuarioNuevo();
+        creador.setRole(com.openlab.mx.share.user.entity.Role.CREATOR);
+        userRepository.save(creador);
 
         var imagen = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
         var res = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -158,7 +161,7 @@ class IdentityGateFlowTests {
 
         org.junit.jupiter.api.Assertions.assertEquals(302, res.getResponse().getStatus());
         org.junit.jupiter.api.Assertions.assertTrue(
-                res.getResponse().getRedirectedUrl().startsWith("/verificacion"),
+                Objects.requireNonNull(res.getResponse().getRedirectedUrl()).startsWith("/verificacion"),
                 "debe redirigir a /verificacion pero fue: " + res.getResponse().getRedirectedUrl());
     }
 }

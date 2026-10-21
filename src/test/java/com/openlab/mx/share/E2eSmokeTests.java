@@ -108,7 +108,7 @@ class E2eSmokeTests {
         // 4. el creador confirma
         Long reservationId = reservationParaPagar.getId();
         mockMvc.perform(post("/reservations/" + reservationId + "/confirm")
-                        .with(user("demo_creator")).with(csrf()))
+                        .with(user("demo_creator").roles("CREATOR")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         // 5. la experiencia termina (lo haría el job) y demo_user evalúa

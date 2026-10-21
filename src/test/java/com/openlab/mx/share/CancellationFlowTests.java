@@ -162,8 +162,9 @@ class CancellationFlowTests {
         reservationService.reserve(instanceId, 1, usuario("demo_user"));
 
         mockMvc.perform(post("/instances/" + instanceId + "/cancel")
-                        .with(user("demo_creator")).with(csrf()))
+                        .with(user("demo_creator").roles("CREATOR")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
+
 
         assertEquals(InstanceStatus.CANCELLED,
                 instanceRepository.findById(instanceId).orElseThrow().getStatus());
@@ -183,7 +184,7 @@ class CancellationFlowTests {
                         .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
 
-        mockMvc.perform(get("/notifications").with(user("demo_creator")))
+        mockMvc.perform(get("/notifications").with(user("demo_creator").roles("CREATOR")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("reserv")));
 
@@ -193,7 +194,7 @@ class CancellationFlowTests {
                 .orElseThrow();
 
         mockMvc.perform(post("/reservations/" + pendiente.getId() + "/confirm")
-                        .with(user("demo_creator")).with(csrf()))
+                        .with(user("demo_creator").roles("CREATOR")).with(csrf()))
                 .andExpect(status().is3xxRedirection());
 
         mockMvc.perform(get("/notifications").with(user("demo_user")))

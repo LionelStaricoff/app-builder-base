@@ -1,6 +1,9 @@
 
 package com.openlab.mx.share;
 
+import com.openlab.mx.share.user.entity.Role;
+import com.openlab.mx.share.user.entity.User;
+import com.openlab.mx.share.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,6 +42,12 @@ class MultipartRealServerTests {
             .cookieHandler(new java.net.CookieManager())
             .connectTimeout(Duration.ofSeconds(5))
             .build();
+
+    private final UserRepository userRepository;
+
+    MultipartRealServerTests(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     private String base() {
         return "http://localhost:" + port;
@@ -97,6 +106,17 @@ class MultipartRealServerTests {
 
     private String registrarYLogin() throws Exception {
         String user = "mt-" + UUID.randomUUID().toString().substring(0, 8);
+        userRepository.save(User.builder()
+                .username(user)
+                .email(user + "@x.com")
+                .passwordHash("{noop}Clave1234!")
+                .birthDate(LocalDate.of(1995, 4, 12))
+                .country("México")
+                .currencyCode("MXN")
+                .role(Role.CREATOR)
+                .spPoints(0)
+                .build());
+        
         var registro = postForm("/register", tokenDe(get("/register")),
                 "username", user, "email", user + "@x.com", "password", "Clave1234!",
                 "birthDate", "1995-04-12");
