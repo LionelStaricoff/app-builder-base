@@ -53,6 +53,35 @@
     const maxCapacity = Number(dto.maxCapacity || 0);
     const occupiedPct = maxCapacity > 0 ? Math.round((reservedCount * 100) / maxCapacity) : 0;
 
+    const stops = Array.isArray(dto.stops) ? dto.stops : [];
+    const stopsHtml = stops.length > 0
+      ? `<div class="border-b border-gray-100 pb-2">
+            <button type="button" 
+                    onclick="this.nextElementSibling.classList.toggle('hidden')"
+                    class="w-full flex items-center justify-between py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
+              <div class="flex items-center gap-2">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.89M15 20l5.447-2.89M12 20V4"/></svg>
+                Ver Recorrido
+              </div>
+              <svg class="w-3 h-3 transform transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div class="hidden space-y-2 py-2 px-1">
+              ${stops.map((stop, idx) => `
+                <div class="flex items-start gap-3">
+                  <div class="flex flex-col items-center">
+                    <div class="w-2 h-2 rounded-full bg-teal-600 ${idx === 0 ? 'ring-4 ring-teal-100' : ''} mt-1"></div>
+                    ${idx !== stops.length - 1 ? '<div class="w-px h-4 bg-gray-200"></div>' : ''}
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="text-[11px] font-bold text-gray-800">${escapeHtml(stop.placeName)}</span>
+                    <span class="text-[9px] text-gray-500">${escapeHtml(stop.city)}, ${escapeHtml(stop.country)}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>`
+      : '';
+
     return `
       <div class="card max-w-md mx-auto bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden font-sans mb-6" style="border: 1px solid var(--border-subtle)" id="card-${dto.id}">
         <div class="relative h-72 w-full overflow-hidden group">
@@ -95,64 +124,67 @@
             </div>
           </div>` : ''}
         </div>
-        <div class="p-6 space-y-5">
+        <div class="p-5 space-y-4">
           <div class="flex items-start justify-between gap-2">
-            <div class="max-w-[70%]">
-              <h2 class="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">${escapeHtml(dto.name)}</h2>
+            <div class="max-w-[75%]">
+              <h2 class="text-xl font-black text-gray-900 tracking-tight leading-tight">${escapeHtml(dto.name)}</h2>
             </div>
-            <button class="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors shadow-sm">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            <button class="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full transition-colors shadow-sm">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
               Save
             </button>
           </div>
           ${dto.creatorName ? `
-          <div class="inline-flex items-center gap-2 bg-gray-100/80 px-3 py-1.5 rounded-full text-xs text-gray-700 font-medium">
-            <div class="w-5 h-5 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-bold overflow-hidden">${creatorAvatar}</div>
+          <div class="inline-flex items-center gap-2 bg-gray-100/80 px-2.5 py-1 rounded-full text-[11px] text-gray-700 font-medium">
+            <div class="w-4 h-4 rounded-full bg-gray-900 text-white flex items-center justify-center text-[8px] font-bold overflow-hidden">${creatorAvatar}</div>
             <span>Organizado por <strong class="text-gray-900">${escapeHtml(dto.creatorName)}</strong></span>
           </div>` : ''}
-          <div class="grid grid-cols-3 gap-2 py-3 text-center text-xs text-gray-600 border-y border-gray-100">
-            <div class="flex flex-col items-center gap-1.5">
-              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          <div class="grid grid-cols-3 gap-2 py-2 text-center text-[11px] text-gray-600 border-y border-gray-100">
+            <div class="flex flex-col items-center gap-1">
+              <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
               <span class="font-bold text-gray-900">${next}</span>
             </div>
-            <div class="flex flex-col items-center gap-1.5 border-x border-gray-100 px-2">
-              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="flex flex-col items-center gap-1 border-x border-gray-100 px-2">
+              <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               <span class="font-bold text-gray-900">${duration}</span>
             </div>
-            <div class="flex flex-col items-center gap-1.5">
-              <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-              <span class="font-bold text-gray-900 truncate w-full">${escapeHtml(dto.meetingPointLabel || '')}</span>
+            <div class="flex flex-col items-center gap-1">
+              <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dto.meetingPointLabel || '')}" target="_blank" class="flex flex-col items-center gap-1 hover:text-teal-600 transition-colors group">
+                <svg class="w-4 h-4 text-gray-700 group-hover:text-teal-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                <span class="font-bold text-gray-900 truncate w-full group-hover:text-teal-600">${escapeHtml(dto.meetingPointLabel || '')}</span>
+              </a>
             </div>
           </div>
+          ${stopsHtml}
           <div class="grid grid-cols-5 gap-3">
-            <div class="col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between space-y-3">
-              <div class="flex justify-between items-center text-xs">
+            <div class="col-span-3 bg-gray-50 p-3 rounded-2xl border border-gray-100 flex flex-col justify-between space-y-2">
+              <div class="flex justify-between items-center text-[11px]">
                 <span class="font-semibold text-gray-800">Lugares libres</span>
-                <span class="text-gray-400 font-medium text-[11px]">${maxCapacity} cupos totales</span>
+                <span class="text-gray-400 font-medium text-[10px]">${maxCapacity} totales</span>
               </div>
-              <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
+              <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
                 <div class="bg-teal-700 h-full rounded-full transition-all duration-300" style="width:${occupiedPct}%"></div>
               </div>
-              <div class="flex items-center justify-between text-[11px] text-gray-500">
+              <div class="flex items-center justify-between text-[10px] text-gray-500">
                 <div class="flex items-center gap-1.5">
                   <div class="flex -space-x-1.5">
-                    ${(Array.isArray(dto.reservedAvatars) ? dto.reservedAvatars : []).map((av) => `<img src="data:image/jpeg;base64,${escapeAttr(av)}" class="w-4 h-4 rounded-full ring-1 ring-white object-cover" alt="">`).join('')}
+                    ${(Array.isArray(dto.reservedAvatars) ? dto.reservedAvatars : []).map((av) => `<img src="data:image/jpeg;base64,${escapeAttr(av)}" class="w-3.5 h-3.5 rounded-full ring-1 ring-white object-cover" alt="">`).join('')}
                   </div>
                   <span>${reservedCount} reservaron</span>
                 </div>
                 <span class="font-bold text-teal-700">${available} libres</span>
               </div>
             </div>
-            <div class="col-span-2 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between text-center">
-              <span class="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">Precio Total</span>
+            <div class="col-span-2 bg-gray-50 p-3 rounded-2xl border border-gray-100 flex flex-col justify-between text-center">
+              <span class="text-[8px] font-extrabold uppercase tracking-wider text-gray-400">Precio Total</span>
               <div class="my-auto">
-                <div class="text-gray-900 font-black text-sm tracking-tight">${escapeHtml(currency)} ${dto.price}</div>
-                <span class="text-[10px] font-semibold text-gray-500">COP</span>
+                <div class="text-gray-900 font-black text-xs tracking-tight">${escapeHtml(currency)} ${dto.price}</div>
+                <span class="text-[9px] font-semibold text-gray-500">COP</span>
               </div>
-              <a class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-1.5 rounded-xl shadow-md transition-all active:scale-95 block text-center" href="/experiences/${dto.id}">CTA</a>
+              <a class="w-full bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold py-1 rounded-lg shadow-sm transition-all active:scale-95 block text-center" href="/experiences/${dto.id}">CTA</a>
             </div>
           </div>
-          <a class="w-full bg-gray-100 hover:bg-gray-200 active:scale-[0.99] text-gray-900 font-bold py-3.5 px-5 rounded-2xl flex items-center justify-between border border-gray-200 transition-all shadow-sm" href="/experiences/${dto.id}">
+          <a class="w-full bg-gray-100 hover:bg-gray-200 active:scale-[0.99] text-gray-900 font-bold py-3 px-5 rounded-2xl flex items-center justify-between border border-gray-200 transition-all shadow-sm" href="/experiences/${dto.id}">
             <span class="mx-auto text-sm">Reservar ahora</span>
             <div class="flex items-center gap-1.5 opacity-60">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>

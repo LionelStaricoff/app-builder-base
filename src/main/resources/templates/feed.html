@@ -140,15 +140,44 @@
                 <span class="font-bold text-gray-900" th:text="${dto.nextDate} ?: 'Sin fecha'">2026-10-24</span>
               </div>
               <div class="flex flex-col items-center gap-1.5 border-x border-gray-100 px-2">
-                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 و 0 0118 0z"/></svg>
                 <span class="font-bold text-gray-900" th:text="${dto.durationMinutes >= 60 ? T(java.lang.Math).floorDiv(dto.durationMinutes, 60) + ' h' + (T(java.lang.Math).floorMod(dto.durationMinutes, 60) > 0 ? ' ' + T(java.lang.Math).floorMod(dto.durationMinutes, 60) + ' min' : '') : dto.durationMinutes + ' min'}">5 horas</span>
               </div>
               <div class="flex flex-col items-center gap-1.5">
-                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                <span class="font-bold text-gray-900 truncate w-full" th:text="${dto.meetingPointLabel}">Recorrido</span>
+                <a th:with="firstStop=${dto.stops != null and !#lists.isEmpty(dto.stops) ? dto.stops[0] : null}" 
+                   th:href="${firstStop != null} ? 'https://www.google.com/maps/search/?api=1&query=' + ${firstStop.lat} + ',' + ${firstStop.lng} : 'https://www.google.com/maps/search/?api=1&query=' + ${dto.meetingPointLabel}" 
+                   target="_blank" class="flex flex-col items-center gap-1.5 hover:text-teal-600 transition-colors group">
+                  <svg class="w-5 h-5 text-gray-700 group-hover:text-teal-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                  <span class="font-bold text-gray-900 truncate w-full group-hover:text-teal-600" th:text="${dto.meetingPointLabel}">Recorrido</span>
+                </a>
               </div>
             </div>
 
+            <!-- SECCIÓN DE PARADAS (Dropdown colapsable) -->
+            <div th:if="${dto.stops != null and !#lists.isEmpty(dto.stops)}" class="border-b border-gray-100 pb-2">
+              <button type="button" 
+                      th:onclick="'this.nextElementSibling.classList.toggle(\'hidden\')'"
+                      class="w-full flex items-center justify-between py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
+                <div class="flex items-center gap-2">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.89M15 20l5.447-2.89M12 20V4"/></svg>
+                  Ver Recorrido
+                </div>
+                <svg class="w-3 h-3 transform transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div class="hidden space-y-2 py-2 px-1">
+                <div th:each="stop, iterStat : ${dto.stops}" class="flex items-start gap-3">
+                  <div class="flex flex-col items-center">
+                    <div class="w-2 h-2 rounded-full bg-teal-600 mt-1" th:classappend="${iterStat.first} ? 'ring-4 ring-teal-100' : ''"></div>
+                    <div th:if="${!iterStat.last}" class="w-px h-4 bg-gray-200"></div>
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="text-[11px] font-bold text-gray-800" th:text="${stop.placeName}">Parada</span>
+                    <span class="text-[9px] text-gray-500" th:text="${stop.city + ', ' + stop.country}">Ciudad, Pais</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
             <div class="grid grid-cols-5 gap-3">
               <div class="col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between space-y-3">
                 <div class="flex justify-between items-center text-xs">
