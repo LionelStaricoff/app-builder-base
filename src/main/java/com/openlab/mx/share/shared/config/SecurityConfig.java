@@ -20,7 +20,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/login", "/register",
                     "/manifest.webmanifest", "/sw.js",
-                    "/css/**", "/js/**", "/icons/**", "/img/**", "/error"
+                    "/css/**", "/js/**", "/icons/**", "/img/**", "/vendor/**", "/error"
                 ).permitAll()
                 // Spec §7: Stripe no firma requests con sesión ni CSRF.
                 .requestMatchers("/api/stripe/webhooks").permitAll()

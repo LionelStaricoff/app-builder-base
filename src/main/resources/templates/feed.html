@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Feed')}"></head>
 <body>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" th:href="@{/vendor/leaflet/leaflet.css}">
 <main class="app-main" id="feed-main">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
@@ -133,7 +133,7 @@
     </div>
 </main>
 <nav th:replace="~{fragments/layout :: nav('feed')}"></nav>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script th:src="@{/vendor/leaflet/leaflet.js}"></script>
 <script th:src="@{/js/map.js}"></script>
 <script th:src="@{/js/carousel.js}"></script>
 <script th:src="@{/js/feed-infinite.js}"></script>

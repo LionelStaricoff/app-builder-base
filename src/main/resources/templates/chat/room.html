@@ -35,8 +35,8 @@
 <script th:inline="javascript">
     window.CHAT_INSTANCE_ID = /*[[${instanceId}]]*/ 0;
 </script>
-<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.0.4/dist/sockjs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/stomp.min.js"></script>
+<script th:src="@{/vendor/sockjs/sockjs.min.js}"></script>
+<script th:src="@{/vendor/stomp/stomp.min.js}"></script>
 <script th:src="@{/js/chat.js}"></script>
 </body>
 </html>

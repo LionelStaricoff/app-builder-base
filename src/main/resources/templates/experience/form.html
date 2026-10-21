@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Crear experiencia')}"></head>
 <body>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" th:href="@{/vendor/leaflet/leaflet.css}">
 <main class="app-main">
     <div class="card" style="padding:1.25rem">
         <h2 th:text="${experienceId} != null ? 'Editar experiencia' : 'Nueva experiencia'">Experiencia</h2>
@@ -189,7 +189,7 @@
     </div>
 </main>
 <nav th:replace="~{fragments/layout :: nav('mine')}"></nav>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script th:src="@{/vendor/leaflet/leaflet.js}"></script>
 <script th:src="@{/js/map.js}"></script>
 <script th:src="@{/js/experience-form.js}"></script>
 <script th:src="@{/js/image-picker.js}"></script>
