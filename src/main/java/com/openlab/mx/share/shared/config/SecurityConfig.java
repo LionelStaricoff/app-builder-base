@@ -29,8 +29,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/webhooks/didit").permitAll()
                 .anyRequest().authenticated()
             )
+            // Solo los webhooks quedan fuera de CSRF: los dos se autentican
+            // con firma (Stripe / HMAC de Didit), no con sesión.
+            // /api/didit/sessions NO va acá: es un POST de sesión autenticada
+            // y el front manda el token (didit-verification.js).
             .csrf(csrf -> csrf.ignoringRequestMatchers(
-                    "/api/stripe/webhooks", "/api/webhooks/didit", "/api/didit/sessions"))
+                    "/api/stripe/webhooks", "/api/webhooks/didit"))
             .formLogin(form -> form
                 .loginPage("/login")
                 .defaultSuccessUrl("/feed", true)

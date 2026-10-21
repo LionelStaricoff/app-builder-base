@@ -14,6 +14,11 @@
     var returnUrlInput = document.getElementById('return-url');
     var returnUrl = (returnUrlInput && returnUrlInput.value) || '/feed';
 
+    // Token CSRF: el POST /api/didit/sessions va contra una sesión autenticada,
+    // así que va protegido igual que el resto de los forms.
+    var csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
     // ---------- Página de inicio: botón "Verificar mi identidad" ----------
     var startBtn = document.getElementById('start-verification');
     if (startBtn) {
@@ -21,7 +26,10 @@
             startBtn.disabled = true;
             fetch('/api/didit/sessions', {
                 method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                headers: Object.assign(
+                    { 'X-Requested-With': 'XMLHttpRequest' },
+                    csrfHeader ? { [csrfHeader]: csrfToken } : {}
+                )
             }).then(function (res) {
                 if (res.status === 409) {
                     // Ya verificado: volver a la página de verificación.

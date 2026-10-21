@@ -2,6 +2,9 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Verificación de identidad')}"></head>
 <body>
+<!-- Token CSRF para el POST /api/didit/sessions (didit-verification.js). -->
+<meta name="_csrf" th:content="${_csrf.token}">
+<meta name="_csrf_header" th:content="${_csrf.headerName}">
 <main class="app-main">
     <div class="page-hero">
         <h1>Verificación de identidad</h1>

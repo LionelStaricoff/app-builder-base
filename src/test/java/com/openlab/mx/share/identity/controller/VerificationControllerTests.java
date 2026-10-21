@@ -19,10 +19,12 @@ import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
@@ -73,6 +75,29 @@ class VerificationControllerTests {
         DiditVerification fila = verificationRepository.findByUserId(u.getId()).orElseThrow();
         org.junit.jupiter.api.Assertions.assertEquals(VerificationStatus.IN_PROGRESS, fila.getStatus());
         org.junit.jupiter.api.Assertions.assertEquals("fake-" + u.getId(), fila.getDiditSessionId());
+    }
+
+    @Test
+    void post_sessions_sin_token_csrf_se_rechaza() throws Exception {
+        User u = usuarioNuevo();
+
+        // La endpoint ya no está en la lista de ignorados de CSRF: sin token
+        // el pedido se rechaza y no se crea ninguna fila de verificación.
+        mockMvc.perform(post("/api/didit/sessions")
+                        .with(user(u.getUsername())))
+                .andExpect(status().isForbidden());
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                verificationRepository.findByUserId(u.getId()).isEmpty());
+    }
+
+    @Test
+    void la_pagina_de_verificacion_expone_el_token_csrf() throws Exception {
+        User u = usuarioNuevo();
+
+        mockMvc.perform(get("/verificacion").with(user(u.getUsername())))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("name=\"_csrf\"")));
     }
 
     @Test
