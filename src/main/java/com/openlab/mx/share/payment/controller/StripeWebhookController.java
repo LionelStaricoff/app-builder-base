@@ -81,8 +81,8 @@ public class StripeWebhookController {
             log.warn("Webhook con payload no parseable: {}", event.getId());
             return ResponseEntity.badRequest().body("payload inválido");
         }
-        Boolean cambio = aplicar(event.getType(), objectId);
-        if (cambio == null) {
+        Resultado resultado = aplicar(event.getType(), objectId);
+        if (resultado == Resultado.IGNORADO) {
             log.debug("Webhook ignorado (no se persiste): {}", event.getType());
             return ResponseEntity.ok("ignorado");
         }
@@ -96,28 +96,43 @@ public class StripeWebhookController {
     }
 
     /**
-     * @return true si se registró el evento con efecto, false si fue no-op,
-     *         null si el tipo no se maneja (no se persiste).
+     * Qué se hizo con un evento del webhook.
+     *
+     * <p>Antes esto se expresaba con un {@code Boolean} que podía ser null
+     * (tipo no manejado). Un enum deja los tres estados explícitos y evita
+     * el null flotante.
      */
-    private Boolean aplicar(String type, String objectId) {
+    private enum Resultado {
+        /** El evento tuvo efecto: se persiste. */
+        APLICADO,
+        /** Se procesó pero no cambió nada (no-op idempotente): se persiste. */
+        SIN_EFFECTO,
+        /** Tipo de evento no soportado: no se persiste. */
+        IGNORADO
+    }
+
+    /**
+     * @return qué se hizo con el evento (ver {@link Resultado}).
+     */
+    private Resultado aplicar(String type, String objectId) {
         switch (type) {
             case "checkout.session.completed":
                 asegurarCompleto(objectId);
-                return true;
+                return Resultado.APLICADO;
             case "checkout.session.expired":
                 stripeCheckoutService.expire(objectId);
-                return true;
+                return Resultado.APLICADO;
             case "payment_intent.payment_failed":
-                return marcarFailed(objectId);
+                return marcarFailed(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
             // ─── Stripe Connect ─────────────────────────────────────────────
             case "account.updated":
-                return actualizarCuentaConnect(objectId);
+                return actualizarCuentaConnect(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
             case "transfer.created":
-                return marcarTransferCompletado(objectId);
+                return marcarTransferCompletado(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
             case "transfer.reversed":
-                return marcarTransferFallido(objectId);
+                return marcarTransferFallido(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
             default:
-                return null;
+                return Resultado.IGNORADO;
         }
     }
 
@@ -133,7 +148,7 @@ public class StripeWebhookController {
     // ─── Stripe Connect webhooks ─────────────────────────────────────────
 
     /** account.updated: sincroniza el estado de la cuenta Connect. */
-    private Boolean actualizarCuentaConnect(String stripeAccountId) {
+    private boolean actualizarCuentaConnect(String stripeAccountId) {
         var account = connectAccountRepository.findByStripeAccountId(stripeAccountId)
                 .orElse(null);
         if (account == null) {
@@ -145,7 +160,7 @@ public class StripeWebhookController {
     }
 
     /** transfer.paid: marca el payout como completado. */
-    private Boolean marcarTransferCompletado(String transferId) {
+    private boolean marcarTransferCompletado(String transferId) {
         var payout = connectPayoutRepository.findAll().stream()
                 .filter(p -> transferId.equals(p.getStripeTransferId()))
                 .findFirst()
@@ -160,7 +175,7 @@ public class StripeWebhookController {
     }
 
     /** transfer.failed: marca el payout como fallido. */
-    private Boolean marcarTransferFallido(String transferId) {
+    private boolean marcarTransferFallido(String transferId) {
         var payout = connectPayoutRepository.findAll().stream()
                 .filter(p -> transferId.equals(p.getStripeTransferId()))
                 .findFirst()
@@ -180,7 +195,7 @@ public class StripeWebhookController {
                 .orElseThrow(() -> new DomainException("Sesión de pago no encontrada"));
     }
 
-    private Boolean marcarFailed(String paymentIntentId) {
+    private boolean marcarFailed(String paymentIntentId) {
         Payment pago = paymentRepository.findFirstByStripePaymentIntentId(paymentIntentId)
                 .orElse(null);
         if (pago == null) {
