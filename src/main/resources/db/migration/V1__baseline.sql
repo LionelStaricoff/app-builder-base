@@ -2,7 +2,7 @@
 --
 -- Generado desde el information_schema de la base real, para que una base
 -- NUEVA quede idéntica a la existente (mismos tipos, longitudes y nullability).
--- Todo es "IF NOT EXISTS": se puede aplicar sobre un esquema que ya tenga las
+-- Todas las tablas usan "IF NOT EXISTS": se puede aplicar sobre un esquema que ya tenga las
 -- tablas (idempotente).
 --
 -- OJO: el esquema lo administraba Hibernate con ddl-auto=update, que NUNCA

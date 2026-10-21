@@ -3,7 +3,10 @@ package com.openlab.mx.share.reservation.service;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -69,5 +72,19 @@ class RefundPolicyTest {
         assertThrows(IllegalStateException.class, () -> new RefundPolicy("basura"));
         assertThrows(IllegalStateException.class, () -> new RefundPolicy("24:abc"));
         assertThrows(IllegalStateException.class, () -> new RefundPolicy("24:1.5"));
+    }
+
+    @Test
+    void conUnRelojFijoElTramoEsDeterminista() {
+        // 2026-10-20T12:00Z == 2026-10-20 06:00 en Ciudad de México (UTC-6).
+        Clock fijo = Clock.fixed(Instant.parse("2026-10-20T12:00:00Z"), ZoneId.of("America/Mexico_City"));
+        RefundPolicy congelada = new RefundPolicy("24:0.90,0:0.50", fijo);
+
+        // 30 h de anticipación → 90 %.
+        assertEquals(90, congelada.percentFor(LocalDateTime.of(2026, 10, 21, 12, 0)));
+        // 10 h de anticipación → 50 %.
+        assertEquals(50, congelada.percentFor(LocalDateTime.of(2026, 10, 20, 16, 0)));
+        // Fecha ya iniciada → 50 %.
+        assertEquals(50, congelada.percentFor(LocalDateTime.of(2026, 10, 20, 4, 0)));
     }
 }

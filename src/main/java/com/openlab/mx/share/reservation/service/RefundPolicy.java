@@ -1,13 +1,17 @@
 package com.openlab.mx.share.reservation.service;
 
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -46,9 +50,21 @@ public class RefundPolicy {
     }
 
     private final List<Tier> tiers;
+    private final Clock clock;
 
-    public RefundPolicy(@Value("${refund.tiers}") String config) {
+    /**
+     * Constructor de Spring: la zona del reloj es explícita y configurable
+     * (ver {@link com.openlab.mx.share.shared.config.TimeConfig}).
+     */
+    @Autowired
+    public RefundPolicy(@Value("${refund.tiers}") String config, Clock clock) {
         this.tiers = parse(config);
+        this.clock = clock;
+    }
+
+    /** Constructor de conveniencia para tests y uso fuera de Spring. */
+    public RefundPolicy(String config) {
+        this(config, Clock.systemDefaultZone());
     }
 
     /** Tramos ordenados de mayor a menor anticipación. */
@@ -63,7 +79,7 @@ public class RefundPolicy {
 
     /** Proporción a devolver al participante para un inicio. */
     public BigDecimal rateFor(LocalDateTime inicio) {
-        Duration restante = Duration.between(LocalDateTime.now(), inicio);
+        Duration restante = restanteHasta(inicio);
         for (Tier tier : tiers) {
             if (restante.compareTo(Duration.ofHours(tier.hours())) > 0) {
                 return tier.rate();
@@ -71,6 +87,26 @@ public class RefundPolicy {
         }
         // Ningún tramo alcanzado (fecha ya iniciada): manda el último.
         return tiers.get(tiers.size() - 1).rate();
+    }
+
+    /**
+     * Tiempo que falta para el inicio, medido como tiempo real transcurrido.
+     *
+     * <p>Los dos extremos se interpretan en la MISMA zona (la del
+     * {@link Clock}): el inicio es hora local de pared de la experiencia y el
+     * "ahora" es la hora de la plataforma. Comparar LocalDateTime sin zona
+     * mezcla dos relojes distintos y, con el servidor en UTC, la duración
+     * sale corrida (un inicio a las 14:30 en México contra un "ahora" en UTC
+     * da un resto negativo aunque falten horas).
+     *
+     * <p>Al pasar a tipos con zona, un cambio de horario de verano entre el
+     * "ahora" y el inicio se cuenta como tiempo real (no como reloj de
+     * pared): el resultado puede diferir en una hora en el día del cambio,
+     * que es justo lo que corresponde.
+     */
+    private Duration restanteHasta(LocalDateTime inicio) {
+        ZoneId zona = clock.getZone();
+        return Duration.between(ZonedDateTime.now(clock), inicio.atZone(zona));
     }
 
     /** Porcentaje entero a devolver (90, 50, ...) para mostrar en la UI. */
