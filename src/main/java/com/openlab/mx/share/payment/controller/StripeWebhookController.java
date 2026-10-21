@@ -1,8 +1,5 @@
 package com.openlab.mx.share.payment.controller;
 
-import com.openlab.mx.share.payment.entity.ConnectAccount;
-import com.openlab.mx.share.payment.entity.ConnectAccountStatus;
-import com.openlab.mx.share.payment.entity.ConnectPayout;
 import com.openlab.mx.share.payment.entity.Payment;
 import com.openlab.mx.share.payment.entity.PaymentStatus;
 import com.openlab.mx.share.payment.entity.PayoutStatus;
@@ -29,8 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
-import java.util.NoSuchElementException;
+import java.time.ZoneId;import java.time.LocalDateTime;
 
 /**
  * Webhook de Stripe (spec §7): firma obligatoria (400 si inválida),
@@ -64,7 +60,7 @@ public class StripeWebhookController {
         Event event;
         try {
             event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
-        } catch (SignatureVerificationException e) {
+        } catch (SignatureVerificationException _) {
             log.warn("Webhook con firma inválida (no se persiste)");
             return ResponseEntity.badRequest().body("firma inválida");
         }
@@ -77,7 +73,7 @@ public class StripeWebhookController {
             JsonObject object = JsonParser.parseString(payload).getAsJsonObject()
                     .getAsJsonObject("data").getAsJsonObject("object");
             objectId = object.get("id").getAsString();
-        } catch (RuntimeException e) {
+        } catch (RuntimeException _) {
             log.warn("Webhook con payload no parseable: {}", event.getId());
             return ResponseEntity.badRequest().body("payload inválido");
         }
@@ -90,7 +86,7 @@ public class StripeWebhookController {
         stripeEventRepository.save(StripeEvent.builder()
                 .eventId(event.getId())
                 .type(event.getType())
-                .processedAt(LocalDateTime.now())
+                .processedAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .build());
         return ResponseEntity.ok("ok");
     }
@@ -169,7 +165,7 @@ public class StripeWebhookController {
             return false;
         }
         payout.setStatus(PayoutStatus.COMPLETED);
-        payout.setCompletedAt(java.time.LocalDateTime.now());
+        payout.setCompletedAt(java.time.LocalDateTime.now(ZoneId.systemDefault()));
         connectPayoutRepository.save(payout);
         return true;
     }

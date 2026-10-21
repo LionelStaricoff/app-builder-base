@@ -11,8 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.ZoneId;import java.time.LocalDate;
+import java.time.ZoneId;import java.time.LocalTime;
 
 /**
  * Jobs de la Etapa B (spec §11): finalización de instancias + liberación
@@ -34,7 +34,7 @@ public class ScheduledJobs {
     public void completionJob() {
         try {
             var terminadas = instanceRepository.findFinished(
-                    InstanceStatus.SCHEDULED, LocalDate.now(), LocalTime.now());
+                    InstanceStatus.SCHEDULED, LocalDate.now(ZoneId.systemDefault()), LocalTime.now(ZoneId.systemDefault()));
             for (ExperienceInstance instance : terminadas) {
                 if (instance.getStatus() != InstanceStatus.SCHEDULED) {
                     continue;
@@ -53,7 +53,7 @@ public class ScheduledJobs {
     public void minCapacityJob() {
         try {
             var iniciadas = instanceRepository.findStarted(
-                    InstanceStatus.SCHEDULED, LocalDate.now(), LocalTime.now());
+                    InstanceStatus.SCHEDULED, LocalDate.now(ZoneId.systemDefault()), LocalTime.now(ZoneId.systemDefault()));
             for (ExperienceInstance instance : iniciadas) {
                 long asistentes = reservationRepository.countAttendees(instance.getId());
                 if (asistentes < instance.getExperience().getMinCapacity()) {

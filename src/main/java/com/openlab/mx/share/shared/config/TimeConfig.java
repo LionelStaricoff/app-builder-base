@@ -12,7 +12,7 @@ import java.time.ZoneId;
  * Fuente única de la hora del sistema.
  *
  * <p>Un bean {@link Clock} inyectable evita el antipatrón
- * {@code LocalDateTime.now()}: {@code now()} usa la zona del sistema JVM de
+ * {@code LocalDateTime.now(ZoneId.systemDefault())}: {@code now()} usa la zona del sistema JVM de
  * forma implícita y no es determinista en tests. Con un {@code Clock}
  * explícito, el código que calcula plazos o duraciones dice en qué zona
  * trabaja y los tests pueden congelar el tiempo.

@@ -36,6 +36,18 @@ public class StripeConnectService {
     private final ConnectAccountService connectAccountService;
     private final PaymentGateway gateway;
 
+    /**
+     * Claves del mapa de estado que devuelve {@link #getStatus(User)}.
+     * Son el contrato con el front (Thymeleaf y el JS de cobros), asi que
+     * viven aca y no repetidas como literales en cada consumidor.
+     */
+    public static final String KEY_HAS_CONNECTED_ACCOUNT = "hasConnectedAccount";
+    public static final String KEY_STRIPE_ACCOUNT_ID = "stripeAccountId";
+    public static final String KEY_STATUS = "status";
+    public static final String KEY_PAYOUTS_ENABLED = "payoutsEnabled";
+    public static final String KEY_ONBOARDING_REQUIRED = "onboardingRequired";
+    public static final String KEY_COUNTRY = "country";
+
     @Value("${app.base-url:http://localhost:8080}")
     private String baseUrl;
 
@@ -117,11 +129,11 @@ public class StripeConnectService {
         if (account == null) {
             log.info("[connect] getStatus: sin cuenta Connect (NOT_STARTED)");
             return Map.of(
-                    "hasConnectedAccount", false,
-                    "status", ConnectAccountStatus.NOT_STARTED.name(),
-                    "payoutsEnabled", false,
-                    "onboardingRequired", true,
-                    "country", ""
+                    KEY_HAS_CONNECTED_ACCOUNT, false,
+                    KEY_STATUS, ConnectAccountStatus.NOT_STARTED.name(),
+                    KEY_PAYOUTS_ENABLED, false,
+                    KEY_ONBOARDING_REQUIRED, true,
+                    KEY_COUNTRY, ""
             );
         }
         // Sincronizar con Stripe antes de devolver
@@ -130,12 +142,12 @@ public class StripeConnectService {
                 synced.getStripeAccountId(), synced.getStatus(),
                 synced.getStatus() == ConnectAccountStatus.ACTIVE);
         return Map.of(
-                "hasConnectedAccount", true,
-                "stripeAccountId", synced.getStripeAccountId(),
-                "status", synced.getStatus().name(),
-                "payoutsEnabled", synced.getStatus() == ConnectAccountStatus.ACTIVE,
-                "onboardingRequired", synced.getStatus() != ConnectAccountStatus.ACTIVE,
-                "country", synced.getCountry() == null ? "" : synced.getCountry()
+                KEY_HAS_CONNECTED_ACCOUNT, true,
+                KEY_STRIPE_ACCOUNT_ID, synced.getStripeAccountId(),
+                KEY_STATUS, synced.getStatus().name(),
+                KEY_PAYOUTS_ENABLED, synced.getStatus() == ConnectAccountStatus.ACTIVE,
+                KEY_ONBOARDING_REQUIRED, synced.getStatus() != ConnectAccountStatus.ACTIVE,
+                KEY_COUNTRY, synced.getCountry() == null ? "" : synced.getCountry()
         );
     }
 

@@ -90,7 +90,7 @@ public class DiditWebhookService {
         }
         try {
             return Long.parseLong(vendorData.trim());
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return null;
         }
     }

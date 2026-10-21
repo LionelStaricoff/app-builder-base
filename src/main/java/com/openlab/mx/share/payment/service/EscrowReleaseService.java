@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -34,7 +34,7 @@ public class EscrowReleaseService {
     public int releaseIfDue(Long instanceId) {
         List<Reservation> confirmadas =
                 reservationRepository.findByInstanceIdAndStatus(instanceId, ReservationStatus.CONFIRMADA);
-        LocalDateTime corte = LocalDateTime.now().minusDays(autoReleaseDays);
+        LocalDateTime corte = LocalDateTime.now(ZoneId.systemDefault()).minusDays(autoReleaseDays);
         int liberados = 0;
         for (Reservation reservation : confirmadas) {
             Payment payment = paymentRepository.findByReservationId(reservation.getId()).orElse(null);

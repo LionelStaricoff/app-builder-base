@@ -97,7 +97,7 @@ public class DiditWebhookSigner {
         long timestamp;
         try {
             timestamp = Long.parseLong(timestampHeader.trim());
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             return false;
         }
         if (Math.abs(clock.instant().getEpochSecond() - timestamp) > MAX_SKEW_SECONDS) {
@@ -106,7 +106,7 @@ public class DiditWebhookSigner {
         String expected;
         try {
             expected = sign(canonicalize(rawBody));
-        } catch (RuntimeException e) {
+        } catch (RuntimeException _) {
             return false;
         }
         return MessageDigest.isEqual(

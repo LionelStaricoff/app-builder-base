@@ -56,7 +56,7 @@ public class CurrentUser {
                         String query = uri.getRawQuery() != null ? "?" + uri.getRawQuery() : "";
                         return path + query;
                     }
-                } catch (IllegalArgumentException ignored) {
+                } catch (IllegalArgumentException _) {
                     // referer inválido: fallback
                 }
             }

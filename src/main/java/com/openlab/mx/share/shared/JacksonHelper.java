@@ -14,7 +14,7 @@ public class JacksonHelper {
     public String toJson(Object value) {
         try {
             return objectMapper.writeValueAsString(value == null ? java.util.List.of() : value);
-        } catch (Exception e) {
+        } catch (Exception _) {
             return "[]";
         }
     }

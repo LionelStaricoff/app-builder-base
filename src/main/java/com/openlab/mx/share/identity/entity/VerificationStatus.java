@@ -29,14 +29,9 @@ public enum VerificationStatus {
                     return REJECTED;
                 case "In Review":
                     return PENDING_MANUAL;
-                case "Abandoned":
-                case "Expired":
-                case "Kyc Expired":
+                case "Abandoned", "Expired", "Kyc Expired":
                     return EXPIRED;
-                case "Not Started":
-                case "In Progress":
-                case "Awaiting User":
-                case "Resubmitted":
+                case "Not Started", "In Progress", "Awaiting User", "Resubmitted":
                     return IN_PROGRESS;
                 default:
                     break;
@@ -51,16 +46,8 @@ public enum VerificationStatus {
             return false;
         }
         switch (diditStatus) {
-            case "Approved":
-            case "Declined":
-            case "In Review":
-            case "Abandoned":
-            case "Expired":
-            case "Kyc Expired":
-            case "Not Started":
-            case "In Progress":
-            case "Awaiting User":
-            case "Resubmitted":
+            case "Approved", "Declined", "In Review", "Abandoned", "Expired", "Kyc Expired",
+                 "Not Started", "In Progress", "Awaiting User", "Resubmitted":
                 return true;
             default:
                 return false;

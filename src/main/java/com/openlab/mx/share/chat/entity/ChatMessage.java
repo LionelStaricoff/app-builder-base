@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 
 /** Mensaje de chat por instancia (spec §5.6). */
 @Entity
@@ -45,5 +45,5 @@ public class ChatMessage {
 
     @Column(nullable = false)
     @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now(ZoneId.systemDefault());
 }

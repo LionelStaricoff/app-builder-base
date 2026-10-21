@@ -36,7 +36,7 @@ public class CreatorPayoutPageController {
         Map<String, Object> status = stripeConnectService.getStatus(user);
         BigDecimal pendingAmount = connectPayoutService.getPendingAmount();
         log.info("[payouts] estado={} payoutsEnabled={} pendiente={}",
-                status.get("status"), status.get("payoutsEnabled"), pendingAmount);
+                status.get(StripeConnectService.KEY_STATUS), status.get(StripeConnectService.KEY_PAYOUTS_ENABLED), pendingAmount);
 
         model.addAttribute("status", status);
         model.addAttribute("pendingAmount", pendingAmount);
@@ -52,9 +52,9 @@ public class CreatorPayoutPageController {
         User user = currentUser.require();
         log.info("[onboarding] GET /creators/onboarding — usuario={}", user.getUsername());
         Map<String, Object> status = stripeConnectService.getStatus(user);
-        log.info("[onboarding] estado={} payoutsEnabled={}", status.get("status"), status.get("payoutsEnabled"));
+        log.info("[onboarding] estado={} payoutsEnabled={}", status.get(StripeConnectService.KEY_STATUS), status.get(StripeConnectService.KEY_PAYOUTS_ENABLED));
 
-        if (Boolean.TRUE.equals(status.get("payoutsEnabled"))) {
+        if (Boolean.TRUE.equals(status.get(StripeConnectService.KEY_PAYOUTS_ENABLED))) {
             log.info("[onboarding] payouts ya habilitados → redirect /creators/payouts");
             return "redirect:/creators/payouts";
         }
@@ -64,7 +64,7 @@ public class CreatorPayoutPageController {
         model.addAttribute("payoutCountries", stripeConnectService.supportedPayoutCountries());
         model.addAttribute("selectedCountry", stripeConnectService.resolvePayoutCountry(user));
         model.addAttribute("payoutCountryName",
-                stripeConnectService.countryName((String) status.get("country")));
+                stripeConnectService.countryName((String) status.get(StripeConnectService.KEY_COUNTRY)));
         log.info("[onboarding] renderizando creators/onboarding");
         return "creators/onboarding";
     }

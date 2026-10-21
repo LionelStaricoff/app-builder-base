@@ -18,7 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 
 /**
  * Reserva de cupos para una instancia concreta (spec §5.3).
@@ -54,5 +54,5 @@ public class Reservation {
 
     @Column(nullable = false)
     @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now(ZoneId.systemDefault());
 }

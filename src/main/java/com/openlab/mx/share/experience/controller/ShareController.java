@@ -31,7 +31,7 @@ public class ShareController {
         Experience experience;
         try {
             experience = feedService.experienceRef(id);
-        } catch (DomainException e) {
+        } catch (DomainException _) {
             return ResponseEntity.notFound().build();
         }
         String base = request.getScheme() + "://" + request.getServerName()

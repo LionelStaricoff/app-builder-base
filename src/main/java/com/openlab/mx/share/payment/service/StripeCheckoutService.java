@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -114,7 +114,7 @@ public class StripeCheckoutService {
             GatewaySession real = gateway.authorizeInfo(sessionId);
             estado = real.status();
             paymentIntentId = real.paymentIntentId();
-        } catch (NoSuchElementException e) {
+        } catch (NoSuchElementException _) {
             throw new DomainException("Sesión de pago no encontrada");
         }
         if (!"paid".equals(estado)) {
@@ -122,7 +122,7 @@ public class StripeCheckoutService {
         }
         pago.setStatus(PaymentStatus.HELD);
         pago.setStripePaymentIntentId(paymentIntentId);
-        pago.setHeldAt(LocalDateTime.now());
+        pago.setHeldAt(LocalDateTime.now(ZoneId.systemDefault()));
         return paymentRepository.save(pago);
     }
 

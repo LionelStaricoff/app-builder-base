@@ -31,8 +31,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.ZoneId;import java.time.LocalDate;
+import java.time.ZoneId;import java.time.LocalTime;
 import java.util.List;
 
 @Controller
@@ -92,7 +92,7 @@ public class ExperienceController {
         Experience experience = experienceService.get(id);
         List<ExperienceImage> images = imageRepository.findByExperienceIdOrderByIdAsc(id);
         List<ExperienceInstance> instances = instanceRepository
-                .findByExperienceIdAndDateGreaterThanEqualOrderByDateAsc(id, LocalDate.now()).stream()
+                .findByExperienceIdAndDateGreaterThanEqualOrderByDateAsc(id, LocalDate.now(ZoneId.systemDefault())).stream()
                 .filter(i -> i.getStatus() == InstanceStatus.SCHEDULED)
                 .toList();
         model.addAttribute("experience", experience);

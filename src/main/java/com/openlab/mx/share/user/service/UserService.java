@@ -10,8 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.Period;
+import java.time.ZoneId;import java.time.LocalDate;
+import java.time.ZoneId;import java.time.Period;
 
 @Service
 @RequiredArgsConstructor
@@ -41,7 +41,7 @@ public class UserService {
     }
 
     private int age(LocalDate birthDate) {
-        return Period.between(birthDate, LocalDate.now()).getYears();
+        return Period.between(birthDate, LocalDate.now(ZoneId.systemDefault())).getYears();
     }
 
     /** Cuentas viejas o tests sin país: default México para no romper. */

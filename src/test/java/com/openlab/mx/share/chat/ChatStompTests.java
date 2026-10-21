@@ -1,6 +1,5 @@
 
 package com.openlab.mx.share.chat;
-import org.junit.jupiter.api.Disabled;
 
 import com.openlab.mx.share.chat.controller.ChatController;
 import com.openlab.mx.share.chat.dto.ChatMessageRequest;
@@ -8,11 +7,9 @@ import com.openlab.mx.share.experience.dto.ExperienceFormRequest;
 import com.openlab.mx.share.experience.dto.ScheduleEntryRequest;
 import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
-import com.openlab.mx.share.experience.entity.InstanceStatus;
 import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
-import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.reservation.service.CancellationService;
 import com.openlab.mx.share.reservation.service.ReservationService;
@@ -24,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.messaging.converter.SimpleMessageConverter;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
@@ -34,7 +30,6 @@ import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.validation.BeanPropertyBindingResult;
-import org.springframework.web.client.RestClient;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.messaging.WebSocketStompClient;
 import org.springframework.web.socket.sockjs.client.SockJsClient;

@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 
 /**
  * Una fila por usuario (UNIQUE user_id): el back es source of truth del
@@ -69,7 +69,7 @@ public class DiditVerification {
 
     /** Nueva verificación en curso para un usuario sin fila previa. */
     public static DiditVerification started(Long userId, String sessionId) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         return DiditVerification.builder()
                 .userId(userId)
                 .diditSessionId(sessionId)
@@ -95,7 +95,7 @@ public class DiditVerification {
         this.diditStatus = null;
         this.verifiedAt = null;
         this.decidedAt = null;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now(ZoneId.systemDefault());
     }
 
     /**
@@ -108,7 +108,7 @@ public class DiditVerification {
         }
         this.status = newStatus;
         this.diditStatus = diditStatusRaw;
-        this.decidedAt = LocalDateTime.now();
+        this.decidedAt = LocalDateTime.now(ZoneId.systemDefault());
         if (newStatus == VerificationStatus.VERIFIED) {
             this.verifiedAt = this.decidedAt;
         } else {
@@ -124,13 +124,13 @@ public class DiditVerification {
     @PrePersist
     void onCreate() {
         if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+            createdAt = LocalDateTime.now(ZoneId.systemDefault());
         }
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now(ZoneId.systemDefault());
     }
 
     @PreUpdate
     void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now(ZoneId.systemDefault());
     }
 }

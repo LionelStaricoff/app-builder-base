@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class VerificationSessionService {
 
-    private static final Logger log = (Logger) LoggerFactory.getLogger(VerificationSessionService.class);
+    private static final Logger log = LoggerFactory.getLogger(VerificationSessionService.class);
 
     private final DiditVerificationRepository repository;
     private final DiditSessionsClient sessionsClient;

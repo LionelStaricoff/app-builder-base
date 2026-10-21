@@ -1,6 +1,5 @@
 
 package com.openlab.mx.share.identity.controller;
-import org.junit.jupiter.api.Disabled;
 
 import com.openlab.mx.share.identity.entity.DiditVerification;
 import com.openlab.mx.share.identity.entity.VerificationStatus;
@@ -27,7 +26,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest

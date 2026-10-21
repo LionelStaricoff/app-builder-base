@@ -22,8 +22,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDate;
+import java.time.ZoneId;import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -98,7 +98,7 @@ public class FeedService {
                     .toList();
         }
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
 
         // Cargar experiencias ya vistas por este usuario (si userId es null, no hay vistas previas)
         Set<Long> viewedExperienceIds = Set.of();
@@ -184,7 +184,7 @@ public class FeedService {
         List<com.openlab.mx.share.experience.entity.ExperienceStop> stops;
         try {
             stops = stopRepository.findAllActive(ExperienceStatus.ACTIVE);
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             // Tabla aún no creada en H2 viejo: sin paradas no se filtra nada.
             return byExperience;
         }
@@ -270,7 +270,7 @@ public class FeedService {
 
     /** DTO público con próxima fecha calculada (usado por favoritos). */
     public ExperienceFeedDTO dtoFor(Experience experience, Long userId) {
-        return toDto(experience, nextDateOf(experience, LocalDate.now()), userId);
+        return toDto(experience, nextDateOf(experience, LocalDate.now(ZoneId.systemDefault())), userId);
     }
 
     /** Marca una experiencia como vista para el usuario actual. */
@@ -279,7 +279,7 @@ public class FeedService {
         UserViewedExperience viewed = UserViewedExperience.builder()
                 .userId(userId)
                 .experienceId(experienceId)
-                .viewedAt(LocalDateTime.now())
+                .viewedAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .build();
         viewedExperienceRepository.save(viewed);
     }
@@ -335,7 +335,7 @@ public class FeedService {
                 var first = stops.get(0);
                 label = first.placeName() + " · " + first.city();
             }
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             // Tabla aún no creada en H2 viejo (ddl-auto=update la crea al arrancar).
         }
         return new ExperienceFeedDTO(

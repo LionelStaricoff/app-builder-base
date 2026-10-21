@@ -37,7 +37,7 @@ public final class ImageNormalizer {
         BufferedImage src;
         try {
             src = ImageIO.read(new ByteArrayInputStream(original));
-        } catch (IOException e) {
+        } catch (IOException _) {
             return original;
         }
         if (src == null) {
@@ -72,7 +72,7 @@ public final class ImageNormalizer {
         }
         try {
             return toJpeg(out);
-        } catch (IOException e) {
+        } catch (IOException _) {
             return original;
         }
     }

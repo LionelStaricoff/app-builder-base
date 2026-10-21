@@ -11,7 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 
 /**
  * Registro de eventos de webhook ya procesados. {@code event_id} es la PK:
@@ -37,7 +37,7 @@ public class DiditWebhookEvent {
     @PrePersist
     void onPersist() {
         if (receivedAt == null) {
-            receivedAt = LocalDateTime.now();
+            receivedAt = LocalDateTime.now(ZoneId.systemDefault());
         }
     }
 }

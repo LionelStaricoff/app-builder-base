@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,8 +59,7 @@ public class EscrowService {
         switch (payment.getStatus()) {
             case RELEASED:
                 return false; // ya se liberó: idempotente (Review Focus #5)
-            case REFUNDED_FULL:
-            case REFUNDED_PARTIAL:
+            case REFUNDED_FULL, REFUNDED_PARTIAL:
                 throw new EscrowException("El pago ya fue reembolsado, no se puede liberar");
             case HELD:
                 break;
@@ -77,7 +76,7 @@ public class EscrowService {
         }
 
         payment.setStatus(PaymentStatus.RELEASED);
-        payment.setReleasedAt(LocalDateTime.now());
+        payment.setReleasedAt(LocalDateTime.now(ZoneId.systemDefault()));
         payment.setPayout(payment.getAmount().subtract(payment.getCommission()));
         // Marcar como pendiente de payout al creador (Stripe Connect)
         payment.setPayoutStatus(PayoutStatus.PENDING);
@@ -118,6 +117,6 @@ public class EscrowService {
 
     private boolean ventanaVencida(Payment payment) {
         return payment.getHeldAt() != null
-                && !payment.getHeldAt().plusDays(autoReleaseDays).isAfter(LocalDateTime.now());
+                && !payment.getHeldAt().plusDays(autoReleaseDays).isAfter(LocalDateTime.now(ZoneId.systemDefault()));
     }
 }

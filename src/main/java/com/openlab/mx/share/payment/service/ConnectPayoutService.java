@@ -18,10 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Servicio de desembolsos al creador vía Stripe Connect.
@@ -114,7 +113,7 @@ public class ConnectPayoutService {
                         .status(PayoutStatus.FAILED)
                         .failureReason(e.getMessage())
                         .idempotencyKey(idempotencyKey + "-" + payment.getId())
-                        .requestedAt(LocalDateTime.now())
+                        .requestedAt(LocalDateTime.now(ZoneId.systemDefault()))
                         .build();
                 connectPayoutRepository.save(failedPayout);
             }
@@ -132,8 +131,8 @@ public class ConnectPayoutService {
                     .stripeTransferId(transferId)
                     .status(PayoutStatus.COMPLETED)
                     .idempotencyKey(idempotencyKey + "-" + payment.getId())
-                    .requestedAt(LocalDateTime.now())
-                    .completedAt(LocalDateTime.now())
+                    .requestedAt(LocalDateTime.now(ZoneId.systemDefault()))
+                    .completedAt(LocalDateTime.now(ZoneId.systemDefault()))
                     .build();
             connectPayoutRepository.save(payout);
 

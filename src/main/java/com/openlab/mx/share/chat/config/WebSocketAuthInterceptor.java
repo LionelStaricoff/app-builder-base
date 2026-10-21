@@ -10,7 +10,6 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
@@ -59,7 +58,7 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             Long instanceId;
             try {
                 instanceId = Long.valueOf(idText);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 throw new AccessDeniedException("Destino inválido");
             }
             if (user == null || !chatAuthorizationService.canAccess(instanceId, user)) {

@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class VerificationController {
 
-    private static final Logger log = (Logger) LoggerFactory.getLogger(VerificationController.class);
+    private static final Logger log = LoggerFactory.getLogger(VerificationController.class);
 
     public static final String CODE_ALREADY_VERIFIED = "IDENTITY_ALREADY_VERIFIED";
 

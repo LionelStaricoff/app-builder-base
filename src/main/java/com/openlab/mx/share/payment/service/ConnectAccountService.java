@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
@@ -53,7 +53,7 @@ public class ConnectAccountService {
                 .stripeAccountId(stripeAccountId)
                 .country(country)
                 .status(ConnectAccountStatus.ONBOARDING_INCOMPLETE)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .build();
         return connectAccountRepository.save(account);
     }
@@ -79,7 +79,7 @@ public class ConnectAccountService {
         } else {
             account.setStatus(ConnectAccountStatus.ONBOARDING_INCOMPLETE);
         }
-        account.setLastSyncedAt(LocalDateTime.now());
+        account.setLastSyncedAt(LocalDateTime.now(ZoneId.systemDefault()));
         return connectAccountRepository.save(account);
     }
 

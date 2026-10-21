@@ -48,7 +48,6 @@ public class GeocodingService {
      */
     public Place resolvePlace(double lat, double lng) {
         long t0 = System.currentTimeMillis();
-        System.out.println("[GEOCODING] reverse → nominatim lat=" + lat + " lng=" + lng);
         log.info("[GEOCODING] reverse → nominatim lat={} lng={}", lat, lng);
         try {
             NominatimResponse r = restClient.get()
@@ -63,31 +62,24 @@ public class GeocodingService {
                     .body(NominatimResponse.class);
             long ms = System.currentTimeMillis() - t0;
             if (r == null) {
-                System.out.println("[GEOCODING] SIN RESPUESTA en " + ms + "ms");
                 log.warn("[GEOCODING] SIN RESPUESTA en {}ms", ms);
                 return null;
             }
             String city = cityOf(r);
             String country = r.address() != null ? r.address().country() : null;
             if (isBlank(city) && isBlank(country)) {
-                System.out.println("[GEOCODING] NADA RESUELTO en " + ms + "ms → address=" + r.address()
-                        + " name=" + r.name() + " addresstype=" + r.addresstype());
                 log.warn("[GEOCODING] NADA RESUELTO en {}ms → address={} name={} addresstype={}",
                         ms, r.address(), r.name(), r.addresstype());
                 return null;
             }
             if (isBlank(city)) {
-                System.out.println("[GEOCODING] SOLO PAÍS en " + ms + "ms → city=null country=" + country);
                 log.warn("[GEOCODING] SOLO PAÍS en {}ms → city=null country={}", ms, country);
             } else {
-                System.out.println("[GEOCODING] OK en " + ms + "ms → city=" + city + " country=" + country);
                 log.info("[GEOCODING] OK en {}ms → city={} country={}", ms, city, country);
             }
             return new Place(city, country);
         } catch (Exception e) {
             long ms = System.currentTimeMillis() - t0;
-            System.out.println("[GEOCODING] FALLO en " + ms + "ms → "
-                    + e.getClass().getSimpleName() + ": " + e.getMessage());
             log.warn("[GEOCODING] FALLO en {}ms → {}: {}", ms,
                     e.getClass().getSimpleName(), e.getMessage());
             return null; // el usuario conserva sus coordenadas aunque no se resuelva la ciudad

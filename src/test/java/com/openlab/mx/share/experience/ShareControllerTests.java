@@ -1,6 +1,5 @@
 
 package com.openlab.mx.share.experience;
-import org.junit.jupiter.api.Disabled;
 
 import com.openlab.mx.share.experience.dto.ExperienceFormRequest;
 import com.openlab.mx.share.experience.dto.ScheduleEntryRequest;

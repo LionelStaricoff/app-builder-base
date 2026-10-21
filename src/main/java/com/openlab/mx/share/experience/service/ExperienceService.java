@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.time.LocalDate;
+import java.time.ZoneId;import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -69,7 +69,7 @@ public class ExperienceService {
         saveStops(experience, stops);
         List<ExperienceSchedule> schedules = saveSchedules(experience, request.schedules());
         instanceRepository.saveAll(
-                generationService.generateFor(experience, schedules, LocalDate.now()));
+                generationService.generateFor(experience, schedules, LocalDate.now(ZoneId.systemDefault())));
         return experience;
     }
 
@@ -97,7 +97,7 @@ public class ExperienceService {
 
         List<ExperienceInstance> existing = instanceRepository.findByExperienceIdOrderByDateAsc(id);
         instanceRepository.saveAll(
-                generationService.regenerateFutures(saved, schedules, existing, LocalDate.now()));
+                generationService.regenerateFutures(saved, schedules, existing, LocalDate.now(ZoneId.systemDefault())));
         return saved;
     }
 
@@ -281,7 +281,7 @@ public class ExperienceService {
     private GeocodingService.Place reverseGeocode(double lat, double lng) {
         try {
             return geocodingService.resolve(lat, lng);
-        } catch (Exception ignored) {
+        } catch (Exception _) {
             return null;
         }
     }
@@ -315,7 +315,7 @@ public class ExperienceService {
                         .data(Base64.getEncoder().encodeToString(normalized))
                         .position(i)
                         .build());
-            } catch (IOException e) {
+            } catch (IOException _) {
                 throw new DomainException("No se pudo leer la imagen: " + files.get(i).getOriginalFilename());
             }
         }

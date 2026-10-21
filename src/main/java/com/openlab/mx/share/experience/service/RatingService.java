@@ -10,7 +10,6 @@ import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.RatingRepository;
 import com.openlab.mx.share.payment.service.EscrowService;
-import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.shared.exception.DomainException;

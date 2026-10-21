@@ -20,6 +20,10 @@ import java.util.Map;
 @Slf4j
 public class GlobalExceptionHandler {
 
+    /** Claves del JSON de error que consume el front. */
+    private static final String KEY_CODE = "code";
+    private static final String KEY_MESSAGE = "message";
+
     @ExceptionHandler(NotOwnerException.class)
     public void notOwner(NotOwnerException e, HttpServletResponse response) throws java.io.IOException {
         response.sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
@@ -52,7 +56,7 @@ public class GlobalExceptionHandler {
             log.warn("[gate] UnverifiedIdentityException en {} (XHR) → 409 JSON IDENTITY_NOT_VERIFIED",
                     request.getRequestURI());
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("code", "IDENTITY_NOT_VERIFIED", "message", mensaje(e)));
+                    .body(Map.of(KEY_CODE, "IDENTITY_NOT_VERIFIED", KEY_MESSAGE, mensaje(e)));
         }
         log.warn("[gate] UnverifiedIdentityException en {} → redirect /verificacion (referer={})",
                 request.getRequestURI(), request.getHeader("Referer"));
@@ -80,7 +84,7 @@ public class GlobalExceptionHandler {
         log.warn("[stripe] país de cobro no soportado en {}: {}",
                 request.getRequestURI(), e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("code", "COUNTRY_UNSUPPORTED", "message", e.getMessage()));
+                .body(Map.of(KEY_CODE, "COUNTRY_UNSUPPORTED", KEY_MESSAGE, e.getMessage()));
     }
 
     @ExceptionHandler(DomainException.class)
@@ -89,7 +93,7 @@ public class GlobalExceptionHandler {
             // PRG con flash no aplica a un fetch: respuesta JSON con el mensaje.
             log.warn("[domain] {} en {} (XHR) → 409 JSON", e.getClass().getSimpleName(), request.getRequestURI());
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("message", mensaje(e)));
+                    .body(Map.of(KEY_MESSAGE, mensaje(e)));
         }
         String destino = com.openlab.mx.share.shared.CurrentUser.refererPathOr("/feed");
         log.warn("[domain] {} en {} → redirect {} (referer={}, xhr=false): {}",

@@ -1,7 +1,6 @@
 package com.openlab.mx.share.user.controller;
 
 import com.openlab.mx.share.shared.CurrentUser;
-import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.user.dto.ProfileUpdateRequest;
 import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
@@ -16,7 +15,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -31,6 +29,11 @@ import java.util.Base64;
 public class ProfileController {
 
     private static final long MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+
+    /** Atributos flash y destino de vuelta de la pagina de ajustes. */
+    private static final String FLASH_ERROR = "error";
+    private static final String FLASH_OK = "ok";
+    private static final String REDIRECT_SETTINGS = "redirect:/settings";
 
     private final UserRepository userRepository;
     private final CurrentUser currentUser;
@@ -48,9 +51,9 @@ public class ProfileController {
         User user = currentUser.require();
         // Campos fuera de rango (nombre > 30, país > 60, moneda > 3) → no se guarda nada.
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute("error",
+            redirectAttributes.addFlashAttribute(FLASH_ERROR,
                     "Revisá los datos: nombre máximo 30 caracteres, país 60 y moneda 3");
-            return "redirect:/settings";
+            return REDIRECT_SETTINGS;
         }
         String username = request.username();
         String country = request.country();
@@ -62,16 +65,16 @@ public class ProfileController {
         // o se guarda todo o no se guarda nada, sin estados a medias).
         boolean usernameChanged = !nuevo.isEmpty() && !nuevo.equals(user.getUsername());
         if (usernameChanged && userRepository.findByUsername(nuevo).isPresent()) {
-            redirectAttributes.addFlashAttribute("error", "Ese nombre de usuario ya existe");
-            return "redirect:/settings";
+            redirectAttributes.addFlashAttribute(FLASH_ERROR, "Ese nombre de usuario ya existe");
+            return REDIRECT_SETTINGS;
         }
 
         String nuevoAvatarBase64 = null;
         boolean avatarChanged = false;
         if (avatar != null && !avatar.isEmpty()) {
             if (avatar.getSize() > MAX_AVATAR_BYTES) {
-                redirectAttributes.addFlashAttribute("error", "El avatar no puede superar 5 MB");
-                return "redirect:/settings";
+                redirectAttributes.addFlashAttribute(FLASH_ERROR, "El avatar no puede superar 5 MB");
+                return REDIRECT_SETTINGS;
             }
             byte[] normalized =
                     com.openlab.mx.share.user.service.AvatarImage.normalize(avatar.getBytes());
@@ -93,8 +96,8 @@ public class ProfileController {
                 && !normalizedCurrency.equals(user.getCurrencyCode());
 
         if (!usernameChanged && !avatarChanged && !countryChanged && !currencyChanged) {
-            redirectAttributes.addFlashAttribute("ok", "Sin cambios para guardar");
-            return "redirect:/settings";
+            redirectAttributes.addFlashAttribute(FLASH_OK, "Sin cambios para guardar");
+            return REDIRECT_SETTINGS;
         }
 
         // FASE 2 — un solo save con todo lo validado.
@@ -116,8 +119,8 @@ public class ProfileController {
             sincronizarSesion(anterior, nuevo);
         }
 
-        redirectAttributes.addFlashAttribute("ok", "Perfil actualizado");
-        return "redirect:/settings";
+        redirectAttributes.addFlashAttribute(FLASH_OK, "Perfil actualizado");
+        return REDIRECT_SETTINGS;
     }
 
     @PostMapping("/settings/logout")

@@ -39,12 +39,8 @@ public class LocationController {
     @ResponseBody
     public LocationResponse save(@Validated @RequestBody LocationRequest request) {
         long t0 = System.currentTimeMillis();
-        System.out.println("[LOCATION] POST /location recibido lat=" + request.lat()
-                + " lng=" + request.lng());
         log.info("[LOCATION] POST /location recibido lat={} lng={}", request.lat(), request.lng());
         User user = currentUser.require();
-        System.out.println("[LOCATION] usuario=" + user.getUsername() + " cityAnterior=" + user.getCity()
-                + " locationCountryAnterior=" + user.getLocationCountry());
         log.info("[LOCATION] usuario={} cityAnterior={} locationCountryAnterior={}",
                 user.getUsername(), user.getCity(), user.getLocationCountry());
 
@@ -55,8 +51,6 @@ public class LocationController {
         // Ciudad y país: solo si el reverse geocoding los resolvió.
         GeocodingService.Place place = geocodingService.resolvePlace(request.lat(), request.lng());
         long tGeo = System.currentTimeMillis() - t0;
-        System.out.println("[LOCATION] geocoding devolvió " + place + " en " + tGeo + "ms"
-                + (place == null ? " (NADA RESUELTO)" : ""));
         log.info("[LOCATION] geocoding={} en {}ms", place, tGeo);
 
         if (place != null) {
@@ -69,10 +63,6 @@ public class LocationController {
         }
         userRepository.save(user);
         long total = System.currentTimeMillis() - t0;
-        System.out.println("[LOCATION] GUARDADO user=" + user.getUsername()
-                + " lat=" + user.getLat() + " lng=" + user.getLng()
-                + " city=" + user.getCity() + " locationCountry=" + user.getLocationCountry()
-                + " total=" + total + "ms");
         log.info("[LOCATION] GUARDADO user={} lat={} lng={} city={} locationCountry={} total={}ms",
                 user.getUsername(), user.getLat(), user.getLng(), user.getCity(),
                 user.getLocationCountry(), total);

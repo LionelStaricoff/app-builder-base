@@ -8,7 +8,7 @@ import com.openlab.mx.share.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -29,14 +29,14 @@ public class NotificationService {
                 .message(message)
                 .link(link)
                 .read(false)
-                .createdAt(LocalDateTime.now())
+                .createdAt(LocalDateTime.now(ZoneId.systemDefault()))
                 .build());
     }
 
     /** Una notificación por destinatario. @return cuántas se crearon. */
     public int notifyMassive(Collection<User> tos, NotificationType type, String message, String link) {
         List<Notification> notifications = new ArrayList<>();
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneId.systemDefault());
         tos.forEach(to -> notifications.add(Notification.builder()
                 .user(to)
                 .type(type)
