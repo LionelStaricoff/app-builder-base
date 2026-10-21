@@ -271,4 +271,25 @@ class FeedServiceTest {
         assertEquals(List.of("México", "Perú"), opciones,
                 "sin duplicados por casing y sin el placeholder —");
     }
+
+    @Test
+    void testDtoIncluyeStopsParaMapeo() {
+        Experience a = experience(1L, "A", "CDMX", 19.43, -99.13, ExperienceCategory.CULTURAL);
+        when(experienceRepository.findByStatus(ExperienceStatus.ACTIVE)).thenReturn(List.of(a));
+        stubNextDate(a, LocalDate.of(2026, 12, 1));
+        stubCover(a, "tapa");
+        
+        when(stopRepository.findByExperienceIdOrderByPositionAscIdAsc(1L)).thenReturn(List.of(
+                new com.openlab.mx.share.experience.dto.ExperienceStopDTO(1, "Stop 1", "City 1", "Country 1", 19.0, -99.0),
+                new com.openlab.mx.share.experience.dto.ExperienceStopDTO(2, "Stop 2", "City 2", "Country 2", 19.1, -99.1)
+        ));
+
+        var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, null, 0);
+        ExperienceFeedDTO dto = page.getContent().get(0);
+
+        assertNotNull(dto.stops());
+        assertEquals(2, dto.stops().size());
+        assertEquals("Stop 1", dto.stops().get(0).placeName());
+        assertEquals(19.0, dto.stops().get(0).lat());
+    }
 }
