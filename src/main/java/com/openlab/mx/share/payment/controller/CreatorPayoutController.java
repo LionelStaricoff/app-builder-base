@@ -4,6 +4,7 @@ import com.openlab.mx.share.payment.entity.ConnectPayout;
 import com.openlab.mx.share.payment.service.ConnectPayoutService;
 import com.openlab.mx.share.payment.service.StripeConnectService;
 import com.openlab.mx.share.shared.CurrentUser;
+import com.openlab.mx.share.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,6 +58,13 @@ public class CreatorPayoutController {
         log.info("[api] POST /payout-account/onboarding-link — usuario={} country={}",
                 user.getUsername(), country);
         String url = stripeConnectService.generateOnboardingLink(user, country);
+        if (url == null || url.isBlank()) {
+            // Salvaguarda: el servicio ya valida el link, pero si llegara vacío
+            // respondemos con un mensaje claro en vez de un NullPointerException.
+            log.error("[api] el servicio devolvió un account link vacío — usuario={}", user.getUsername());
+            throw new DomainException(
+                    "No se pudo generar el enlace de configuración de cobros. Intentá de nuevo.");
+        }
         log.info("[api] account link generado (long={}) url={}...", url.length(),
                 url.substring(0, Math.min(url.length(), 60)));
         return Map.of("url", url);

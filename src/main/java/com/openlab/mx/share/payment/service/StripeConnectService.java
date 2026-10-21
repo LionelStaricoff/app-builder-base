@@ -97,7 +97,15 @@ public class StripeConnectService {
         log.info("[connect] creando account link — stripeId={} refresh={} return={}",
                 account.getStripeAccountId(), refreshUrl, returnUrl);
         String link = gateway.createAccountLink(account.getStripeAccountId(), refreshUrl, returnUrl);
-        log.info("[connect] account link OK (long={})", link != null ? link.length() : 0);
+        if (link == null || link.isBlank()) {
+            // La pasarela devolvió un link vacío: si lo dejamos pasar, el
+            // controller explota con NullPointerException (500 sin mensaje).
+            log.warn("[connect] la pasarela devolvió un account link vacío — stripeId={}",
+                    account.getStripeAccountId());
+            throw new DomainException(
+                    "No se pudo generar el enlace de configuración de cobros. Intentá de nuevo.");
+        }
+        log.info("[connect] account link OK (long={})", link.length());
         return link;
     }
 
