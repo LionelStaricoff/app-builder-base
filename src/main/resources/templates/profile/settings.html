@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head th:replace="~{fragments/layout :: head('Configuración')}"></head>
 <body>
 <main class="app-main">
@@ -49,7 +49,7 @@
             </label>
         </div>
         <p class="hint">Los precios del feed se muestran en esta moneda.</p>
-        <label>Avatar (máx 5 MB)</label>
+        <label for="avatar-input">Avatar (máx 5 MB)</label>
         <div class="image-picker image-picker--avatar" id="avatar-picker" data-max-files="1" data-max-bytes="5242880">
             <input type="file" id="avatar-input" name="avatar" accept="image/*" hidden>
             <div class="image-picker-drop" id="avatar-picker-drop" role="button" tabindex="0"

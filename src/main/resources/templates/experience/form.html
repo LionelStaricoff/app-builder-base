@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head th:replace="~{fragments/layout :: head('Crear experiencia')}"></head>
 <body>
 <link rel="stylesheet" th:href="@{/vendor/leaflet/leaflet.css}">
@@ -20,10 +20,10 @@
             </label>
             <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Error</span>
 
-            <label>Imágenes (1 a 5, la primera es la tapa)</label>
+            <label for="images-input">Imágenes (1 a 5, la primera es la tapa)</label>
             <div th:if="${existingImages != null and not #lists.isEmpty(existingImages)}" id="existing-images" class="image-picker-previews">
                 <figure class="image-picker-item existing-image" th:each="img, st : ${existingImages}" th:attr="data-image-id=${img.id}">
-                    <img th:src="'data:image/jpeg;base64,' + ${img.data}" alt="Imagen guardada" loading="lazy">
+                    <img th:src="'data:image/jpeg;base64,' + ${img.data}" alt="Foto guardada" loading="lazy">
                     <span class="image-picker-badge" th:text="${st.first ? 'Tapa' : st.count}">Tapa</span>
                     <button type="button" class="img-remove" th:attr="data-image-id=${img.id}" aria-label="Eliminar esta imagen">
                         <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
@@ -49,7 +49,7 @@
 
             <div class="form-grid">
                 <div>
-                    <label>Duración
+                    <label for="duration-hours">Duración
                         <span class="hint" style="display:block">Horas y minutos (ej. 2 h 30 min)</span>
                     </label>
                     <div class="duration-row">
@@ -120,29 +120,29 @@
             <div id="weekly-fields" hidden>
                 <div id="weekly-rows">
                     <div class="weekly-row">
-                        <select name="schedules[0].dayOfWeek">
+                        <select name="schedules[0].dayOfWeek" aria-label="Dí de la semana">
                             <option th:each="d : ${T(java.time.DayOfWeek).values()}" th:value="${d}"
                                     th:text="${d}"
                                     th:selected="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].dayOfWeek == d}">Lunes</option>
                         </select>
-                        <input type="time" name="schedules[0].startTime" value="18:00"
+                        <input type="time" name="schedules[0].startTime" value="18:00" aria-label="Hora de inicio"
                                th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].startTime != null ? experienceForm.schedules[0].startTime : '18:00'}">
-                        <input type="time" name="schedules[0].endTime" value="20:00"
+                        <input type="time" name="schedules[0].endTime" value="20:00" aria-label="Hora de fin"
                                th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].endTime != null ? experienceForm.schedules[0].endTime : '20:00'}">
-                        <input type="date" name="schedules[0].rangeStart"
+                        <input type="date" name="schedules[0].rangeStart" aria-label="Inicio del rango"
                                th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) ? experienceForm.schedules[0].rangeStart : ''}">
-                        <input type="date" name="schedules[0].rangeEnd"
+                        <input type="date" name="schedules[0].rangeEnd" aria-label="Fin del rango"
                                th:value="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) ? experienceForm.schedules[0].rangeEnd : ''}">
                     </div>
                     <div class="weekly-row" th:each="ws, stat : ${experienceForm.schedules}" th:if="${stat.index > 0}">
-                        <select th:name="'schedules[' + ${stat.index} + '].dayOfWeek'">
+                        <select th:name="'schedules[' + ${stat.index} + '].dayOfWeek'" aria-label="Dí de la semana">
                             <option th:each="d : ${T(java.time.DayOfWeek).values()}" th:value="${d}"
                                     th:text="${d}" th:selected="${ws.dayOfWeek == d}">Lunes</option>
                         </select>
-                        <input type="time" th:name="'schedules[' + ${stat.index} + '].startTime'" th:value="${ws.startTime}">
-                        <input type="time" th:name="'schedules[' + ${stat.index} + '].endTime'" th:value="${ws.endTime}">
-                        <input type="date" th:name="'schedules[' + ${stat.index} + '].rangeStart'" th:value="${ws.rangeStart}">
-                        <input type="date" th:name="'schedules[' + ${stat.index} + '].rangeEnd'" th:value="${ws.rangeEnd}">
+                        <input type="time" th:name="'schedules[' + ${stat.index} + '].startTime'" aria-label="Hora de inicio" th:value="${ws.startTime}">
+                        <input type="time" th:name="'schedules[' + ${stat.index} + '].endTime'" aria-label="Hora de fin" th:value="${ws.endTime}">
+                        <input type="date" th:name="'schedules[' + ${stat.index} + '].rangeStart'" aria-label="Inicio del rango" th:value="${ws.rangeStart}">
+                        <input type="date" th:name="'schedules[' + ${stat.index} + '].rangeEnd'" aria-label="Fin del rango" th:value="${ws.rangeEnd}">
                     </div>
                 </div>
                 <button type="button" id="add-weekly-row" class="btn-secondary">+ Agregar día</button>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head th:replace="~{fragments/layout :: head('Chat')}"></head>
 <body>
 <main class="app-main">
@@ -27,7 +27,7 @@
           style="display:flex;gap:.5rem;margin-top:1rem">
         <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <input id="chat-text" name="text" placeholder="Escribí un mensaje…" required
-               class="form-input">
+               aria-label="Mensaje" class="form-input">
         <button type="submit" class="btn-primary">Enviar</button>
     </form>
 </main>
