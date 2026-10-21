@@ -62,9 +62,10 @@ public class DiditRestSessionsClient implements DiditSessionsClient {
                     .toEntity(String.class)
                     .getBody();
         } catch (RestClientResponseException e) {
-            log.error("Didit respondió con error HTTP {}: {}", e.getStatusCode().value(), e.getResponseBodyAsString());
-            throw mapStatus(e.getStatusCode().value());
+            log.error("Didit respondió con error HTTP {}: {}", e.getStatusCode().value(), e.getResponseBodyAsString(), e);
+            throw mapStatus(e.getStatusCode().value(), e);
         } catch (RestClientException e) {
+            log.error("No se pudo contactar a Didit: {}", e.getMessage(), e);
             throw new DiditApiException("No se pudo contactar a Didit", e);
         }
 
@@ -78,13 +79,20 @@ public class DiditRestSessionsClient implements DiditSessionsClient {
         }
     }
 
-    private DiditApiException mapStatus(int status) {
+    /**
+     * Traduce el status HTTP de Didit a un error de dominio.
+     *
+     * <p>La causa original se conserva: sin ella se pierde el stack trace y
+     * el body de la respuesta, que es justo lo que hace falta para entender
+     * por qué Didit rechazó la petición.
+     */
+    private DiditApiException mapStatus(int status, RestClientResponseException cause) {
         return switch (status) {
             case 403 -> new DiditApiException(
-                    "Didit rechazó la petición (403): API key inválida o sin créditos");
+                    "Didit rechazó la petición (403): API key inválida o sin créditos", cause);
             case 429 -> new DiditApiException(
-                    "Didit limitó las peticiones (429), reintentá más tarde");
-            default -> new DiditApiException("Didit respondió con error HTTP " + status);
+                    "Didit limitó las peticiones (429), reintentá más tarde", cause);
+            default -> new DiditApiException("Didit respondió con error HTTP " + status, cause);
         };
     }
 }

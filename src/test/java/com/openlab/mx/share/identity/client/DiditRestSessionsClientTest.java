@@ -6,8 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
@@ -89,6 +91,19 @@ class DiditRestSessionsClientTest {
                 .andRespond(withSuccess("{\"session_id\":\"s-1\"}", MediaType.APPLICATION_JSON));
 
         assertThrows(DiditApiException.class, () -> client.createSession(1L, "wf", "cb"));
+    }
+
+    @Test
+    void el_error_http_conserva_la_causa_original() {
+        server.expect(requestTo(CREATE)).andRespond(withStatus(HttpStatus.FORBIDDEN));
+
+        DiditApiException e = assertThrows(DiditApiException.class,
+                () -> client.createSession(1L, "wf", "cb"));
+
+        // Sin la causa se pierde el stack trace y el body de la respuesta.
+        assertNotNull(e.getCause());
+        assertTrue(e.getCause() instanceof RestClientResponseException);
+        assertEquals(403, ((RestClientResponseException) e.getCause()).getStatusCode().value());
     }
 
     @Test
