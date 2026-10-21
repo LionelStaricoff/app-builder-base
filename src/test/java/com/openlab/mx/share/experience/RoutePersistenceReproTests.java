@@ -140,7 +140,7 @@ class RoutePersistenceReproTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void editarMuestraDatosCargados() throws Exception {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
         String nombre = "Repro edit " + UUID.randomUUID();
@@ -211,7 +211,7 @@ class RoutePersistenceReproTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void editarSinImagenesNuevasConservaLasViejas() throws Exception {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
         Experience experience = experienceService.create(new ExperienceFormRequest(
@@ -248,7 +248,7 @@ class RoutePersistenceReproTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void editarPuedeEliminarUnaImagenExistente() throws Exception {
         var img1 = new MockMultipartFile("images", "a.png", "image/png", "aaa".getBytes());
         var img2 = new MockMultipartFile("images", "b.png", "image/png", "bbb".getBytes());
@@ -348,7 +348,7 @@ class RoutePersistenceReproTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void crearSinFechaRechazaConError() throws Exception {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
 
@@ -374,7 +374,7 @@ class RoutePersistenceReproTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void crearSemanalSinRangoRechazaConError() throws Exception {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
 
@@ -476,7 +476,7 @@ class RoutePersistenceReproTests {
     }
 
     @Test
-    @WithMockUser("demo_creator")
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
     void errorDeValidacionConservaParadasEnElForm() throws Exception {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
 

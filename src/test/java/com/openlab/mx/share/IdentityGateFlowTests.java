@@ -155,7 +155,7 @@ class IdentityGateFlowTests {
                         .param("schedules[0].date", "2026-12-01")
                         .param("schedules[0].startTime", "10:00")
                         .param("schedules[0].endTime", "12:00")
-                        .with(user(creador.getUsername()))
+                        .with(user(creador.getUsername()).roles("CREATOR"))
                         .with(csrf()))
                 .andReturn();
 

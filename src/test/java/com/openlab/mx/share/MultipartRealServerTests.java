@@ -5,6 +5,7 @@ import com.openlab.mx.share.user.entity.Role;
 import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -43,11 +44,10 @@ class MultipartRealServerTests {
             .connectTimeout(Duration.ofSeconds(5))
             .build();
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    MultipartRealServerTests(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
+    // constructor eliminado por @Autowired en campos
 
     private String base() {
         return "http://localhost:" + port;
@@ -106,21 +106,17 @@ class MultipartRealServerTests {
 
     private String registrarYLogin() throws Exception {
         String user = "mt-" + UUID.randomUUID().toString().substring(0, 8);
-        userRepository.save(User.builder()
-                .username(user)
-                .email(user + "@x.com")
-                .passwordHash("{noop}Clave1234!")
-                .birthDate(LocalDate.of(1995, 4, 12))
-                .country("México")
-                .currencyCode("MXN")
-                .role(Role.CREATOR)
-                .spPoints(0)
-                .build());
         
         var registro = postForm("/register", tokenDe(get("/register")),
                 "username", user, "email", user + "@x.com", "password", "Clave1234!",
                 "birthDate", "1995-04-12");
         assertEquals(302, registro.statusCode(), "el registro debe redirigir a /login");
+        
+        // Actualizamos el rol a CREATOR después del registro para que pueda usar los endpoints
+        User u = userRepository.findByUsername(user).orElseThrow();
+        u.setRole(Role.CREATOR);
+        userRepository.save(u);
+
         var login = postForm("/login", tokenDe(get("/login")), "username", user, "password", "Clave1234!");
         assertEquals(302, login.statusCode(), "el login debe redirigir");
         return user;

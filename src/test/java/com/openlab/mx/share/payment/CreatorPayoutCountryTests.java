@@ -73,7 +73,7 @@ class CreatorPayoutCountryTests {
         mockMvc.perform(post("/api/creators/payout-account/onboarding-link")
                         .param("country", "CO")
                         .header("X-Requested-With", "XMLHttpRequest")
-                        .with(SecurityMockMvcRequestPostProcessors.user(usuario))
+                        .with(SecurityMockMvcRequestPostProcessors.user(usuario).roles("CREATOR"))
                         .with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("COUNTRY_UNSUPPORTED"))
@@ -87,7 +87,7 @@ class CreatorPayoutCountryTests {
 
         mockMvc.perform(post("/api/creators/payout-account/onboarding-link")
                         .header("X-Requested-With", "XMLHttpRequest")
-                        .with(SecurityMockMvcRequestPostProcessors.user(usuario))
+                        .with(SecurityMockMvcRequestPostProcessors.user(usuario).roles("CREATOR"))
                         .with(csrf()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", containsString("Elegí el país")));
@@ -101,7 +101,7 @@ class CreatorPayoutCountryTests {
         mockMvc.perform(post("/api/creators/payout-account/onboarding-link")
                         .param("country", "MX")
                         .header("X-Requested-With", "XMLHttpRequest")
-                        .with(SecurityMockMvcRequestPostProcessors.user(usuario))
+                        .with(SecurityMockMvcRequestPostProcessors.user(usuario).roles("CREATOR"))
                         .with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.url").isNotEmpty());
