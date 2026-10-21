@@ -8,7 +8,6 @@
   if (!list || !sentinel) return;
 
   const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
-  const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
   const params = new URLSearchParams(window.location.search);
   const category = params.get('category');
   const country = params.get('country');
@@ -18,9 +17,10 @@
   let done = false;
 
   function cardHtml(dto) {
-    const images = Array.isArray(dto.images) && dto.images.length > 0
-      ? dto.images
-      : (dto.coverBase64 ? [dto.coverBase64] : []);
+    let images = Array.isArray(dto.images) ? dto.images : [];
+    if (images.length === 0 && dto.coverBase64) {
+      images = [dto.coverBase64];
+    }
     const slides = images.map((b64) => `
       <figure class="carousel-slide">
         <a href="/experiences/${dto.id}">
@@ -40,11 +40,13 @@
       ? `/favorites/${dto.id}/remove`
       : `/favorites/${dto.id}/add`;
     const heart = dto.favorite ? '❤️' : '🤍';
+    let creatorAvatar = '<span class="card-creator-fallback" aria-hidden="true">👤</span>';
+    if (dto.creatorAvatar) {
+      creatorAvatar = `<img class="card-creator-avatar" src="data:image/jpeg;base64,${escapeAttr(dto.creatorAvatar)}" alt="" loading="lazy">`;
+    }
     const creator = dto.creatorName
       ? `<div class="card-creator">
-           ${dto.creatorAvatar
-              ? `<img class="card-creator-avatar" src="data:image/jpeg;base64,${escapeAttr(dto.creatorAvatar)}" alt="" loading="lazy">`
-             : '<span class="card-creator-fallback" aria-hidden="true">👤</span>'}
+           ${creatorAvatar}
            <span class="card-creator-name">${escapeHtml(dto.creatorName)}</span>
            <span class="card-creator-tag">· armó este viaje</span>
          </div>`
@@ -53,11 +55,14 @@
     const currency = dto.currencyCode || 'MXN';
     const duration = formatDuration(dto.durationMinutes || 60);
     const stops = Array.isArray(dto.stops) ? dto.stops : [];
+    const lastStop = stops.length > 1
+      ? ' → ' + escapeHtml(stops[stops.length - 1].placeName || '')
+      : '';
     const routeHtml = stops.length > 0
       ? `<div class="feed-route">
            <div class="map-box feed-route-map" data-map="feed-route" style="height:180px"
                 data-stops='${escapeAttr(JSON.stringify(stops))}'></div>
-           <p class="hint">🗺️ ${stops.length} paradas · ${escapeHtml(stops[0].placeName || '')}${stops.length > 1 ? ' → ' + escapeHtml(stops[stops.length - 1].placeName || '') : ''}</p>
+           <p class="hint">🗺️ ${stops.length} paradas · ${escapeHtml(stops[0].placeName || '')}${lastStop}</p>
          </div>`
       : '';
     return `
@@ -86,7 +91,7 @@
   }
 
   function formatDuration(total) {
-    total = Math.max(1, parseInt(total, 10) || 60);
+    total = Math.max(1, Number.parseInt(total, 10) || 60);
     const h = Math.floor(total / 60);
     const m = total % 60;
     if (h === 0) return `${m} min`;
@@ -101,7 +106,7 @@
   }
 
   function escapeAttr(text) {
-    return String(text).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    return String(text).replaceAll('&', '&amp;').replaceAll("'", '&#39;').replaceAll('<', '&lt;');
   }
 
   async function loadNext() {
@@ -132,6 +137,7 @@
         page += 1;
       }
     } catch (e) {
+      // Si el listado falla no hay más páginas que pedir: se corta el scroll.
       done = true;
     } finally {
       loading_page = false;

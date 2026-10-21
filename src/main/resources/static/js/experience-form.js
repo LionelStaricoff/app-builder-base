@@ -44,15 +44,15 @@
   }
   function syncDurationFromHidden() {
     if (!hiddenMinutes || !hoursInput || !minsInput) return;
-    const total = Math.max(1, parseInt(hiddenMinutes.value || '60', 10) || 60);
+    const total = Math.max(1, Number.parseInt(hiddenMinutes.value || '60', 10) || 60);
     hoursInput.value = Math.floor(total / 60);
     minsInput.value = total % 60;
     if (preview) preview.textContent = formatDuration(total);
   }
   function syncHiddenFromInputs() {
     if (!hiddenMinutes || !hoursInput || !minsInput) return;
-    const h = Math.max(0, parseInt(hoursInput.value || '0', 10) || 0);
-    const m = Math.min(59, Math.max(0, parseInt(minsInput.value || '0', 10) || 0));
+    const h = Math.max(0, Number.parseInt(hoursInput.value || '0', 10) || 0);
+    const m = Math.min(59, Math.max(0, Number.parseInt(minsInput.value || '0', 10) || 0));
     const total = Math.max(1, h * 60 + m);
     hiddenMinutes.value = String(total);
     if (preview) preview.textContent = formatDuration(total);
@@ -131,14 +131,14 @@
     node.querySelector('[data-stop-up]')?.addEventListener('click', () => {
       const prev = node.previousElementSibling;
       if (prev) {
-        stopsList.insertBefore(node, prev);
+        prev.before(node);
         renumberStops();
       }
     });
     node.querySelector('[data-stop-down]')?.addEventListener('click', () => {
       const next = node.nextElementSibling;
       if (next) {
-        stopsList.insertBefore(next, node);
+        node.before(next);
         renumberStops();
       }
     });
@@ -160,8 +160,8 @@
       let row = pendingStopRow;
       if (!row && stopsList) {
         row = [...stopsList.querySelectorAll('[data-stop-row]')].find((r) => {
-          const la = parseFloat(r.querySelector('input[name="stopLat"]').value || '0');
-          const lo = parseFloat(r.querySelector('input[name="stopLng"]').value || '0');
+          const la = Number.parseFloat(r.querySelector('input[name="stopLat"]').value || '0');
+          const lo = Number.parseFloat(r.querySelector('input[name="stopLng"]').value || '0');
           return !(la && lo);
         }) || null;
       }
@@ -180,8 +180,8 @@
     all() {
       if (!stopsList) return [];
       return [...stopsList.querySelectorAll('[data-stop-row]')].map((r) => ({
-        lat: parseFloat(r.querySelector('input[name="stopLat"]').value || '0') || 0,
-        lng: parseFloat(r.querySelector('input[name="stopLng"]').value || '0') || 0,
+        lat: Number.parseFloat(r.querySelector('input[name="stopLat"]').value || '0') || 0,
+        lng: Number.parseFloat(r.querySelector('input[name="stopLng"]').value || '0') || 0,
         name: r.querySelector('input[name="stopPlace"]')?.value || '',
       }));
     },
@@ -191,8 +191,8 @@
       return [...stopsList.querySelectorAll('[data-stop-row]')]
         .map((r, index) => ({
           index,
-          lat: parseFloat(r.querySelector('input[name="stopLat"]').value || '0') || 0,
-          lng: parseFloat(r.querySelector('input[name="stopLng"]').value || '0') || 0,
+          lat: Number.parseFloat(r.querySelector('input[name="stopLat"]').value || '0') || 0,
+          lng: Number.parseFloat(r.querySelector('input[name="stopLng"]').value || '0') || 0,
           name: r.querySelector('input[name="stopPlace"]')?.value || '',
         }))
         .filter((p) => p.lat && p.lng);
@@ -269,7 +269,7 @@
     // Duración: campos no vacíos.
     let durationOk = true;
     [hoursInput, minsInput].forEach((el) => {
-      if (el && el.value === '') { markMissing(el); first = first || el; durationOk = false; }
+      if (el?.value === '') { markMissing(el); first = first || el; durationOk = false; }
     });
     if (!durationOk) {
       const p = document.getElementById('duration-error');
@@ -308,8 +308,8 @@
     // Paradas: toda fila necesita nombre Y punto en el mapa.
     stopsList?.querySelectorAll('[data-stop-row]').forEach((row) => {
       const name = row.querySelector('input[name="stopPlace"]');
-      const la = parseFloat(row.querySelector('input[name="stopLat"]')?.value || '0') || 0;
-      const lo = parseFloat(row.querySelector('input[name="stopLng"]')?.value || '0') || 0;
+      const la = Number.parseFloat(row.querySelector('input[name="stopLat"]')?.value || '0') || 0;
+      const lo = Number.parseFloat(row.querySelector('input[name="stopLng"]')?.value || '0') || 0;
       let msg = '';
       if (!name?.value.trim()) msg = 'Falta el nombre de esta parada.';
       else if (!(la && lo)) msg = 'Tocá el mapa para ubicar esta parada.';

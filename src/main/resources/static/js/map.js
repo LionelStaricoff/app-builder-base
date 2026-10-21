@@ -12,7 +12,7 @@
   }
 
   function num(v, dflt) {
-    const n = parseFloat(v);
+    const n = Number.parseFloat(v);
     return Number.isFinite(n) ? n : dflt;
   }
 
@@ -26,13 +26,15 @@
       return arr
         .map((s) => ({
           // Soporta tanto camelCase (JSON Jackson) como minúsculas.
-          lat: num(s.lat ?? s.Lat, NaN),
-          lng: num(s.lng ?? s.Lng ?? s.lon, NaN),
+          lat: num(s.lat ?? s.Lat, Number.NaN),
+          lng: num(s.lng ?? s.Lng ?? s.lon, Number.NaN),
           placeName: s.placeName ?? s.placename ?? s.name ?? '',
           city: s.city ?? '',
         }))
         .filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lng) && (s.lat !== 0 || s.lng !== 0));
     } catch (e) {
+      // Las paradas vienen del HTML (data-stops): si no parsean, el mapa se
+      // dibuja sin paradas en vez de romper la página.
       return [];
     }
   }
@@ -115,8 +117,8 @@
     for (const input of latInputs) {
       const lngInput = input.parentElement?.querySelector('input[name="stopLng"]')
         || input.closest('[data-stop-row]')?.querySelector('input[name="stopLng"]');
-      const la = parseFloat(input.value || '0') || 0;
-      const lo = parseFloat(lngInput?.value || '0') || 0;
+      const la = Number.parseFloat(input.value || '0') || 0;
+      const lo = Number.parseFloat(lngInput?.value || '0') || 0;
       if (!(la && lo)) return true;
     }
     return false;
@@ -162,8 +164,8 @@
     // Estado inicial: en form nuevo el GPS pisa el default (CDMX);
     // en edición se respeta el punto guardado.
     const isFresh = el.dataset.fresh === 'true';
-    const initLat = latInput?.value ? parseFloat(latInput.value) : NaN;
-    const initLng = lngInput?.value ? parseFloat(lngInput.value) : NaN;
+    const initLat = latInput?.value ? Number.parseFloat(latInput.value) : Number.NaN;
+    const initLng = lngInput?.value ? Number.parseFloat(lngInput.value) : Number.NaN;
     const hasSaved = Number.isFinite(initLat) && Number.isFinite(initLng) && (initLat || initLng);
     if (hasSaved) setMeeting(initLat, initLng, true);
     if (isFresh && navigator.geolocation) {

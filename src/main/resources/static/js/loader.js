@@ -23,7 +23,7 @@
   }
 
   function hide(el) {
-    if (el && el.parentNode) el.parentNode.removeChild(el);
+    el?.remove();
   }
 
   window.SharedLoader = { show: show, hide: hide };
@@ -38,7 +38,12 @@
       if (b.disabled) return;
       b.disabled = true;
       b.classList.add('is-loading');
-      var texto = (b.textContent || 'Enviar').replace(/…+$/, '');
+      // Sin regex: la etiqueta original puede traer los puntos suspensivos
+      // que el propio loader agrega.
+      var texto = b.textContent || 'Enviar';
+      while (texto.endsWith('…')) {
+        texto = texto.slice(0, -1);
+      }
       b.innerHTML = SVG + ' ' + texto + '…';
     });
   });

@@ -22,12 +22,12 @@
     if (!input || !drop || !previews || !errorBox) return;
 
     var isSingle = !input.hasAttribute('multiple');
-    var maxFiles = parseInt(root.dataset.maxFiles || '', 10);
-    if (isNaN(maxFiles) || maxFiles < 1) {
+    var maxFiles = Number.parseInt(root.dataset.maxFiles || '', 10);
+    if (Number.isNaN(maxFiles) || maxFiles < 1) {
       maxFiles = isSingle ? 1 : DEFAULT_MULTI_MAX_FILES;
     }
-    var maxBytes = parseInt(root.dataset.maxBytes || '', 10);
-    if (isNaN(maxBytes) || maxBytes < 1) {
+    var maxBytes = Number.parseInt(root.dataset.maxBytes || '', 10);
+    if (Number.isNaN(maxBytes) || maxBytes < 1) {
       maxBytes = maxFiles === 1 ? DEFAULT_SINGLE_MAX_BYTES : DEFAULT_MULTI_MAX_BYTES;
     }
     var maxLabel = root.dataset.maxLabel || formatMB(maxBytes) + ' MB';
@@ -143,7 +143,7 @@
           item.addEventListener('drop', function (e) {
             e.preventDefault();
             e.stopPropagation();
-            var from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+            var from = Number.parseInt(e.dataTransfer.getData('text/plain'), 10);
             if (Number.isNaN(from) || from === index) return;
             var moved = current.splice(from, 1)[0];
             current.splice(index, 0, moved);

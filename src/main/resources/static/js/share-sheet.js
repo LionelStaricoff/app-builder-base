@@ -11,7 +11,7 @@
   var lastTrigger = null;
 
   function close() {
-    if (sheet && sheet.parentNode) sheet.parentNode.removeChild(sheet);
+    sheet?.remove();
     sheet = null;
     if (lastTrigger && document.contains(lastTrigger)) lastTrigger.focus();
     lastTrigger = null;
@@ -87,9 +87,13 @@
     copiar.appendChild(iconC);
     copiar.appendChild(labelC);
     copiar.addEventListener('click', function () {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
+      if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(meta.url).then(function () {
           labelC.textContent = '¡Copiado!';
+        }).catch(function () {
+          // Sin permiso de portapapeles (o contexto inseguro): se avisa en vez
+          // de dejar la promesa rechazada.
+          labelC.textContent = 'No se pudo copiar';
         });
       }
     });
@@ -114,10 +118,10 @@
   });
 
   document.addEventListener('click', function (e) {
-    var trigger = e.target && e.target.closest && e.target.closest('[data-share-experience]');
+    var trigger = e.target?.closest?.('[data-share-experience]');
     if (!trigger) return;
     e.preventDefault();
-    var id = trigger.getAttribute('data-share-experience');
+    var id = trigger.dataset.shareExperience;
 
     fetch('/share/' + encodeURIComponent(id) + '/meta', {
       headers: { Accept: 'application/json' }
@@ -126,11 +130,15 @@
         if (!res.ok) throw new Error('sin meta');
         return res.json();
       })
-      .then(function (meta) {
-        var tactil = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+      .then(async function (meta) {
+        var tactil = window.matchMedia?.('(pointer: coarse)')?.matches === true;
         if (tactil && navigator.share) {
           // Nativo: título y URL por separado (jamás "título — url" pegado).
-          navigator.share({ title: meta.title, url: meta.url }).catch(function () {});
+          try {
+            await navigator.share({ title: meta.title, url: meta.url });
+          } catch (err) {
+            /* el usuario canceló el diálogo: no es un error */
+          }
           return;
         }
         open(trigger, meta);

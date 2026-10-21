@@ -21,7 +21,6 @@
   // ciudad: el GPS puede no traer ciudad y igual estar conectado). Alimenta el
   // check verde, el texto del banner y el label del botón — no su color.
   const hasLocation = banner.dataset.hasLocation === 'true';
-  const dismissedKey = 'shared.location.dismissed';
 
   function setStatus(text) {
     if (statusEl) statusEl.textContent = text;
@@ -111,8 +110,9 @@
       // Recargar sin query de búsqueda manual: el feed ya ordena por su ciudad.
       window.location.href = '/feed';
     } catch (e) {
-      console.error('[location] fallo al guardar:', e && e.message);
-      setStatus(e && e.message === 'sesion-vencida'
+      var mensajeError = e?.message;
+      console.error('[location] fallo al guardar:', mensajeError);
+      setStatus(mensajeError === 'sesion-vencida'
         ? 'Tu sesión venció. Recargá la página e intentá de nuevo.'
         : 'No pudimos guardar tu ubicación. Intentá de nuevo.');
       if (allowBtn) allowBtn.disabled = false;
@@ -137,7 +137,9 @@
         (pos) => {
           console.log('[location] GPS OK lat=' + pos.coords.latitude + ' lng=' + pos.coords.longitude +
             ' precision=' + pos.coords.accuracy + 'm');
-          saveLocation(pos.coords.latitude, pos.coords.longitude);
+          // La función ya maneja sus propios errores (try/catch adentro): se
+          // marca como ignorada a propósito para no dejar una promesa suelta.
+          void saveLocation(pos.coords.latitude, pos.coords.longitude);
         },
         (err) => {
           console.warn('[location] GPS ERROR code=' + err.code + ' msg=' + err.message +

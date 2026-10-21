@@ -29,14 +29,14 @@
         function markActive(s) {
           var buttons = document.querySelectorAll('[data-visual-style]');
           buttons.forEach(function (btn) {
-            btn.classList.toggle('active', btn.getAttribute('data-visual-style') === s);
+            btn.classList.toggle('active', btn.dataset.visualStyle === s);
           });
         }
         function current() { return read(KEY) || '1'; }
         function set(styleNum) {
           var s = String(styleNum);
           if (s !== '1' && s !== '2' && s !== '3' && s !== '4' && s !== '5' && s !== '6') { s = '1'; }
-          document.documentElement.setAttribute('data-style', s);
+          document.documentElement.dataset.style = s;
           write(KEY, s);
           markActive(s);
         }
@@ -65,9 +65,9 @@
           vs = (legacyDark === 'true' || legacyDark === true) ? '3' : '1';
           write(KEY, vs);
           try { localStorage.removeItem('darkMode'); } catch (e) { /* nada */ }
-          try { document.documentElement.removeAttribute('data-dark-mode'); } catch (e) { /* nada */ }
+          try { delete document.documentElement.dataset.darkMode; } catch (e) { /* nada */ }
         }
-        document.documentElement.setAttribute('data-style', vs);
+        document.documentElement.dataset.style = vs;
       })();
     </script>
     <script th:src="@{/js/sw-register.js}" defer></script>

@@ -9,7 +9,7 @@ self.addEventListener('install', (event) => {
           c.add(url).catch(() => null)
         )
       )
-    )
+    ).catch(() => null)
   );
   self.skipWaiting();
 });
@@ -18,7 +18,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    )
+    ).catch(() => null)
   );
   self.clients.claim();
 });
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
       .then((res) => {
         if (res.ok && url.pathname === '/') {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put('/', copy));
+          caches.open(CACHE).then((c) => c.put('/', copy)).catch(() => null);
         }
         return res;
       })
