@@ -101,8 +101,6 @@ public class ReservationController {
             // para el creador): mostrar el link a ciegas dejaría un 403 post-pago.
             model.addAttribute("chatDisponible",
                     esCreador || reservation.getStatus() == ReservationStatus.CONFIRMADA);
-            model.addAttribute("nombreCreador",
-                    experience.getCreator() == null ? "" : experience.getCreator().getUsername());
         }
         return "confirmation";
     }

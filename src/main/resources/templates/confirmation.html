@@ -15,7 +15,7 @@
             <p th:if="${chatDisponible}" style="margin-top:.75rem">
                 <a class="btn-primary" th:href="@{/chats/{id}(id=${reservation.instance.id})}">💬 Ir al chat grupal</a>
             </p>
-            <p class="hint" th:if="${!chatDisponible}">El chat grupal se abre cuando <strong th:text="${nombreCreador}">anfitrión</strong> confirme tu reserva.</p>
+            <p class="hint" th:if="${!chatDisponible}">El chat grupal se abre cuando se complete el pago.</p>
             <p style="margin-top:.75rem">
                 <a class="btn-secondary" th:href="@{/reservations/{id}/calendar.ics(id=${reservation.id})}">📅 Añadir a mi calendario</a>
             </p>
