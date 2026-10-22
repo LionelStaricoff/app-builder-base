@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bricolage+Grotesque:wght@500;600;700;800&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- v=2: subir al tocar app.css para que el navegador no sirva el viejo cacheado -->
-    <link rel="stylesheet" th:href="@{/css/app.css(v=16)}">
+    <link rel="stylesheet" th:href="@{/css/app.css(v=17)}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -101,8 +101,11 @@
     <a th:href="@{/creators/payouts}" th:classappend="${active == 'payouts'} ? 'active'">
         <span class="icon">💰</span><span class="nav-label">Cobros</span>
     </a>
-    <a th:href="@{/notifications}" th:classappend="${active == 'notifications'} ? 'active'">
-        <span class="icon">🔔</span><span class="nav-label">Avisos</span>
+    <a th:href="@{/notifications}" th:classappend="${active == 'notifications'} ? 'active'"
+       th:aria-label="${unreadNotifications != null and unreadNotifications > 0 ? unreadNotifications + (unreadNotifications == 1L ? ' aviso sin leer' : ' avisos sin leer') : null}">
+        <span class="icon">🔔<span class="nav-badge"
+              th:if="${unreadNotifications != null and unreadNotifications > 0}"
+              th:text="${unreadNotifications > 99 ? '99+' : unreadNotifications}">3</span></span><span class="nav-label">Avisos</span>
     </a>
     <a th:href="@{/chats}" th:classappend="${active == 'chats'} ? 'active'">
         <span class="icon">💬</span><span class="nav-label">Chats</span>

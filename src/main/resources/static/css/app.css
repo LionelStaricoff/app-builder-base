@@ -237,14 +237,30 @@ h1, h2, h3, .brand-name {
 @media (max-width: 420px) {
   .bottom-nav a { font-size: 0.6rem; }
   .bottom-nav a .icon { font-size: 1.15rem; }
-}
-
-.bottom-nav a .icon { font-size: 1.3rem; display: block; }
-
+}.bottom-nav a .icon { font-size: 1.3rem; display: block; position: relative; }
 .bottom-nav a.active {
   color: var(--color-primary);
   opacity: 1;
   font-weight: 600;
+}
+
+/* Badge de avisos sin leer sobre el ícono 🔔 (mismo rojo de marca que
+   .chip.active y .btn-primary, así hereda los 5 temas data-style). */
+.nav-badge {
+  position: absolute;
+  top: -5px;
+  right: -10px;
+  min-width: 1.05rem;
+  padding: 0 .28rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: .58rem;
+  font-weight: 700;
+  line-height: 1.05rem;
+  text-align: center;
+  box-shadow: 0 0 0 1.5px var(--surface);
+  pointer-events: none;
 }/* ---- Escritorio (>= 1024px): la barra pasa a fila superior fija ----
    El nav vive en UNA sola fila (marca + secciones) arriba del todo; en
    móvil sigue siendo la barra de abajo. */
