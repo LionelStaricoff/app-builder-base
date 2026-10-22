@@ -572,6 +572,11 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
   border-radius: 999px;
 }
 
+/* Reseñas con texto en el detalle (estrellas + comentario) */
+.review-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1rem; }
+.review { padding: 0.9rem 1rem; }
+.review .meta { margin-bottom: 0.3rem; }
+
 .slot-list { display: flex; flex-direction: column; gap: 0.9rem; }
 .slot-list .slot {
   margin-bottom: 0;

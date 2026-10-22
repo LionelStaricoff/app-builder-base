@@ -11,6 +11,7 @@ import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
+import com.openlab.mx.share.experience.service.RatingService;
 import com.openlab.mx.share.reservation.service.RefundPolicy;
 import com.openlab.mx.share.shared.JacksonHelper;
 import com.openlab.mx.share.shared.exception.DomainException;
@@ -47,6 +48,7 @@ public class ExperienceController {
     private final com.openlab.mx.share.experience.repository.ExperienceScheduleRepository scheduleRepository;
     private final JacksonHelper jacksonHelper;
     private final RefundPolicy refundPolicy;
+    private final RatingService ratingService;
 
     @GetMapping("/experiences/new")
     public String form(Model model) {
@@ -105,6 +107,8 @@ public class ExperienceController {
         model.addAttribute("stopsJson", jacksonHelper.toJson(stops));
         model.addAttribute("images", images);
         model.addAttribute("instances", instances);
+        // Reseñas con texto (Rating + Comment de fechas terminadas).
+        model.addAttribute("reviews", ratingService.reviewsFor(id));
         // Política de reembolso visible ANTES de reservar (cartel) y el % que
         // corresponde a cada fecha.
         model.addAttribute("refundPolicyLines", refundPolicy.lines());

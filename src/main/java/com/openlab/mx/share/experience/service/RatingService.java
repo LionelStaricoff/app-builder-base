@@ -1,5 +1,6 @@
 package com.openlab.mx.share.experience.service;
 
+import com.openlab.mx.share.experience.dto.ExperienceReviewDTO;
 import com.openlab.mx.share.experience.entity.Comment;
 import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
@@ -17,6 +18,8 @@ import com.openlab.mx.share.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Evaluación de instancias terminadas: estrella 1..5 + comentario,
@@ -66,5 +69,10 @@ public class RatingService {
 
         reservationRepository.findByInstanceIdAndStatus(instanceId, ReservationStatus.CONFIRMADA)
                 .forEach(r -> escrowService.tryRelease(r.getId()));
+    }
+
+    /** Reseñas del detalle de la experiencia (estrella + texto), más nuevas primero. */
+    public List<ExperienceReviewDTO> reviewsFor(Long experienceId) {
+        return ratingRepository.reviewsForExperience(experienceId);
     }
 }

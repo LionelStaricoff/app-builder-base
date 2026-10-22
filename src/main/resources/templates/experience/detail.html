@@ -23,6 +23,7 @@
             <p class="meta">
                 <span class="stars">★</span>
                 <span th:text="${#numbers.formatDecimal(experience.ratingAverage, 1, 1)}">0.0</span>
+                <span class="hint" th:text="${'(' + reviews.size() + (reviews.size() == 1 ? ' reseña)' : ' reseñas)')}">(3 reseñas)</span>
                 · <span class="pill" th:text="${experience.category}">Categoria</span>
                 · ⏱ <span th:text="${experience.durationMinutes >= 60 ? T(java.lang.Math).floorDiv(experience.durationMinutes, 60) + ' h' + (T(java.lang.Math).floorMod(experience.durationMinutes, 60) > 0 ? ' ' + T(java.lang.Math).floorMod(experience.durationMinutes, 60) + ' min' : '') : experience.durationMinutes + ' min'}">2 h 30 min</span>
                 · <strong th:text="${experienceCurrency} + ' ' + ${experience.price}">MXN 190</strong>
@@ -51,6 +52,19 @@
                 <div id="detail-map" class="map-box" data-map="view"
                      th:attr="data-lat=${experience.meetingLat},data-lng=${experience.meetingLng}"></div>
                 <p class="hint">Punto de encuentro: <span th:text="${experience.meetingLat} + ', ' + ${experience.meetingLng}">0, 0</span></p>
+            </div>
+
+            <h3>Reseñas <span class="hint" th:text="${'(' + reviews.size() + ')'}">(3)</span></h3>
+            <div class="empty" th:if="${#lists.isEmpty(reviews)}">Todavía no hay reseñas. Sé la primera persona en contar cómo fue.</div>
+            <div class="review-list" th:if="${!#lists.isEmpty(reviews)}">
+                <div class="card review" th:each="rv : ${reviews}">
+                    <p class="meta">
+                        <strong th:text="${rv.username}">usuario</strong>
+                        · <span th:text="${rv.date != null ? #temporals.format(rv.date, 'MMM yyyy') : ''}">oct 2026</span>
+                    </p>
+                    <p><span class="stars">★</span> <span th:text="${rv.stars}">5</span>/5</p>
+                    <p th:if="${rv.text != null and !#strings.isEmpty(rv.text)}" th:text="${rv.text}">Texto de la reseña</p>
+                </div>
             </div>
 
             <h3>Próximas fechas</h3>
