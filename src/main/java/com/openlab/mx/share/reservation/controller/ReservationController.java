@@ -6,13 +6,19 @@ import com.openlab.mx.share.reservation.dto.ReservationRequest;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
+import com.openlab.mx.share.reservation.service.CalendarIcsService;
 import com.openlab.mx.share.reservation.service.RefundPolicy;
 import com.openlab.mx.share.reservation.service.ReservationService;
 import com.openlab.mx.share.shared.CurrentUser;
+import com.openlab.mx.share.shared.exception.DomainException;
+import com.openlab.mx.share.shared.exception.NotOwnerException;
 import com.openlab.mx.share.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -38,6 +44,7 @@ public class ReservationController {
     private final com.openlab.mx.share.identity.service.RequireVerifiedIdentityService
             requireVerifiedIdentityService;
     private final RefundPolicy refundPolicy;
+    private final CalendarIcsService calendarIcsService;
 
     @Value("${escrow.commission-rate}")
     private java.math.BigDecimal commissionRate = new java.math.BigDecimal("0.05");
@@ -109,9 +116,38 @@ public class ReservationController {
             model.addAttribute("payout", monto.subtract(monto.multiply(commissionRate)));
             model.addAttribute("currencyCode", experience.getCurrencyCode() == null
                     ? "MXN" : experience.getCurrencyCode());
-            model.addAttribute("esCreador",
-                    user.getId().equals(experience.getCreator().getId()));
+            boolean esCreador = user.getId().equals(experience.getCreator().getId());
+            model.addAttribute("esCreador", esCreador);
+            // El chat grupal se abre recién con la reserva CONFIRMADA (o siempre
+            // para el creador): mostrar el link a ciegas dejaría un 403 post-pago.
+            model.addAttribute("chatDisponible",
+                    esCreador || reservation.getStatus() == ReservationStatus.CONFIRMADA);
+            model.addAttribute("nombreCreador",
+                    experience.getCreator() == null ? "" : experience.getCreator().getUsername());
         }
         return "confirmation";
+    }
+
+    /** Descarga .ics de la reserva: "añadir a mi calendario" post-pago. */
+    @GetMapping("/reservations/{id}/calendar.ics")
+    public ResponseEntity<String> calendar(@PathVariable Long id) {
+        User user = currentUser.require();
+        Reservation reserva = reservationRepository.findById(id)
+                .orElseThrow(() -> new DomainException("Reserva no encontrada"));
+        boolean dueno = reserva.getUser() != null
+                && user.getId().equals(reserva.getUser().getId());
+        boolean creador = reserva.getInstance() != null
+                && reserva.getInstance().getExperience() != null
+                && reserva.getInstance().getExperience().getCreator() != null
+                && user.getId().equals(reserva.getInstance().getExperience().getCreator().getId());
+        if (!dueno && !creador) {
+            throw new NotOwnerException();
+        }
+        String archivo = "shared-" + reserva.getInstance().getDate()
+                .format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE) + ".ics";
+        return ResponseEntity.ok()
+                .contentType(new MediaType("text", "calendar", java.nio.charset.StandardCharsets.UTF_8))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + archivo + "\"")
+                .body(calendarIcsService.build(reserva));
     }
 }

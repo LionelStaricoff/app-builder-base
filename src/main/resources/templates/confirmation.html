@@ -11,6 +11,14 @@
         <div th:if="${reservation != null}">
             <p style="font-size:2rem;margin:.5rem 0" th:text="(${esCreador} ? 'COBRASTE ' : 'PAGASTE ') + ${currencyCode} + ' ' + ${monto}">PAGASTE MXN 0</p>
             <p th:text="${reservation.instance.experience.name}">Experiencia</p><p class="meta" th:text="'Para ' + ${reservation.attendees} + ' cupo(s) · llega a tu cuenta ' + ${currencyCode} + ' ' + ${payout} + ' menos 5% de comisión'">Detalle</p>
+            <!-- Salidas post-pago: chat grupal (solo si está disponible) y calendario -->
+            <p th:if="${chatDisponible}" style="margin-top:.75rem">
+                <a class="btn-primary" th:href="@{/chats/{id}(id=${reservation.instance.id})}">💬 Ir al chat grupal</a>
+            </p>
+            <p class="hint" th:if="${!chatDisponible}">El chat grupal se abre cuando <strong th:text="${nombreCreador}">anfitrión</strong> confirme tu reserva.</p>
+            <p style="margin-top:.75rem">
+                <a class="btn-secondary" th:href="@{/reservations/{id}/calendar.ics(id=${reservation.id})}">📅 Añadir a mi calendario</a>
+            </p>
             <a class="btn-primary" th:href="@{/reservations}">Mis reservas</a>
         </div>
     </div>
