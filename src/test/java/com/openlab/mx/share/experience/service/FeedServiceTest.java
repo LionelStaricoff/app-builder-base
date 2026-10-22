@@ -279,9 +279,14 @@ class FeedServiceTest {
         stubNextDate(a, LocalDate.of(2026, 12, 1));
         stubCover(a, "tapa");
         
+        // El repositorio devuelve entidades ExperienceStop; el service las mapea a DTO.
         when(stopRepository.findByExperienceIdOrderByPositionAscIdAsc(1L)).thenReturn(List.of(
-                new com.openlab.mx.share.experience.dto.ExperienceStopDTO(1, "Stop 1", "City 1", "Country 1", 19.0, -99.0),
-                new com.openlab.mx.share.experience.dto.ExperienceStopDTO(2, "Stop 2", "City 2", "Country 2", 19.1, -99.1)
+                com.openlab.mx.share.experience.entity.ExperienceStop.builder()
+                        .position(0).placeName("Stop 1").city("City 1").country("Country 1")
+                        .lat(19.0).lng(-99.0).build(),
+                com.openlab.mx.share.experience.entity.ExperienceStop.builder()
+                        .position(1).placeName("Stop 2").city("City 2").country("Country 2")
+                        .lat(19.1).lng(-99.1).build()
         ));
 
         var page = feedService.page(null, "CDMX", 19.4326, -99.1332, null, null, 0);

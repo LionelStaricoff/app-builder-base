@@ -469,10 +469,14 @@ class RoutePersistenceReproTests {
 
         String html = templateEngine.process("feed", ctx);
 
-        org.junit.jupiter.api.Assertions.assertTrue(html.contains("feed-route-map"),
-                "la tarjeta del feed muestra el mapa del recorrido");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Ver Recorrido"),
+                "la tarjeta del feed muestra el recorrido");
         org.junit.jupiter.api.Assertions.assertTrue(html.contains("Playa Escondida"),
                 "la tarjeta del feed nombra inicio y fin");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("google.com/maps/search/"),
+                "la tarjeta del feed enlaza el recorrido en el mapa");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("19.44,-99.14"),
+                "el enlace del recorrido apunta a la primera parada");
     }
 
     @Test

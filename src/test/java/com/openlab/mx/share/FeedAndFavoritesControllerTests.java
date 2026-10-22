@@ -28,6 +28,8 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -173,19 +175,27 @@ class FeedAndFavoritesControllerTests {
     @Test
     @WithMockUser("demo_user")
     void feedBuscadorUnicoSeRenderiza() throws Exception {
-        mockMvc.perform(get("/feed"))
+        // El rediseño unificó la búsqueda en un solo input (name="city") en el header:
+        // el input manual del banner y el desplegable de países ya no existen.
+        String html = mockMvc.perform(get("/feed"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("location-manual-input")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("country-options")));
+                .andReturn().getResponse().getContentAsString();
+
+        assertEquals(1, html.split("name=\"city\"", -1).length - 1,
+                "el feed debe renderizar un único buscador");
+        assertFalse(html.contains("country-options"),
+                "el desplegable de países se eliminó del feed");
     }
 
     @Test
     @WithMockUser("demo_user")
     void feedConUbicacionMuestraIconoConectado() throws Exception {
-        // demo_user tiene ciudad guardada (CDMX): el banner muestra el icono de conectado.
+        // demo_user tiene ciudad guardada (CDMX): el chip muestra el punto verde.
         mockMvc.perform(get("/feed"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("location-connected-icon")));
+                .andExpect(content().string(containsString("location-chip")))
+                .andExpect(content().string(containsString("bg-emerald-400")))
+                .andExpect(content().string(containsString(">CDMX<")));
     }
 
     @Test
@@ -193,26 +203,28 @@ class FeedAndFavoritesControllerTests {
         String username = crearUsuarioSinCiudad();
         mockMvc.perform(get("/feed").with(user(username)))
                 .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("location-connected-icon"))));
+                .andExpect(content().string(not(containsString("bg-emerald-400"))))
+                .andExpect(content().string(containsString(">Sin ubicación<")));
     }
 
     @Test
     @WithMockUser("demo_user")
     void feedBotonMuestraActivadoConUbicacion() throws Exception {
-        // demo_user tiene ciudad guardada: pin verde + "Activado".
+        // Con ubicación guardada, el chip muestra la ciudad y el botón GPS está disponible.
         mockMvc.perform(get("/feed"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("location-allow is-on")))
-                .andExpect(content().string(containsString(">Activado<")));
+                .andExpect(content().string(containsString("id=\"btn-gps\"")))
+                .andExpect(content().string(containsString(">CDMX<")));
     }
 
     @Test
     void feedBotonMuestraActivarSinUbicacion() throws Exception {
+        // Sin ubicación guardada, el chip avisa que falta activarla.
         String username = crearUsuarioSinCiudad();
         mockMvc.perform(get("/feed").with(user(username)))
                 .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("is-on"))))
-                .andExpect(content().string(containsString(">Activar<")));
+                .andExpect(content().string(containsString("id=\"btn-gps\"")))
+                .andExpect(content().string(containsString(">Sin ubicación<")));
     }
 
     @Test

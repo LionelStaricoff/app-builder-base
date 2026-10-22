@@ -83,8 +83,8 @@
       : '';
 
     return `
-      <div class="card max-w-md mx-auto bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden font-sans mb-6" style="border: 1px solid var(--border-subtle)" id="card-${dto.id}">
-        <div class="relative h-72 w-full overflow-hidden group">
+      <div class="card feed-card w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden font-sans transition-transform duration-300 hover:scale-[1.02]" style="border: 1px solid var(--border-subtle)" id="card-${dto.id}">
+        <div class="relative w-full overflow-hidden group feed-card-cover">
           <img src="data:image/jpeg;base64,${dto.coverBase64 || ''}" 
                alt="Experiencia" 
                class="w-full h-full object-cover">
@@ -124,10 +124,10 @@
             </div>
           </div>` : ''}
         </div>
-        <div class="p-5 space-y-4">
+        <div class="space-y-4 feed-card-body">
           <div class="flex items-start justify-between gap-2">
             <div class="max-w-[75%]">
-              <h2 class="text-xl font-black text-gray-900 tracking-tight leading-tight">${escapeHtml(dto.name)}</h2>
+              <h2 class="font-black text-gray-900 tracking-tight leading-tight feed-card-title">${escapeHtml(dto.name)}</h2>
             </div>
             <button class="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1 rounded-full transition-colors shadow-sm">
               <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>

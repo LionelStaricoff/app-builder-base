@@ -12,16 +12,34 @@
     <link rel="manifest" th:href="@{/manifest.webmanifest}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bricolage+Grotesque:wght@500;600;700;800&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- v=2: subir al tocar app.css para que el navegador no sirva el viejo cacheado -->
-    <link rel="stylesheet" th:href="@{/css/app.css(v=11)}">
+    <link rel="stylesheet" th:href="@{/css/app.css(v=16)}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      /* Theme — ÚNICA fuente de verdad del estilo visual (opción B).
-         Dueño único: data-style="1|2|3" + localStorage.visualStyle.
-         El viejo sistema data-dark-mode/localStorage.darkMode se elimina:
-         nunca tuvo reglas CSS y su <script> del <body> jamás se incluía
-         (las páginas solo piden los fragmentos head y nav). */
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['Inter', 'sans-serif'] },
+            colors: { brand: { 50: '#fff1f2', 100: '#ffe4e6', 500: '#e11d48', 600: '#e11d48', 700: '#be123c', dark: '#881337' } },
+            keyframes: {
+              fadeInStagger: { '0%': { opacity: '0', transform: 'translateY(8px) scale(0.94)' }, '100%': { opacity: '1', transform: 'translateY(0) scale(1)' } },
+              pulseGlow: { '0%, 100%': { opacity: '0.3' }, '50%': { opacity: '0.6' } }
+            },
+            animation: { stagger: 'fadeInStagger 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards', pulseGlow: 'pulseGlow 3s infinite ease-in-out' }
+          }
+        }
+      }
+    </script>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .stagger-1 { animation-delay: 0.04s; } .stagger-2 { animation-delay: 0.08s; } .stagger-3 { animation-delay: 0.12s; }
+      .stagger-4 { animation-delay: 0.16s; } .stagger-5 { animation-delay: 0.20s; } .stagger-6 { animation-delay: 0.24s; }
+      .stagger-7 { animation-delay: 0.28s; } .stagger-8 { animation-delay: 0.32s; }
+    </style>
+    <script>
+      /* Theme — ÚNICA fuente de verdad del estilo visual */
       (function () {
         var KEY = 'visualStyle';
         var PREV_KEY = 'visualStylePrev';
@@ -29,9 +47,7 @@
         function write(key, val) { try { localStorage.setItem(key, val); } catch (e) { /* storage no disponible */ } }
         function markActive(s) {
           var buttons = document.querySelectorAll('[data-visual-style]');
-          buttons.forEach(function (btn) {
-            btn.classList.toggle('active', btn.dataset.visualStyle === s);
-          });
+          buttons.forEach(function (btn) { btn.classList.toggle('active', btn.dataset.visualStyle === s); });
         }
         function current() { return read(KEY) || '1'; }
         function set(styleNum) {
@@ -51,22 +67,14 @@
             set('3');
           }
         }
-        window.Theme = {
-          get: current,
-          set: set,
-          toggleDark: toggleDark,
-          isDark: function () { return current() === '3'; }
-        };
-        window.setStyle = set; /* alias compat: settings.html y código viejo */
-        /* Migración legacy + restore temprano anti-FOUC en TODAS las páginas */
+        window.Theme = { get: current, set: set, toggleDark: toggleDark, isDark: function () { return current() === '3'; } };
+        window.setStyle = set;
         var vs = read(KEY);
         if (!vs) {
           var legacyDark = null;
           try { legacyDark = localStorage.getItem('darkMode'); } catch (e) { /* nada */ }
           vs = (legacyDark === 'true' || legacyDark === true) ? '3' : '1';
           write(KEY, vs);
-          try { localStorage.removeItem('darkMode'); } catch (e) { /* nada */ }
-          try { delete document.documentElement.dataset.darkMode; } catch (e) { /* nada */ }
         }
         document.documentElement.dataset.style = vs;
       })();
@@ -77,26 +85,30 @@
 </head>
 <body>
 <nav th:fragment="nav(active)" class="bottom-nav">
+    <div class="nav-brand">
+        <img th:src="@{/img/logo.svg}" alt="" class="nav-brand-logo">
+        <span class="nav-brand-name">Shared</span>
+    </div>
     <a th:href="@{/feed}" th:classappend="${active == 'feed'} ? 'active'">
-        <span class="icon">🏠</span>Feed
+        <span class="icon">🏠</span><span class="nav-label">Feed</span>
     </a>
     <a th:href="@{/favorites}" th:classappend="${active == 'favorites'} ? 'active'">
-        <span class="icon">❤️</span>Favoritos
+        <span class="icon">❤️</span><span class="nav-label">Favoritos</span>
     </a>
     <a th:href="@{/my-experiences}" th:classappend="${active == 'mine'} ? 'active'">
-        <span class="icon">➕</span>Tus Experiencias
+        <span class="icon">➕</span><span class="nav-label">Tus Experiencias</span>
     </a>
     <a th:href="@{/creators/payouts}" th:classappend="${active == 'payouts'} ? 'active'">
-        <span class="icon">💰</span>Cobros
+        <span class="icon">💰</span><span class="nav-label">Cobros</span>
     </a>
     <a th:href="@{/notifications}" th:classappend="${active == 'notifications'} ? 'active'">
-        <span class="icon">🔔</span>Avisos
+        <span class="icon">🔔</span><span class="nav-label">Avisos</span>
     </a>
     <a th:href="@{/chats}" th:classappend="${active == 'chats'} ? 'active'">
-        <span class="icon">💬</span>Chats
+        <span class="icon">💬</span><span class="nav-label">Chats</span>
     </a>
     <a th:href="@{/settings}" th:classappend="${active == 'settings'} ? 'active'">
-        <span class="icon">⚙️</span>Config
+        <span class="icon">⚙️</span><span class="nav-label">Config</span>
     </a>
 </nav>
 </body>

@@ -44,7 +44,19 @@
       while (texto.endsWith('…')) {
         texto = texto.slice(0, -1);
       }
-      b.innerHTML = SVG + ' ' + texto + '…';
+      // El botón conserva su tamaño: se mide antes de vaciarlo y se fija con
+      // min-width/min-height, así el spinner no lo ensancha ni lo encoge
+      // (el texto original + "…" lo estiraba).
+      var caja = b.getBoundingClientRect();
+      if (caja.width > 0) {
+        b.style.minWidth = Math.round(caja.width) + 'px';
+      }
+      if (caja.height > 0) {
+        b.style.minHeight = Math.round(caja.height) + 'px';
+      }
+      b.innerHTML = SVG;
+      // La etiqueta sigue disponible para lectores de pantalla.
+      b.setAttribute('aria-label', texto);
     });
   });
 })();
