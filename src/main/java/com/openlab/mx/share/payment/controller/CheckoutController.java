@@ -2,8 +2,6 @@ package com.openlab.mx.share.payment.controller;
 
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
-import com.openlab.mx.share.notification.entity.NotificationType;
-import com.openlab.mx.share.notification.service.NotificationService;
 import com.openlab.mx.share.payment.dto.CheckoutPayRequest;
 import com.openlab.mx.share.payment.gateway.GatewaySession;
 import com.openlab.mx.share.payment.service.StripeCheckoutService;
@@ -40,7 +38,6 @@ public class CheckoutController {
     private final StripeCheckoutService stripeCheckoutService;
     private final ReservationRepository reservationRepository;
     private final ExperienceInstanceRepository instanceRepository;
-    private final NotificationService notificationService;
     private final CurrentUser currentUser;
     private final RefundPolicy refundPolicy;
 
@@ -75,24 +72,12 @@ public class CheckoutController {
         // Cupos fuera de 1..20 → se corrige al límite más cercano (como el GET).
         int cupos = bindingResult.hasErrors() ? 1 : sanitize(request.attendees());
         User user = currentUser.require();
-        boolean nuevaReserva = pendiente(instanceId, user) == null;
         GatewaySession session;
         try {
             session = stripeCheckoutService.start(instanceId, cupos, user);
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/checkout/" + instanceId + "?attendees=" + cupos;
-        }
-        if (nuevaReserva) {
-            ExperienceInstance instance = instanceRepository.findById(instanceId)
-                    .orElseThrow(() -> new DomainException("Fecha no encontrada"));
-            User creador = instance.getExperience().getCreator();
-            if (creador != null) {
-                notificationService.notify(creador, NotificationType.SOLICITUD_RESERVA,
-                        user.getUsername() + " reservó " + cupos + " lugar(es) en "
-                                + instance.getExperience().getName(),
-                        "/reservations");
-            }
         }
         return "redirect:" + session.url();
     }

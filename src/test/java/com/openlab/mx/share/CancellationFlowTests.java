@@ -175,27 +175,28 @@ class CancellationFlowTests {
     }
 
     @Test
-    void reservarYConfirmarGeneranNotificaciones() throws Exception {
+    void reservarYPagarGeneranNotificaciones() throws Exception {
         Long instanceId = fechaFutura();
 
-        // Flujo Stripe nuevo: el checkout crea la PENDIENTE + notifica al creador.
+        // Instant book (spec §6): el checkout crea la PENDIENTE y el pago la
+        // confirma, avisando a creador y huésped en el mismo momento.
         mockMvc.perform(post("/checkout/" + instanceId)
                         .with(user("demo_user")).with(csrf())
                         .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
 
+        Reservation reserva = reservationRepository
+                .findFirstByInstanceIdAndUserId(instanceId, usuario("demo_user").getId())
+                .orElseThrow();
+        String sessionId = paymentRepository.findByReservationId(reserva.getId())
+                .orElseThrow().getStripeSessionId();
+        mockMvc.perform(get("/pago/exito").param("session_id", sessionId)
+                        .with(user("demo_user")))
+                .andExpect(status().is3xxRedirection());
+
         mockMvc.perform(get("/notifications").with(user("demo_creator").roles("CREATOR")))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("reserv")));
-
-        Reservation pendiente = reservationRepository
-                .findFirstByInstanceIdAndUserIdAndStatus(
-                        instanceId, usuario("demo_user").getId(), ReservationStatus.PENDIENTE)
-                .orElseThrow();
-
-        mockMvc.perform(post("/reservations/" + pendiente.getId() + "/confirm")
-                        .with(user("demo_creator").roles("CREATOR")).with(csrf()))
-                .andExpect(status().is3xxRedirection());
 
         mockMvc.perform(get("/notifications").with(user("demo_user")))
                 .andExpect(status().isOk())

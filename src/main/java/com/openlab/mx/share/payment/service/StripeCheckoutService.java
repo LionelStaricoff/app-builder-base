@@ -1,6 +1,8 @@
 package com.openlab.mx.share.payment.service;
 
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
+import com.openlab.mx.share.notification.entity.NotificationType;
+import com.openlab.mx.share.notification.service.NotificationService;
 import com.openlab.mx.share.payment.entity.Payment;
 import com.openlab.mx.share.payment.entity.PaymentStatus;
 import com.openlab.mx.share.payment.repository.PaymentRepository;
@@ -39,6 +41,7 @@ public class StripeCheckoutService {
     private final ReservationService reservationService;
     private final ReservationRepository reservationRepository;
     private final PaymentRepository paymentRepository;
+    private final NotificationService notificationService;
     private final PaymentGateway gateway;
 
     @Value("${escrow.commission-rate}")
@@ -123,7 +126,39 @@ public class StripeCheckoutService {
         pago.setStatus(PaymentStatus.HELD);
         pago.setStripePaymentIntentId(paymentIntentId);
         pago.setHeldAt(LocalDateTime.now(ZoneId.systemDefault()));
-        return paymentRepository.save(pago);
+        Payment guardado = paymentRepository.save(pago);
+        // Instant book (spec §6): con el pago completado la reserva queda
+        // CONFIRMADA y ambos reciben RESERVA_CONFIRMADA (una sola vez: acá
+        // solo se entra con el pago en PENDING).
+        confirmarAlPagar(guardado.getReservation());
+        return guardado;
+    }
+
+    /**
+     * Instant book: PENDIENTE → CONFIRMADA al cobrar + aviso al huésped
+     * (link al chat) y al creador. Si la reserva no está PENDIENTE no hace
+     * nada (ya confirmada, cancelada o reserva ajena): idempotente por diseño.
+     */
+    private void confirmarAlPagar(Reservation reserva) {
+        if (reserva == null || reserva.getStatus() != ReservationStatus.PENDIENTE) {
+            return;
+        }
+        reserva.setStatus(ReservationStatus.CONFIRMADA);
+        reservationRepository.save(reserva);
+
+        var experiencia = reserva.getInstance().getExperience();
+        String nombre = experiencia.getName();
+        if (reserva.getUser() != null) {
+            notificationService.notify(reserva.getUser(), NotificationType.RESERVA_CONFIRMADA,
+                    "Tu reserva en " + nombre + " está confirmada — entrá al chat grupal",
+                    "/chats/" + reserva.getInstance().getId());
+        }
+        if (experiencia.getCreator() != null && reserva.getUser() != null) {
+            notificationService.notify(experiencia.getCreator(), NotificationType.RESERVA_CONFIRMADA,
+                    reserva.getUser().getUsername() + " reservó " + reserva.getAttendees()
+                            + " lugar(es) en " + nombre,
+                    "/reservations");
+        }
     }
 
     /**

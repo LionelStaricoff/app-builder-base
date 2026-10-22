@@ -10,6 +10,10 @@ import com.openlab.mx.share.experience.service.ExperienceService;
 import com.openlab.mx.share.payment.entity.Payment;
 import com.openlab.mx.share.payment.entity.PaymentStatus;
 import com.openlab.mx.share.payment.repository.PaymentRepository;
+import com.openlab.mx.share.payment.service.StripeCheckoutService;
+import com.openlab.mx.share.notification.entity.NotificationType;
+import com.openlab.mx.share.notification.repository.NotificationRepository;
+import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.shared.TestGatewayConfig;
@@ -31,6 +35,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -60,6 +65,10 @@ class PaymentSuccessFlowTests {
     private PaymentRepository paymentRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private NotificationRepository notificationRepository;
+    @Autowired
+    private StripeCheckoutService stripeCheckoutService;
 
     private Long fechaFutura() {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
@@ -76,9 +85,8 @@ class PaymentSuccessFlowTests {
     }
 
     private Payment pago(Long instanceId, String username) {
-        var reservation = reservationRepository.findFirstByInstanceIdAndUserIdAndStatus(
-                instanceId, userRepository.findByUsername(username).orElseThrow().getId(),
-                ReservationStatus.PENDIENTE).orElseThrow();
+        var reservation = reservationRepository.findFirstByInstanceIdAndUserId(
+                instanceId, userRepository.findByUsername(username).orElseThrow().getId()).orElseThrow();
         return paymentRepository.findByReservationId(reservation.getId()).orElseThrow();
     }
 
@@ -169,5 +177,79 @@ class PaymentSuccessFlowTests {
                         .header("X-Requested-With", "XMLHttpRequest"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").exists());
+    }
+
+    // ---------- instant book: el pago confirma y notifica (spec §6) ----------
+
+    /** Flujo completo: checkout → sesión Stripe → retorno de Stripe. Devuelve el sessionId. */
+    private String pagar(Long instanceId, String username) throws Exception {
+        mockMvc.perform(post("/checkout/" + instanceId).with(csrf()).param("attendees", "2"))
+                .andExpect(status().is3xxRedirection());
+        String sessionId = pago(instanceId, username).getStripeSessionId();
+        mockMvc.perform(get("/pago/exito").param("session_id", sessionId))
+                .andExpect(status().is3xxRedirection());
+        return sessionId;
+    }
+
+    private long contarConfirmadas(Long userId) {
+        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .filter(n -> n.getType() == NotificationType.RESERVA_CONFIRMADA)
+                .count();
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void elPagoConfirmaLaReservaYAbreElChat() throws Exception {
+        Long instanceId = fechaFutura();
+        pagar(instanceId, "demo_user");
+
+        Long userId = userRepository.findByUsername("demo_user").orElseThrow().getId();
+        Reservation r = reservationRepository.findFirstByInstanceIdAndUserId(instanceId, userId)
+                .orElseThrow();
+        assertEquals(ReservationStatus.CONFIRMADA, r.getStatus(), "el pago confirma la reserva");
+        assertEquals(PaymentStatus.HELD, pago(instanceId, "demo_user").getStatus(),
+                "el escrow no se libera al confirmar");
+        mockMvc.perform(get("/chats/" + instanceId)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void elPagoNotificaAlHuespedYAlCreador() throws Exception {
+        notificationRepository.deleteAll();
+        Long instanceId = fechaFutura();
+        pagar(instanceId, "demo_user");
+
+        Long huespedId = userRepository.findByUsername("demo_user").orElseThrow().getId();
+        Long creadorId = userRepository.findByUsername("demo_creator").orElseThrow().getId();
+
+        assertTrue(notificationRepository.findByUserIdOrderByCreatedAtDesc(huespedId).stream().anyMatch(
+                        n -> n.getType() == NotificationType.RESERVA_CONFIRMADA
+                                && ("/chats/" + instanceId).equals(n.getLink())),
+                "aviso al huésped con link al chat");
+        assertTrue(notificationRepository.findByUserIdOrderByCreatedAtDesc(creadorId).stream().anyMatch(
+                        n -> n.getType() == NotificationType.RESERVA_CONFIRMADA
+                                && "/reservations".equals(n.getLink())),
+                "aviso al creador");
+        assertTrue(notificationRepository.findByUserIdOrderByCreatedAtDesc(creadorId).stream().noneMatch(
+                        n -> n.getType() == NotificationType.SOLICITUD_RESERVA),
+                "el aviso previo al cobro ya no existe");
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void completeIdempotenteNoDuplicaConfirmacionNiAvisos() throws Exception {
+        notificationRepository.deleteAll();
+        Long instanceId = fechaFutura();
+        String sessionId = pagar(instanceId, "demo_user");
+
+        Long huespedId = userRepository.findByUsername("demo_user").orElseThrow().getId();
+        Long creadorId = userRepository.findByUsername("demo_creator").orElseThrow().getId();
+        long avisos = contarConfirmadas(huespedId) + contarConfirmadas(creadorId);
+        assertEquals(2L, avisos, "el pago genera exactamente un aviso por destinatario");
+
+        stripeCheckoutService.complete(sessionId, huespedId); // 2ª llamada (retorno/webhook repetido)
+
+        assertEquals(avisos, contarConfirmadas(huespedId) + contarConfirmadas(creadorId),
+                "la segunda llamada no duplica RESERVA_CONFIRMADA");
     }
 }

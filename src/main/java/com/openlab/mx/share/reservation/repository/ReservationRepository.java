@@ -31,6 +31,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     java.util.Optional<Reservation> findFirstByInstanceIdAndUserIdAndStatus(
             Long instanceId, Long userId, ReservationStatus status);
 
+    /** Única reserva (cualquier estado) de un usuario en una fecha — la usa el test de post-pago. */
+    java.util.Optional<Reservation> findFirstByInstanceIdAndUserId(Long instanceId, Long userId);
+
     List<Reservation> findByInstanceExperienceCreatorIdAndStatus(Long creatorId, ReservationStatus status);
 
     boolean existsByInstanceIdAndUserIdAndStatus(Long instanceId, Long userId, ReservationStatus status);

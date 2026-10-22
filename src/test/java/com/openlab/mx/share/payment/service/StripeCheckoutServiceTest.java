@@ -2,6 +2,7 @@ package com.openlab.mx.share.payment.service;
 
 import com.openlab.mx.share.experience.entity.Experience;
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
+import com.openlab.mx.share.notification.service.NotificationService;
 import com.openlab.mx.share.payment.entity.Payment;
 import com.openlab.mx.share.payment.entity.PaymentStatus;
 import com.openlab.mx.share.payment.gateway.FakePaymentGateway;
@@ -47,6 +48,7 @@ class StripeCheckoutServiceTest {
     @Mock ReservationService reservationService;
     @Mock ReservationRepository reservationRepository;
     @Mock PaymentRepository paymentRepository;
+    @Mock NotificationService notificationService;
 
     FakePaymentGateway gateway;
     StripeCheckoutService service;
@@ -57,7 +59,7 @@ class StripeCheckoutServiceTest {
     void setUp() {
         gateway = new FakePaymentGateway();
         service = new StripeCheckoutService(
-                reservationService, reservationRepository, paymentRepository, gateway);
+                reservationService, reservationRepository, paymentRepository, notificationService, gateway);
     }
 
     // ---------- fixtures ----------
