@@ -10,7 +10,6 @@ import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.shared.exception.CupoAgotadoException;
 import com.openlab.mx.share.shared.exception.InstancePastException;
-import com.openlab.mx.share.shared.exception.NotOwnerException;
 import com.openlab.mx.share.shared.exception.UnverifiedIdentityException;
 import com.openlab.mx.share.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -170,24 +169,5 @@ class ReservationServiceTest {
 
         assertThrows(InstancePastException.class,
                 () -> reservationService.reserve(5L, 1, user(2L)));
-    }
-
-    @Test
-    void testConfirmSoloElDueno() {
-        Reservation pendiente = Reservation.builder()
-                .id(7L)
-                .instance(instance(5L, 8, BigDecimal.valueOf(190), LocalDate.now(RELOJ).plusDays(10)))
-                .attendees(2)
-                .status(ReservationStatus.PENDIENTE)
-                .build();
-        when(reservationRepository.findById(7L)).thenReturn(Optional.of(pendiente));
-        when(reservationRepository.save(any(Reservation.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Reservation confirmada = reservationService.confirm(7L, user(1L));
-        assertEquals(ReservationStatus.CONFIRMADA, confirmada.getStatus());
-
-        assertThrows(NotOwnerException.class, () -> reservationService.confirm(7L, user(2L)));
-        assertEquals(ReservationStatus.CONFIRMADA, pendiente.getStatus(),
-                "el no-dueño no muta la reserva");
     }
 }

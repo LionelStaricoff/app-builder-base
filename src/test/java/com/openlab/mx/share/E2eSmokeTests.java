@@ -105,12 +105,6 @@ class E2eSmokeTests {
                         .with(user("demo_user")))
                 .andExpect(status().is3xxRedirection());
 
-        // 4. el creador confirma
-        Long reservationId = reservationParaPagar.getId();
-        mockMvc.perform(post("/reservations/" + reservationId + "/confirm")
-                        .with(user("demo_creator").roles("CREATOR")).with(csrf()))
-                .andExpect(status().is3xxRedirection());
-
         // 5. la experiencia termina (lo haría el job) y demo_user evalúa
         ExperienceInstance instance = instanceRepository.findById(instanceId).orElseThrow();
         instance.setStatus(InstanceStatus.COMPLETED);
@@ -121,7 +115,7 @@ class E2eSmokeTests {
                 .andExpect(status().is3xxRedirection());
 
         // 6. escrow liberado con comisión del 5%
-        var payment = paymentRepository.findByReservationId(reservationId).orElseThrow();
+        var payment = paymentRepository.findByReservationId(reservationParaPagar.getId()).orElseThrow();
         assertEquals(PaymentStatus.RELEASED, payment.getStatus());
         assertEquals(0, payment.getCommission().compareTo(
                 payment.getAmount().multiply(new BigDecimal("0.05"))), "comisión 5%");

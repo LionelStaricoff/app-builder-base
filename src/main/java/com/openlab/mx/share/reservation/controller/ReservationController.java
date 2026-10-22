@@ -1,7 +1,5 @@
 package com.openlab.mx.share.reservation.controller;
 
-import com.openlab.mx.share.notification.entity.NotificationType;
-import com.openlab.mx.share.notification.service.NotificationService;
 import com.openlab.mx.share.reservation.dto.ReservationRequest;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
@@ -19,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -27,7 +24,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Reservas: abrir checkout, confirmar como creador, ver las propias
@@ -39,7 +35,6 @@ public class ReservationController {
 
     private final ReservationService reservationService;
     private final ReservationRepository reservationRepository;
-    private final NotificationService notificationService;
     private final CurrentUser currentUser;
     private final com.openlab.mx.share.identity.service.RequireVerifiedIdentityService
             requireVerifiedIdentityService;
@@ -69,27 +64,11 @@ public class ReservationController {
         return "redirect:/checkout/" + instanceId + "?attendees=" + attendees;
     }
 
-    /** El creador confirma la reserva pendiente (spec §5.3). */
-    @PostMapping("/reservations/{id}/confirm")
-    @PreAuthorize("hasRole('CREATOR')")
-    public String confirm(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        Reservation reservation = reservationService.confirm(id, currentUser.require());
-        notificationService.notify(reservation.getUser(), NotificationType.RESERVA_CONFIRMADA,
-                "Tu reserva en " + reservation.getInstance().getExperience().getName()
-                        + " fue confirmada",
-                "/reservations");
-        redirectAttributes.addFlashAttribute("ok", "Reserva confirmada");
-        return CurrentUser.backOr("/reservations");
-    }
-
     @GetMapping("/reservations")
     public String myReservations(Model model) {
         User user = currentUser.require();
         var reservas = reservationRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
         model.addAttribute("reservations", reservas);
-        model.addAttribute("pendientes",
-                reservationRepository.findByInstanceExperienceCreatorIdAndStatus(
-                        user.getId(), ReservationStatus.PENDIENTE));
         // % a devolver por reserva: el botón de cancelar lo dice antes de aplicar.
         java.util.Map<Long, Integer> reembolso = new java.util.HashMap<>();
         for (Reservation reserva : reservas) {

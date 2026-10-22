@@ -28,7 +28,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -129,5 +131,22 @@ class ReservationFlowTests {
         mockMvc.perform(get("/confirmation"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
+    }
+
+    // ---------- instant book: sin confirmación manual (spec §2.1) ----------
+
+    @Test
+    void confirmacionManualYaNoExiste() throws Exception {
+        mockMvc.perform(post("/reservations/1/confirm")
+                        .with(user("demo_creator").roles("CREATOR")).with(csrf()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void misReservasNoMuestraLaColaDeConfirmacion() throws Exception {
+        mockMvc.perform(get("/reservations"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("Esperando tu confirmación"))));
     }
 }

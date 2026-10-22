@@ -138,7 +138,9 @@ class ChatStompTests {
         Long instanceId = instanceRepository.findByExperienceIdOrderByDateAsc(experience.getId())
                 .get(0).getId();
         var reserva = reservationService.reserve(instanceId, 1, usuario("demo_user"));
-        reservationService.confirm(reserva.getId(), usuario("demo_creator"));
+        // La confirmación la hace el pago (Task 1); sembramos el estado directo.
+        reserva.setStatus(com.openlab.mx.share.reservation.entity.ReservationStatus.CONFIRMADA);
+        reservationRepository.save(reserva);
         return instanceId;
     }
 

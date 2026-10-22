@@ -9,7 +9,6 @@ import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.shared.exception.CupoAgotadoException;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.shared.exception.InstancePastException;
-import com.openlab.mx.share.shared.exception.NotOwnerException;
 import com.openlab.mx.share.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -65,19 +64,6 @@ public class ReservationService {
         reservationRepository.save(reservation);
 
         return reservation;
-    }
-
-    /** Solo el dueño de la experiencia confirma (spec §5.3). */
-    @Transactional
-    public Reservation confirm(Long reservationId, User creator) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new DomainException("Reserva no encontrada"));
-        User dueno = reservation.getInstance().getExperience().getCreator();
-        if (creator == null || dueno == null || !dueno.getId().equals(creator.getId())) {
-            throw new NotOwnerException();
-        }
-        reservation.setStatus(ReservationStatus.CONFIRMADA);
-        return reservationRepository.save(reservation);
     }
 
     /**
