@@ -70,4 +70,14 @@ public class User {
 
     @Builder.Default
     private int spPoints = 0;
+
+    /**
+     * {@code false} = todavía no pasó por el onboarding de intereses. Sin este
+     * flag no se puede distinguir "eligió cero intereses" de "nunca vio el
+     * paso": el usuario que saltea volvería a ser interceptado en cada visita
+     * al feed.
+     */
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean interestsOnboarded = false;
 }
