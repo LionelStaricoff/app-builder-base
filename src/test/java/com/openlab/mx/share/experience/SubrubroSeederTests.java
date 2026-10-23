@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.openlab.mx.share.experience.repository.SubrubroRepository;
+import com.openlab.mx.share.interest.repository.UserInterestRepository;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +21,26 @@ class SubrubroSeederTests {
     @Autowired
     private SubrubroRepository subrubros;
 
+    @Autowired
+    private UserInterestRepository userInterests;
+
+    /**
+     * Todo borrado de subrubros empieza acá: {@code user_interests.subrubro_id}
+     * es FK con RESTRICT, y {@link com.openlab.mx.share.interest.DemoInterestSeeder}
+     * deja intereses de demo apuntando al catálogo. La transacción del test
+     * revierte todo al terminar.
+     */
+    private void limpiarCatalogo() {
+        userInterests.deleteAll();
+        // Flush explícito: Hibernate agrupa los DELETE y sin esto el de subrubros
+        // puede salir primero y chocar contra la FK.
+        userInterests.flush();
+        subrubros.deleteAll();
+    }
+
     @Test
     void siembraLaSemillaCompleta() {
-        subrubros.deleteAll();
+        limpiarCatalogo();
 
         new SubrubroSeeder(subrubros).run();
 
@@ -55,6 +73,10 @@ class SubrubroSeederTests {
             .filter(s -> "Senderismo".equals(s.getNombre()))
             .findFirst()
             .orElseThrow();
+        // Senderismo es de los que el seeder de demo usa: hay que soltar la FK
+        // antes de borrarlo, si no la base (con razón) lo impide.
+        userInterests.deleteAll();
+        userInterests.flush();
         subrubros.delete(senderismo);
         assertFalse(subrubros.existsByNombreAndCategoria("Senderismo", "AVENTURA"));
 
