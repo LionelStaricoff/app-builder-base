@@ -3,11 +3,11 @@
 <head th:replace="~{fragments/layout :: head('Pagar con Stripe')}"></head>
 <body>
 <main class="app-main">
-    <div class="card" style="padding:1rem">
-        <h2>Pago seguro con Stripe</h2>
+    <div class="card section">
+        <h1 class="page-title">Pago seguro con Stripe</h1>
         <p><strong th:text="${instance.experience.name}">Experiencia</strong></p>
         <p class="meta">
-            📅 <span th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(instance.date) + ' ' + #temporals.format(instance.startTime, 'HH:mm')}">24 oct 10:00</span>
+            <span th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(instance.date) + ' ' + #temporals.format(instance.startTime, 'HH:mm')}">24 oct 10:00</span>
             · Cupos: <span th:text="${attendees}">1</span>
             · <strong th:text="${currencyCode + ' ' + #numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}">MXN 0.00</strong>
         </p>

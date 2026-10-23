@@ -10,7 +10,7 @@
         <p>Un paso corto para recibir tus ganancias</p>
     </div>
 
-    <div class="card" style="padding:1rem">
+    <div class="card section">
         <p th:if="${status.status == 'NOT_STARTED'}">
             Para recibir tus ganancias necesitás configurar una cuenta Stripe Connect.
             El proceso toma unos minutos y lo completás con Stripe, nuestro proveedor de pagos.
@@ -23,21 +23,20 @@
         </p>
 
         <!-- País de cobro: solo países donde Stripe permite crear cuentas -->
-        <div id="payout-country-block" th:if="${status.status == 'NOT_STARTED'}" style="margin:1rem 0">
+        <div id="payout-country-block" th:if="${status.status == 'NOT_STARTED'}">
             <label for="payout-country"><strong>País de tu cuenta bancaria</strong></label>
             <p class="meta">
                 Stripe solo puede depositar en estos países. Elegí el que coincida con tu
                 residencia e identificación; no se puede cambiar después del onboarding.
             </p>
-            <select id="payout-country"
-                    style="width:100%; padding:.6rem; margin-top:.4rem; border-radius:8px; border:1px solid #ccc; font-size:1rem;">
+            <select id="payout-country" class="form-input">
                 <option value="">— Seleccioná un país —</option>
                 <option th:each="c : ${payoutCountries}"
                         th:value="${c.iso()}"
                         th:selected="${c.iso() == selectedCountry}"
                         th:text="${c.name()}">México</option>
             </select>
-            <p class="hint" id="payout-country-error" style="display:none; color:#b00020;"></p>
+            <p class="error" id="payout-country-error" style="display:none;"></p>
         </div>
         <p class="meta" th:if="${status.status == 'ONBOARDING_INCOMPLETE'}">
             País de cobro elegido: <strong th:text="${payoutCountryName}">México</strong>.

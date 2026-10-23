@@ -8,8 +8,8 @@
         <p class="brand-name">Shared</p>
         <p class="brand-tag">Creá tu cuenta y empezá a vivir</p>
     </div>
-    <div class="auth-card" style="max-width:420px; width:100%">
-        <h2>Crear cuenta</h2>
+    <div class="auth-card">
+        <h1>Crear cuenta</h1>
         <div class="auth-error" th:if="${error}" th:text="${error}">Error</div>
         <form th:action="@{/register}" th:object="${registerRequest}" method="post">
             <label>Usuario
@@ -74,7 +74,6 @@
                 });
             })();
         </script>
-        </form>
         <div class="auth-divider">o</div>
         <p class="auth-switch">¿Ya tenés cuenta?</p>
         <a class="btn-ghost" th:href="@{/login}">Iniciá sesión</a>

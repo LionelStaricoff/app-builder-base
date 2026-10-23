@@ -512,7 +512,7 @@ button.is-loading > .loader-svg--inline { display: block; margin: 0 auto; }
 .tab-divider { height: 1px; background: #eee; margin: 1.5rem 0; }
 .hint { font-size: .8rem; color: var(--text-muted); }
 .btn-secondary { background: var(--surface); border: 1px solid #ccc; border-radius: var(--radius); padding: .5rem 1rem; cursor: pointer; }
-.field-error, span.error, div.error { color: var(--color-primary); font-size: .85rem; }
+.field-error, span.error, div.error, p.error { color: var(--color-primary); font-size: .85rem; }
 label { display: block; margin: .75rem 0; font-size: .9rem; }
 input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], textarea { width: 100%; padding: .65rem .75rem; border: 1.5px solid #e2e2e6; border-radius: 10px; font-size: 1rem; background: #fff; color: #111827; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
 input[type=date] { color-scheme: light; }
@@ -759,7 +759,8 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
   padding: 1.5rem;
 }
 
-.auth-card h2 {
+/* h1 de las pantallas de auth: antes era h2 sin h1 (hallazgo G4). */
+.auth-card h1 {
   margin: 0 0 1rem;
   font-size: 1.25rem;
 }
@@ -1948,6 +1949,34 @@ input.missing, select.missing, textarea.missing {
 .account-link .meta { font-weight: 400; text-align: right; }
 
 .logout-form { margin-top: var(--space-4); }
+
+/* Confirmación post-pago: el monto es el título real de la pantalla. */
+.pay-amount {
+  margin: 0 0 var(--space-2);
+  font-family: "Bricolage Grotesque", "Nunito Sans", system-ui, sans-serif;
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  color: var(--text);
+}
+
+/* Acciones de salida (chat, calendario, mis reservas): una fila envolvible. */
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* País de cobro en el onboarding del creador. */
+#payout-country-block { margin: 1rem 0; }
+
+/* SVG embebido junto a texto de botón o meta. */
+.icon-inline {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+}
 
 /* Foco visible único para todo lo interactivo. El outline no altera layout,
    así que no rompe los radios ni el flujo de ninguna pantalla. */

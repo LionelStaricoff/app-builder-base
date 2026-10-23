@@ -11,7 +11,7 @@
     </div>
 
     <!-- Estado de cuenta Connect -->
-    <div class="card" style="padding:1rem" th:if="${status.hasConnectedAccount}">
+    <div class="card section" th:if="${status.hasConnectedAccount}">
         <div class="card-head">
             <h3>Cuenta Stripe Connect</h3>
             <span class="chip" th:text="${T(com.openlab.mx.share.payment.entity.ConnectAccountStatus).labelOf(status.status)}">Activa</span>
@@ -26,27 +26,27 @@
            th:href="@{/creators/onboarding}">Configurar cuenta</a>
     </div>
 
-    <div class="card" style="padding:1rem" th:if="${!status.hasConnectedAccount}">
+    <div class="card section" th:if="${!status.hasConnectedAccount}">
         <p><strong>No tenés cuenta Stripe Connect configurada</strong></p>
         <p class="meta">Necesitás configurar una cuenta para recibir tus ganancias.</p>
         <a class="btn-primary btn-block" th:href="@{/creators/onboarding}">Configurar cuenta</a>
     </div>
 
     <!-- Monto pendiente -->
-    <div class="card" style="padding:1rem" th:if="${pendingAmount > 0}">
+    <div class="card section" th:if="${pendingAmount > 0}">
         <p><strong>Tenés <span th:text="${#numbers.formatDecimal(pendingAmount, 1, 'COMMA', 2, 'POINT')}">0.00</span> para reclamar</strong></p>
         <p class="meta">Cuando estés listo, presioná el botón y el dinero va a tu cuenta bancaria.</p>
         <button id="reclamar-btn" class="btn-primary btn-block" type="button">Reclamar</button>
         <p class="hint" id="reclamar-status"></p>
     </div>
 
-    <div class="card" style="padding:1rem" th:if="${pendingAmount == 0}">
+    <div class="card section" th:if="${pendingAmount == 0}">
         <p><strong>No tenés fondos para reclamar</strong></p>
         <p class="meta">Cuando completes un viaje y se libere el escrow, el dinero va a aparecer acá.</p>
     </div>
 
     <!-- Historial -->
-    <div class="card" style="padding:1rem">
+    <div class="card section">
         <div class="card-head">
             <h3>Historial de cobros</h3>
         </div>

@@ -8,8 +8,8 @@
         <p class="brand-name">Shared</p>
         <p class="brand-tag">Viví experiencias únicas cerca tuyo</p>
     </div>
-    <div class="auth-card" style="max-width:420px; width:100%">
-        <h2>Iniciar sesión</h2>
+    <div class="auth-card">
+        <h1>Iniciar sesión</h1>
         <div class="auth-error" th:if="${param.error}">Usuario o contraseña incorrectos</div>
         <div class="auth-error" th:if="${param.logout}">Cerraste sesión correctamente</div>
         <form th:action="@{/login}" method="post">
