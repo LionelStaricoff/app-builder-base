@@ -983,7 +983,10 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 /* Variante avatar (settings): respeta la lógica del avatar circular,
    preview única centrada en 50% para anticipar el .avatar-ring final. */
 .image-picker--avatar .image-picker-previews {
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  /* columna única de 120px centrada: con auto-fill la preview caía en la
+     primera columna y quedaba a la izquierda. */
+  grid-template-columns: 120px;
+  justify-content: center;
   justify-items: center;
 }
 
@@ -996,11 +999,25 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
 
 /* Login: botón secundario + foco visible */
 .avatar-ring {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  justify-self: center;
   width: 88px;
   height: 88px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--color-primary);
+}
+/* Tarjeta resumen de perfil (settings): avatar + usuario + SP como bloque
+   centrado, igual que anticipa la preview del picker. */
+.profile-summary {
+  text-align: center;
+}
+/* .card .meta es flex (no hereda text-align como ítem flex): centrarlo con
+   justify-content para que la línea de SP quede bajo el avatar. */
+.profile-summary .meta {
+  justify-content: center;
 }
 
 .auth-card input,

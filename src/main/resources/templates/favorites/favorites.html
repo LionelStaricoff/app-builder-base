@@ -2,7 +2,10 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head th:replace="~{fragments/layout :: head('Mis favoritos')}"></head>
 <body>
-<main class="app-main">
+<main class="app-main app-main--wide">
+    <!--/* Mismo tope que el feed (max-w-7xl): sin esto el cap de 680px de
+         .app-main aplasta el grid de 3 columnas en pantallas grandes. */-->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="page-hero">
         <h1>Mis favoritos</h1>
         <p>Todo lo que guardaste y lo que ya viviste</p>
@@ -57,6 +60,7 @@
             </article>
         </div>
     </section>
+    </div>
 </main>
 <nav th:replace="~{fragments/layout :: nav('favorites')}"></nav>
 <script th:src="@{/js/carousel.js}"></script>

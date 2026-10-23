@@ -81,7 +81,7 @@
                 <span class="font-bold text-gray-900" th:text="${dto.nextDate != null ? T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(dto.nextDate) : 'Sin fecha'}">24 oct</span>
               </div>
               <div class="flex flex-col items-center gap-1.5 border-x border-gray-100 px-2">
-                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 و 0 0118 0z"/></svg>
+                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span class="font-bold text-gray-900" th:text="${dto.durationMinutes >= 60 ? T(java.lang.Math).floorDiv(dto.durationMinutes, 60) + ' h' + (T(java.lang.Math).floorMod(dto.durationMinutes, 60) > 0 ? ' ' + T(java.lang.Math).floorMod(dto.durationMinutes, 60) + ' min' : '') : dto.durationMinutes + ' min'}">5 horas</span>
               </div>
               <div class="flex flex-col items-center gap-1.5 min-w-0">
