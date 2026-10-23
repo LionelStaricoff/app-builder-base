@@ -8,10 +8,25 @@
         <p>Creá, editá y mirá quién se anota</p>
     </div>
 
-    <div class="tabs">
-        <span class="tab active">Mis Experiencias</span>
-        <a class="tab" th:href="@{/reservations}">Mis Reservas</a>
+    <!--/* La acción de crear va SIEMPRE visible, no dentro del estado vacío.
+         Un creador con 10 experiencias necesita el botón igual que uno sin
+         ninguna; y un usuario sin verificar necesita saber qué le falta para
+         publicar, no encontrarse con una pantalla sin salida. */-->
+    <div class="page-actions">
+        <a class="btn-primary btn-block" th:if="${puedePublicar}"
+           th:href="@{/experiences/new}">+ Crear experiencia</a>
+        <a class="btn-secondary btn-block" th:unless="${puedePublicar}"
+           th:href="@{/verificacion}">Verificá tu identidad para publicar</a>
     </div>
+
+    <!--/* Mis Experiencias y Mis Reservas son dos PANTALLAS distintas, no dos
+         pestañas: cada una tiene su URL. Por eso es un <nav> con aria-current
+         y no role="tablist" (un tab real cambia de panel sin cambiar de URL,
+         y se navega con flechas). */-->
+    <nav class="tabs" aria-label="Experiencias y reservas">
+        <span class="tab active" aria-current="page">Mis Experiencias</span>
+        <a class="tab" th:href="@{/reservations}">Mis Reservas</a>
+    </nav>
 
     <div class="empty" th:if="${success}" th:text="${success}">OK</div>
     <div class="empty" th:if="${error}" th:text="${error}">Error</div>
@@ -19,8 +34,8 @@
     <div class="empty-illustration" th:if="${#lists.isEmpty(experiencias)}">
         <img th:src="@{/img/empty-mine.svg}" alt="Sin experiencias creadas">
         <p><strong>Todavía no creaste experiencias</strong></p>
-        <p class="hint">Tocá el + y publicá la primera en minutos.</p>
-        <a class="btn-primary" th:href="@{/experiences/new}">Crear la primera</a>
+        <p class="hint" th:if="${puedePublicar}">Publicá la primera y va a aparecer acá.</p>
+        <p class="hint" th:unless="${puedePublicar}">Cuando verifiques tu identidad vas a poder publicar.</p>
     </div>
 
     <div class="card" th:each="e : ${experiencias}">
@@ -39,30 +54,25 @@
             <div class="carousel-dots" data-carousel-dots></div>
             <span class="carousel-counter" data-carousel-counter>1 / 1</span>
         </div>
-        <div style="padding:1rem">
+        <div class="section">
         <div class="card-head">
             <h3><a th:href="@{/experiences/{id}(id=${e.id})}" th:text="${e.name}">Nombre</a></h3>
-            <span class="chip" th:text="${e.status}">ACTIVE</span>
+            <span class="chip" th:text="${e.status.label}">Activa</span>
         </div>
         <p class="meta">
-            <strong th:text="${e.currencyCode} + ' ' + ${e.price}">MXN 190</strong>
-            · <span th:text="${e.category}">CULTURAL</span>
+            <strong th:text="${e.currencyCode + ' ' + #numbers.formatDecimal(e.price, 1, 'COMMA', 2, 'POINT')}">MXN 190.00</strong>
+            · <span th:text="${e.category.label}">CULTURAL</span>
             · <span th:text="${e.minCapacity} + ' a ' + ${e.maxCapacity}">1 a 4</span>
         </p>
         <div class="mine-actions">
             <a class="btn-primary" th:href="@{/experiences/{id}/edit(id=${e.id})}">Editar</a>
             <form th:action="@{/experiences/{id}/delete(id=${e.id})}" method="post"
-                  th:onsubmit="'return confirm(\\'¿Eliminar esta experiencia?\\')'">
-                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                  onsubmit="return confirm('¿Eliminar esta experiencia?')">
                 <button type="submit" class="btn-danger-outline">Eliminar</button>
             </form>
         </div>
         </div>
     </div>
-
-    <a th:href="@{/experiences/new}" class="btn-primary"
-       style="position:fixed;right:1rem;bottom:5rem;border-radius:50%;width:56px;height:56px;
-              display:flex;align-items:center;justify-content:center;font-size:1.6rem;z-index:5">+</a>
 </main>
 <nav th:replace="~{fragments/layout :: nav('mine')}"></nav>
 <script th:src="@{/js/carousel.js}"></script>

@@ -15,6 +15,17 @@
         "mcp"
       ],
       "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@playwright/mcp@latest",
+        "--browser",
+        "chrome"
+      ],
+      "enabled": true
     }
   }
 }

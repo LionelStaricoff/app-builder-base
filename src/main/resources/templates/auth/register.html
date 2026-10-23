@@ -12,7 +12,6 @@
         <h2>Crear cuenta</h2>
         <div class="auth-error" th:if="${error}" th:text="${error}">Error</div>
         <form th:action="@{/register}" th:object="${registerRequest}" method="post">
-            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <label>Usuario
                 <input type="text" th:field="*{username}" required autocomplete="username" class="form-input">
             </label>

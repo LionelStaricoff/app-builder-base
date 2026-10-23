@@ -8,7 +8,7 @@
     <p class="meta">
         <a th:href="@{/chats}">← Mis chats</a>
         · <strong th:text="${instance.experience.name}">Experiencia</strong>
-        · <span th:text="${instance.date}">01/11/2026</span>
+        · <span th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(instance.date)}">24 oct</span>
     </p>
 
     <div class="empty" th:if="${archivado}">Esta fecha fue cancelada: el chat está en solo-lectura.</div>
@@ -25,7 +25,6 @@
     <form id="chat-form" th:if="${!archivado}"
           th:action="@{/chats/{id}/send(id=${instanceId})}" method="post"
           style="display:flex;gap:.5rem;margin-top:1rem">
-        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <input id="chat-text" name="text" placeholder="Escribí un mensaje…" required
                aria-label="Mensaje" class="form-input">
         <button type="submit" class="btn-primary">Enviar</button>

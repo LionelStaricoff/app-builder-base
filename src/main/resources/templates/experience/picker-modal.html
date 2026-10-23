@@ -5,7 +5,6 @@
      refundPercent = % que se devuelve si cancela esta fecha. -->
 <form th:fragment="picker(instanceId, refundPercent)" th:action="@{/reservations/{id}(id=${instanceId})}"
       method="post" class="picker">
-    <input type="hidden" name="_csrf" th:value="${_csrf.token}">
     <label class="hint" style="display:flex;gap:.5rem;align-items:center">
         Cupos
         <input type="number" name="attendees" min="1" max="20" value="1"

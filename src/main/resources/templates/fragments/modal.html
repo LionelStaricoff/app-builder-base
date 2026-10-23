@@ -5,7 +5,6 @@
     <div class="modal-box card">
         <p th:text="${message}">Mensaje</p>
         <form th:action="${action}" method="post">
-            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <button type="submit" class="btn-primary">Confirmar</button>
             <button type="button" th:onclick="'document.getElementById(\'' + ${id} + '\').setAttribute(\'hidden\', \'hidden\')'">Cancelar</button>
         </form>

@@ -9,8 +9,8 @@
             <a class="btn-primary" th:href="@{/feed}" style="background:#fff;color:#E91E63">Ver experiencias</a>
         </div>
         <div th:if="${reservation != null}">
-            <p style="font-size:2rem;margin:.5rem 0" th:text="(${esCreador} ? 'COBRASTE ' : 'PAGASTE ') + ${currencyCode} + ' ' + ${monto}">PAGASTE MXN 0</p>
-            <p th:text="${reservation.instance.experience.name}">Experiencia</p><p class="meta" th:text="'Para ' + ${reservation.attendees} + ' cupo(s) · llega a tu cuenta ' + ${currencyCode} + ' ' + ${payout} + ' menos 5% de comisión'">Detalle</p>
+            <p style="font-size:2rem;margin:.5rem 0" th:text="${(esCreador ? 'COBRASTE ' : 'PAGASTE ') + currencyCode + ' ' + #numbers.formatDecimal(monto, 1, 'COMMA', 2, 'POINT')}">PAGASTE MXN 0.00</p>
+            <p th:text="${reservation.instance.experience.name}">Experiencia</p><p class="meta" th:text="${'Para ' + reservation.attendees + (reservation.attendees == 1 ? ' cupo' : ' cupos') + ' · llega a tu cuenta ' + currencyCode + ' ' + #numbers.formatDecimal(payout, 1, 'COMMA', 2, 'POINT') + ' menos 5% de comisión'}">Detalle</p>
             <!-- Salidas post-pago: chat grupal (solo si está disponible) y calendario -->
             <p th:if="${chatDisponible}" style="margin-top:.75rem">
                 <a class="btn-primary" th:href="@{/chats/{id}(id=${reservation.instance.id})}">💬 Ir al chat grupal</a>

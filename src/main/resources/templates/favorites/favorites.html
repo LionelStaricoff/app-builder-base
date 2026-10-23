@@ -8,74 +8,55 @@
         <p>Todo lo que guardaste y lo que ya viviste</p>
     </div>
 
-    <div class="tabs">
-        <span class="tab active">Experiencias Favoritas</span>
-        <span class="tab">Experiencias Vividas</span>
-    </div>
+    <!--/*
+      Antes esto eran dos "tabs" hechos con <span>: parecían pestañas pero
+      mostraban las dos listas a la vez, así que anunciarles rol de tab al
+      lector de pantalla era mentirle (un tab real implica un solo panel
+      visible y navegación con flechas). Son dos secciones de la misma
+      pantalla: eso es lo que declaran ahora, con su encabezado.
+    */-->
+    <section aria-labelledby="favoritas">
+        <h2 id="favoritas" class="section-title">Experiencias favoritas</h2>
 
-    <div class="empty-illustration" th:if="${#lists.isEmpty(favorites)}">
-        <img th:src="@{/img/empty-favorites.svg}" alt="Sin favoritos">
-        <p><strong>Todavía no guardaste favoritos</strong></p>
-        <p class="hint">Tocá el 🤍 en cualquier experiencia para guardarla acá.</p>
-        <a class="btn-primary" th:href="@{/feed}">Explorar el feed</a>
-    </div>
-
-    <div class="card" th:each="dto : ${favorites}">
-        <div class="carousel" data-carousel
-             th:if="${dto.images != null and not #lists.isEmpty(dto.images)}">
-            <div class="carousel-track" data-carousel-track>
-                <figure class="carousel-slide" th:each="imgData : ${dto.images}">
-                    <a th:href="@{/experiences/{id}(id=${dto.id})}">
-                        <img th:src="'data:image/jpeg;base64,' + ${imgData}"
-                             th:alt="${dto.name}" loading="lazy">
-                    </a>
-                </figure>
-            </div>
-            <button type="button" class="carousel-btn prev" data-carousel-prev aria-label="Anterior">‹</button>
-            <button type="button" class="carousel-btn next" data-carousel-next aria-label="Siguiente">›</button>
-            <div class="carousel-dots" data-carousel-dots></div>
-            <span class="carousel-counter" data-carousel-counter>1 / 1</span>
+        <div class="empty-illustration" th:if="${#lists.isEmpty(favorites)}">
+            <img th:src="@{/img/empty-favorites.svg}" alt="">
+            <p><strong>Todavía no guardaste favoritos</strong></p>
+            <p class="hint">Tocá el corazón de cualquier experiencia para guardarla acá.</p>
+            <a class="btn-primary" th:href="@{/feed}">Explorar el feed</a>
         </div>
-        <img class="cover" th:if="${(dto.images == null or #lists.isEmpty(dto.images)) and dto.coverBase64 != null}"
-             th:src="'data:image/jpeg;base64,' + ${dto.coverBase64}" th:alt="${dto.name}">
-        <div style="padding:1rem">
-            <div class="card-head">
-                <h3><a th:href="@{/experiences/{id}(id=${dto.id})}" th:text="${dto.name}">Nombre</a></h3>
-                <form th:action="@{/favorites/{id}/remove(id=${dto.id})}" method="post" class="heart">
-                    <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-                    <button type="submit"
-                            th:onclick="'return confirm(\'¿Quitar de favoritos?\')'">❤️</button>
-                </form>
-            </div>
-            <p class="meta">
-                <strong th:text="${dto.currencyCode} + ' ' + ${dto.price}">MXN 190</strong>
-                · 📅 <span th:text="${dto.nextDate} ?: 'Sin fecha'">2026-12-01</span>
-            </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" th:unless="${#lists.isEmpty(favorites)}">
+            <th:block th:each="dto : ${favorites}">
+                <div th:replace="~{fragments/feed-card :: card(${dto})}"></div>
+            </th:block>
         </div>
-    </div>
+    </section>
 
-    <div class="tab-divider"></div>
-    <div class="tabs">
-        <span class="tab">Experiencias Vividas</span>
-    </div>
-    <div class="empty-illustration" th:if="${#lists.isEmpty(lived)}">
-        <img th:src="@{/img/empty-lived.svg}" alt="Sin experiencias vividas">
-        <p><strong>Todavía no viviste experiencias</strong></p>
-        <p class="hint">Cuando completes tu primera reserva, aparece acá con tu evaluación.</p>
-    </div>
+    <section aria-labelledby="vividas" class="mt-10">
+        <h2 id="vividas" class="section-title">Experiencias vividas</h2>
 
-    <div class="card" th:each="l : ${lived}" style="padding:1rem">
-        <p>
-            <strong th:text="${l.experienceName}">Experiencia</strong>
-            · 📅 <span th:text="${l.date}">01/11/2026</span>
-        </p>
-        <p class="meta">
-            <span class="stars">★</span> <span th:text="${l.stars}">5</span>
-            <span th:if="${l.comment != null && !l.comment.isEmpty()}">
-                · <span th:text="${l.comment}">Comentario</span>
-            </span>
-        </p>
-    </div>
+        <div class="empty-illustration" th:if="${#lists.isEmpty(lived)}">
+            <img th:src="@{/img/empty-lived.svg}" alt="">
+            <p><strong>Todavía no viviste experiencias</strong></p>
+            <p class="hint">Cuando completes tu primera reserva, aparece acá con tu evaluación.</p>
+            <a class="btn-primary" th:href="@{/feed}">Explorar experiencias</a>
+        </div>
+
+        <div class="grid gap-4" th:unless="${#lists.isEmpty(lived)}">
+            <article class="card section" th:each="l : ${lived}">
+                <div class="section-head">
+                    <h3 class="section-title" th:text="${l.experienceName}">Experiencia</h3>
+                    <span class="meta" th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(l.date)}">24 oct</span>
+                </div>
+                <p class="meta">
+                    <span class="stars" aria-hidden="true">★</span>
+                    <span th:text="${l.stars}">5</span>
+                    <span th:if="${l.comment != null && !l.comment.isEmpty()}"
+                          th:text="'· ' + ${l.comment}">Comentario</span>
+                </p>
+            </article>
+        </div>
+    </section>
 </main>
 <nav th:replace="~{fragments/layout :: nav('favorites')}"></nav>
 <script th:src="@{/js/carousel.js}"></script>

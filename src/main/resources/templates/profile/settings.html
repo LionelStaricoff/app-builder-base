@@ -64,7 +64,6 @@
 
     <form th:action="@{/settings/update}" method="post" enctype="multipart/form-data"
           class="card section">
-        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <label>Nombre
             <input name="username" th:value="${user.username}" required class="form-input">
         </label>
@@ -101,7 +100,6 @@
     </form>
 
     <form th:action="@{/settings/logout}" method="post" class="logout-form">
-        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <button type="submit" class="btn-secondary">Cerrar sesión</button>
     </form>
 </main>

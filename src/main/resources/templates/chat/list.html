@@ -23,7 +23,7 @@
     <a class="card" style="padding:1rem" th:each="g : ${grupos}" th:href="@{/chats/{id}(id=${g.id})}">
         <strong th:text="${g.experience.name}">Experiencia</strong>
         <p class="meta">
-            📅 <span th:text="${g.date}">01/11/2026</span>
+            📅 <span th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(g.date)}">24 oct</span>
             <span th:if="${g.archived}" class="chip">Archivado</span>
         </p>
     </a>

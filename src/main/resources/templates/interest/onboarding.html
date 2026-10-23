@@ -6,7 +6,6 @@
 <!-- Fuera del form principal: un form no puede anidarse. El botón lo envía por id. -->
 <form id="interest-skip-form" class="interest-skip-form" method="post"
       th:action="@{/onboarding/intereses/saltear}" hidden>
-    <input type="hidden" name="_csrf" th:value="${_csrf.token}">
     <input type="hidden" name="next" th:value="${next}">
 </form>
 
@@ -43,7 +42,6 @@
 
     <form class="interest-form" id="interest-form" method="post"
           th:action="@{/onboarding/intereses}">
-        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <input type="hidden" name="next" th:value="${next}">
 
         <button type="button" class="interest-add" id="interest-open" hidden>

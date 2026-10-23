@@ -7,9 +7,9 @@
         <h2>Pago seguro con Stripe</h2>
         <p><strong th:text="${instance.experience.name}">Experiencia</strong></p>
         <p class="meta">
-            📅 <span th:text="${instance.date} + ' ' + ${instance.startTime}">01/11/2026 10:00</span>
+            📅 <span th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(instance.date) + ' ' + #temporals.format(instance.startTime, 'HH:mm')}">24 oct 10:00</span>
             · Cupos: <span th:text="${attendees}">1</span>
-            · <strong th:text="${currencyCode} + ' ' + ${total}">MXN 0</strong>
+            · <strong th:text="${currencyCode + ' ' + #numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}">MXN 0.00</strong>
         </p>
         <p class="hint">El pago queda retenido en garantía hasta que la experiencia termine.</p>
 
@@ -18,7 +18,6 @@
         <div class="empty" th:if="${error}" th:text="${error}">Error</div>
 
         <form th:action="@{/checkout/{id}(id=${instance.id})}" method="post">
-            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
             <input type="hidden" name="attendees" th:value="${attendees}">
             <button type="submit" class="btn-primary">Pagar con Stripe</button>
         </form>

@@ -22,7 +22,6 @@
     </header>
 
     <form class="interest-form" method="post" th:action="@{/onboarding/intereses/niveles}">
-        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <input type="hidden" name="next" th:value="${next}">
         <input type="hidden" name="subrubroIds" th:each="s : ${elegidos}" th:value="${s.id}">
 

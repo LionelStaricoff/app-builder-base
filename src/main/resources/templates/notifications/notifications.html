@@ -8,32 +8,38 @@
         <p>Confirmaciones, solicitudes y reembolsos</p>
     </div>
 
-    <div class="tabs">
-        <span class="tab active">Notificaciones</span>
+    <!--/* Dos pantallas distintas, no dos pestañas: cada una tiene su URL. */-->
+    <nav class="tabs" aria-label="Avisos y mensajes">
+        <span class="tab active" aria-current="page">Notificaciones</span>
         <a class="tab" th:href="@{/chats}">Mensajes</a>
-    </div>
+    </nav>
 
     <div class="empty-illustration" th:if="${#lists.isEmpty(notificaciones)}">
-        <img th:src="@{/img/empty-notifications.svg}" alt="Sin avisos">
+        <img th:src="@{/img/empty-notifications.svg}" alt="">
         <p><strong>No tenés avisos todavía</strong></p>
         <p class="hint">Confirmaciones, solicitudes y reembolsos aparecen acá.</p>
+        <a class="btn-primary" th:href="@{/feed}">Explorar experiencias</a>
     </div>
 
-    <div class="card" th:each="n : ${notificaciones}" style="padding:1rem"
-         th:classappend="${!n.read} ? 'unread'">
-        <p>
-            <strong th:text="${n.type}">SOLICITUD_RESERVA</strong>
-            <span th:if="${!n.read}" class="chip">Nuevo</span>
-        </p>
-        <p th:text="${n.message}">Mensaje</p>
-        <p class="meta">
-            <span th:text="${#temporals.format(n.createdAt, 'dd/MM/yyyy HH:mm')}">01/11/2026 10:00</span>
-            <a th:if="${n.link}" th:href="${n.link}">Ver</a>
-        </p>
-        <form th:if="${!n.read}" th:action="@{/notifications/{id}/read(id=${n.id})}" method="post">
-            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-            <button type="submit" class="btn-primary">Marcar como leído</button>
-        </form>
+    <!--/* El título era el enum crudo (SOLICITUD_RESERVA): un detalle interno
+         filtrado a la pantalla. El mensaje ya dice qué pasó, así que manda. */-->
+    <div class="grid gap-4" th:unless="${#lists.isEmpty(notificaciones)}">
+        <article class="card section" th:each="n : ${notificaciones}"
+                 th:classappend="${!n.read} ? 'unread'">
+            <div class="section-head">
+                <p th:text="${n.message}">Mensaje</p>
+                <span th:if="${!n.read}" class="chip">Nuevo</span>
+            </div>
+
+            <p class="meta">
+                <span th:text="${#temporals.format(n.createdAt, 'dd/MM/yyyy HH:mm')}">01/11/2026 10:00</span>
+                <a th:if="${n.link}" th:href="${n.link}">Ver</a>
+            </p>
+
+            <form th:if="${!n.read}" th:action="@{/notifications/{id}/read(id=${n.id})}" method="post">
+                <button type="submit" class="btn-primary">Marcar como leído</button>
+            </form>
+        </article>
     </div>
 </main>
 <nav th:replace="~{fragments/layout :: nav('notifications')}"></nav>
