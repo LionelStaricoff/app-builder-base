@@ -3,32 +3,33 @@
 <head th:replace="~{fragments/layout :: head('Configuración')}"></head>
 <body>
 <main class="app-main">
+    <h1 class="page-title">Tu cuenta</h1>
     <div class="empty" th:if="${ok}" th:text="${ok}">OK</div>
     <div class="empty" th:if="${error}" th:text="${error}">Error</div>
 
-    <section class="visual-selector card" style="padding:1rem">
-        <h3>Estilo Visual</h3>
+    <section class="visual-selector card section">
+        <h2 class="section-title">Estilo visual</h2>
         <div class="visual-selector-options">
-            <button type="button" class="btn-secondary" data-visual-style="1">🌸 Claro</button>
-            <button type="button" class="btn-secondary" data-visual-style="2">💜 Violeta</button>
-            <button type="button" class="btn-secondary" data-visual-style="3">🌙 Oscuro</button>
-            <button type="button" class="btn-secondary" data-visual-style="4">💙 Neutro</button>
-            <button type="button" class="btn-secondary" data-visual-style="5">🟤 Cálido</button>
-            <button type="button" class="btn-secondary" data-visual-style="6">🌚 Profundo</button>
+            <button type="button" class="btn-secondary" data-visual-style="1"><span class="theme-swatch" aria-hidden="true"></span>Claro</button>
+            <button type="button" class="btn-secondary" data-visual-style="2"><span class="theme-swatch" aria-hidden="true"></span>Violeta</button>
+            <button type="button" class="btn-secondary" data-visual-style="3"><span class="theme-swatch" aria-hidden="true"></span>Oscuro</button>
+            <button type="button" class="btn-secondary" data-visual-style="4"><span class="theme-swatch" aria-hidden="true"></span>Neutro</button>
+            <button type="button" class="btn-secondary" data-visual-style="5"><span class="theme-swatch" aria-hidden="true"></span>Cálido</button>
+            <button type="button" class="btn-secondary" data-visual-style="6"><span class="theme-swatch" aria-hidden="true"></span>Profundo</button>
         </div>
     </section>
 
-    <div class="card" style="padding:1rem">
+    <section class="card section">
         <img th:if="${user.avatarBase64 != null}" alt="Avatar"
              th:src="'data:image/jpeg;base64,' + ${user.avatarBase64}"
              class="avatar-ring">
         <p><strong th:text="${user.username}">usuario</strong></p>
         <p class="meta"><strong th:text="${user.spPoints} + ' SP'">0 SP</strong></p>
-    </div>
+    </section>
 
-    <section class="card" style="padding:1rem">
-        <div class="interest-summary-head" style="margin-bottom:.6rem">
-            <h3 style="margin:0">Intereses</h3>
+    <section class="card section">
+        <div class="section-head">
+            <h2 class="section-title">Intereses</h2>
             <a th:href="@{/onboarding/intereses(next='settings')}" class="interest-link">Editar</a>
         </div>
         <ul class="interest-chips" th:if="${!#lists.isEmpty(intereses)}">
@@ -43,8 +44,26 @@
         </p>
     </section>
 
+    <section class="card section">
+        <h2 class="section-title">Mi cuenta</h2>
+        <ul class="account-links">
+            <li>
+                <a th:href="@{/chats}" class="account-link">
+                    <span>Chats</span>
+                    <span class="meta">Mensajes con organizadores y viajeros</span>
+                </a>
+            </li>
+            <li>
+                <a th:href="@{/creators/payouts}" class="account-link">
+                    <span>Cobros</span>
+                    <span class="meta">Cómo recibís tu dinero</span>
+                </a>
+            </li>
+        </ul>
+    </section>
+
     <form th:action="@{/settings/update}" method="post" enctype="multipart/form-data"
-          class="card" style="padding:1rem;display:flex;flex-direction:column;gap:.8rem">
+          class="card section">
         <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <label>Nombre
             <input name="username" th:value="${user.username}" required class="form-input">
@@ -81,7 +100,7 @@
         <button type="submit" class="btn-primary">Guardar</button>
     </form>
 
-    <form th:action="@{/settings/logout}" method="post" style="margin-top:1rem">
+    <form th:action="@{/settings/logout}" method="post" class="logout-form">
         <input type="hidden" name="_csrf" th:value="${_csrf.token}">
         <button type="submit" class="btn-secondary">Cerrar sesión</button>
     </form>
