@@ -10,12 +10,14 @@
     <section class="visual-selector card section">
         <h2 class="section-title">Estilo visual</h2>
         <div class="visual-selector-options">
-            <button type="button" class="btn-secondary" data-visual-style="1"><span class="theme-swatch" aria-hidden="true"></span>Claro</button>
-            <button type="button" class="btn-secondary" data-visual-style="2"><span class="theme-swatch" aria-hidden="true"></span>Violeta</button>
-            <button type="button" class="btn-secondary" data-visual-style="3"><span class="theme-swatch" aria-hidden="true"></span>Oscuro</button>
-            <button type="button" class="btn-secondary" data-visual-style="4"><span class="theme-swatch" aria-hidden="true"></span>Neutro</button>
-            <button type="button" class="btn-secondary" data-visual-style="5"><span class="theme-swatch" aria-hidden="true"></span>Cálido</button>
-            <button type="button" class="btn-secondary" data-visual-style="6"><span class="theme-swatch" aria-hidden="true"></span>Profundo</button>
+            <!--/* aria-pressed lo sincroniza Theme.set (layout.html) al cargar y al
+                 elegir: es la única fuente de verdad del estilo activo. */-->
+            <button type="button" class="btn-secondary" data-visual-style="1" aria-pressed="false"><span class="theme-swatch" aria-hidden="true"></span>Claro</button>
+            <button type="button" class="btn-secondary" data-visual-style="2" aria-pressed="false"><span class="theme-swatch" aria-hidden="true"></span>Violeta</button>
+            <button type="button" class="btn-secondary" data-visual-style="3" aria-pressed="false"><span class="theme-swatch" aria-hidden="true"></span>Oscuro</button>
+            <button type="button" class="btn-secondary" data-visual-style="4" aria-pressed="false"><span class="theme-swatch" aria-hidden="true"></span>Neutro</button>
+            <button type="button" class="btn-secondary" data-visual-style="5" aria-pressed="false"><span class="theme-swatch" aria-hidden="true"></span>Cálido</button>
+            <button type="button" class="btn-secondary" data-visual-style="6" aria-pressed="false"><span class="theme-swatch" aria-hidden="true"></span>Profundo</button>
         </div>
     </section>
 
@@ -89,11 +91,17 @@
             <input type="file" id="avatar-input" name="avatar" accept="image/*" hidden>
             <div class="image-picker-drop" id="avatar-picker-drop" role="button" tabindex="0"
                  aria-label="Elegir avatar">
-                <span class="image-picker-icon">👤</span>
+                <span class="image-picker-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                         stroke-linecap="round" stroke-linejoin="round" width="28" height="28">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </span>
                 <span class="image-picker-title">Tocá para elegir tu avatar</span>
                 <span class="hint">JPG, PNG o WebP · hasta 5 MB · 1 foto</span>
             </div>
-            <div class="image-picker-previews" id="avatar-picker-previews"></div>
+            <div class="image-picker-previews" id="avatar-picker-previews" aria-live="polite"></div>
             <p class="error" id="avatar-picker-error" hidden></p>
         </div>
         <button type="submit" class="btn-primary">Guardar</button>

@@ -47,7 +47,13 @@
         function write(key, val) { try { localStorage.setItem(key, val); } catch (e) { /* storage no disponible */ } }
         function markActive(s) {
           var buttons = document.querySelectorAll('[data-visual-style]');
-          buttons.forEach(function (btn) { btn.classList.toggle('active', btn.dataset.visualStyle === s); });
+          buttons.forEach(function (btn) {
+            var on = btn.dataset.visualStyle === s;
+            btn.classList.toggle('active', on);
+            // aria-pressed: los botones son un grupo de opciones con estado, y sin
+            // esto el lector de pantalla anuncia seis botones sin decir cuál está activo.
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+          });
         }
         function current() { return read(KEY) || '1'; }
         function set(styleNum) {
