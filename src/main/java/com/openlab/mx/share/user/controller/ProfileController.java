@@ -1,5 +1,6 @@
 package com.openlab.mx.share.user.controller;
 
+import com.openlab.mx.share.interest.service.InterestService;
 import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.user.dto.ProfileUpdateRequest;
 import com.openlab.mx.share.user.entity.User;
@@ -37,10 +38,13 @@ public class ProfileController {
 
     private final UserRepository userRepository;
     private final CurrentUser currentUser;
+    private final InterestService interestService;
 
     @GetMapping("/settings")
     public String settings(Model model) {
-        model.addAttribute("user", currentUser.require());
+        User user = currentUser.require();
+        model.addAttribute("user", user);
+        model.addAttribute("intereses", interestService.intereses(user));
         return "profile/settings";
     }
 

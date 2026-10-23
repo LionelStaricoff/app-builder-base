@@ -1,13 +1,15 @@
-package com.openlab.mx.share.experience;
+﻿package com.openlab.mx.share.experience;
 
 import com.openlab.mx.share.experience.entity.Subrubro;
 import com.openlab.mx.share.experience.repository.SubrubroRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Order(1)
 public class SubrubroSeeder implements CommandLineRunner {
 
     private static final String[][] SEMILLA = {
