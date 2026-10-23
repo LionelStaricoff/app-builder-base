@@ -120,6 +120,12 @@ public class ExperienceController {
         var usuario = currentUser();
         model.addAttribute("esDueno", usuario != null && experience.getCreator() != null
                 && usuario.getId().equals(experience.getCreator().getId()));
+        // El organizador se muestra en la card del feed pero el detalle lo
+        // omitía (auditoría UI). Se resuelve acá para no exponer el proxy lazy
+        // en la vista ni cambiar la entidad.
+        var creador = experience.getCreator();
+        model.addAttribute("creatorName", creador == null ? null : creador.getUsername());
+        model.addAttribute("creatorAvatar", creador == null ? null : creador.getAvatarBase64());
         return "experience/detail";
     }
 

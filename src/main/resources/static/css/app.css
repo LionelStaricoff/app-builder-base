@@ -885,6 +885,11 @@ input[type=radio], input[type=checkbox] { accent-color: var(--color-primary); wi
   overflow: hidden;
 }
 .map-box.leaflet-container { z-index: 0; }
+
+/* Detalle v2: el carrusel del hero no lleva radios propios (los pone el
+   contenedor) y el mapa del recorrido necesita más alto que los 220px. */
+.carousel--flush { border-radius: 0; }
+.map-box--route { height: 300px; }
 .map-fallback {
   display: flex;
   align-items: center;
