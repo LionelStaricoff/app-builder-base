@@ -77,7 +77,7 @@ class ExperienceServiceTest {
                 -99.1332,
                 List.of(new ScheduleEntryRequest(LocalDate.of(2026, 12, 1), null,
                         LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                images);
+                images, null, null);
     }
 
     @Test
@@ -177,5 +177,49 @@ class ExperienceServiceTest {
         assertNotNull(storedImg, "la foto debe seguir siendo una imagen legible");
         assertTrue(Math.max(storedImg.getWidth(), storedImg.getHeight()) <= 1600,
                 "la foto debería estar redimensionada a máx 1600px");
+    }
+
+    /**
+     * Los bloques "Qué incluye" / "Qué llevar" se guardan como un ítem por
+     * línea. Normalizar al escribir evita que los dos renderers de la card
+     * (Thymeleaf y el template literal del scroll infinito) tengan que hacerlo.
+     */
+    @Test
+    void normalizeLinesLimpiaCrLfEspaciosYLineasVacias() {
+        assertEquals("Entrada al museo\nGuía bilingüe",
+                ExperienceService.normalizeLines("  Entrada al museo  \r\n\r\n Guía bilingüe \r\n"));
+        assertEquals("Uno\nDos", ExperienceService.normalizeLines("Uno\rDos"));
+        assertNull(ExperienceService.normalizeLines(null));
+        assertNull(ExperienceService.normalizeLines("   \n\t\r\n "),
+                "un bloque con solo blancos equivale a no tenerlo");
+    }
+
+    @Test
+    void testCreatePersisteIncludesYBringNormalizados() {
+        when(experienceRepository.save(any(Experience.class))).thenAnswer(inv -> {
+            Experience e = inv.getArgument(0);
+            e.setId(12L);
+            return e;
+        });
+        when(imageRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(instanceRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+        when(generationService.generateFor(any(), anyList(), any())).thenReturn(List.of());
+
+        Experience created = experienceService.create(
+                requestConContenido("  Entrada al museo \r\n\r\n Guía bilingüe  ", "   "), user(1L));
+
+        assertEquals("Entrada al museo\nGuía bilingüe", created.getIncludes());
+        assertNull(created.getBring(), "qué llevar en blanco se guarda como null");
+    }
+
+    private ExperienceFormRequest requestConContenido(String includes, String bring) {
+        var image = new MockMultipartFile("images", "uno.png", "image/png", "aaa".getBytes());
+        return new ExperienceFormRequest(
+                "Tour nocturno", "Descripción", 120, 2, 8, BigDecimal.valueOf(190),
+                ExperienceCategory.CULTURAL, RecurrenceType.UNIQUE, 19.4326, -99.1332,
+                List.of(new ScheduleEntryRequest(LocalDate.of(2026, 12, 1), null,
+                        LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
+                List.of(image), includes, bring);
     }
 }

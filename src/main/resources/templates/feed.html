@@ -7,22 +7,22 @@
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
 
-    <!-- CABECERA UNIFICADA PREMIUM RESPONSIVA -->
+    <!--/* CABECERA UNIFICADA PREMIUM RESPONSIVA */-->
     <div class="w-full max-w-7xl mx-auto space-y-6 mb-10 px-4 sm:px-6 lg:px-8 mt-6">
         <div class="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-rose-600 via-brand-600 to-pink-700 p-6 sm:p-10 shadow-2xl shadow-rose-950/60 border border-white/20">
           
-          <!-- Destellos decorativos de fondo -->
+          <!--/* Destellos decorativos de fondo */-->
           <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/20 rounded-full blur-3xl pointer-events-none animate-pulseGlow"></div>
           <div class="absolute -bottom-20 -left-20 w-56 h-56 bg-purple-900/40 rounded-full blur-2xl pointer-events-none"></div>
 
           <div class="relative z-10 space-y-6">
-            <!-- FILA SUPERIOR: Título + chip de ubicación, todo en UNA sola fila -->
+            <!--/* FILA SUPERIOR: Título + chip de ubicación, todo en UNA sola fila */-->
             <div class="flex items-center gap-3 min-w-0">
               <h1 class="text-lg sm:text-3xl font-black tracking-tight text-white leading-tight truncate min-w-0">
                 Descubrí experiencias
               </h1>
 
-              <!-- Chip / Badge compacto de Ubicación, al lado del título -->
+              <!--/* Chip / Badge compacto de Ubicación, al lado del título */-->
               <div id="location-chip" class="inline-flex items-center gap-1.5 bg-black/25 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20 shadow-sm max-w-full min-w-0 shrink">
                   <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
@@ -39,7 +39,7 @@
                   <span id="location-city" class="text-xs font-bold text-white tracking-wide truncate max-w-[80px] sm:max-w-none"
                         th:text="${savedCity != null and !#strings.isEmpty(savedCity) ? savedCity : 'Sin ubicación'}">Cartagena</span>
 
-                  <!-- Botón interactivo para actualizar GPS -->
+                  <!--/* Botón interactivo para actualizar GPS */-->
                   <button id="btn-gps" type="button" title="Actualizar ubicación GPS" aria-label="Actualizar ubicación GPS"
                           class="p-1 text-rose-200 hover:text-white hover:bg-white/20 rounded-full transition-all active:scale-90 ml-0.5 flex-shrink-0">
                     <svg id="gps-icon" class="w-3.5 h-3.5 transition-transform duration-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -47,7 +47,7 @@
                     </svg>
                   </button>
 
-                  <!-- Lupa: abre/cierra el buscador. El ícono cambia de color al activarse -->
+                  <!--/* Lupa: abre/cierra el buscador. El ícono cambia de color al activarse */-->
                   <button id="btn-search" type="button" title="Buscar" aria-label="Buscar" aria-expanded="false" aria-controls="feed-search"
                           class="feed-search-toggle p-1 text-rose-200 hover:text-white hover:bg-white/20 rounded-full transition-all active:scale-90 ml-0.5 flex-shrink-0">
                     <svg id="search-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -59,7 +59,7 @@
 
             <p class="text-rose-100 text-xs sm:text-sm opacity-90 font-medium">Explorá los mejores rincones del mundo</p>
 
-            <!-- BUSCADOR INTEGRADO: aparece y desaparece con la lupa de la cabecera -->
+            <!--/* BUSCADOR INTEGRADO: aparece y desaparece con la lupa de la cabecera */-->
             <div id="feed-search" class="feed-search" th:classappend="${searchedQuery != null} ? 'is-open'">
               <form th:action="@{/feed}" method="get" class="relative flex items-center">
                 <div class="absolute left-3.5 pointer-events-none text-slate-400">
@@ -77,19 +77,19 @@
                 <button type="submit" class="absolute right-1.5 bg-slate-900 hover:bg-black active:scale-95 text-white font-bold text-xs px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-md transition-all flex items-center gap-1">
                   <span>Buscar</span>
                 </button>
-                <!-- conserva el filtro de categoría activo al buscar -->
+                <!--/* conserva el filtro de categoría activo al buscar */-->
                 <input type="hidden" name="category" th:if="${selectedCategory != null}" th:value="${selectedCategory}">
               </form>
             </div>
 
-            <!-- Carrusel de Categorías -->
+            <!--/* Carrusel de Categorías */-->
             <div class="pt-4">
               <div class="flex items-center justify-between text-white/80 text-[11px] font-semibold mb-3 px-1">
                 <span class="uppercase tracking-widest opacity-80">Filtros por categoría</span>
                 <span class="text-rose-200 animate-pulse">Deslizar →</span>
               </div>
               <div id="category-container" class="flex items-center gap-3 overflow-x-auto overflow-y-hidden no-scrollbar py-2 w-full">
-                <!-- Todas -->
+                <!--/* Todas */-->
                 <a th:href="@{/feed}" th:classappend="${selectedCategory == null} ? 'bg-white text-rose-600 font-extrabold shadow-md' : 'bg-black/20 text-white font-medium border border-white/15'" 
                    class="category-pill opacity-0 animate-stagger stagger-1 flex-shrink-0 inline-flex items-center gap-1.5 text-xs px-5 py-2.5 rounded-xl transition-all active:scale-95">
                   <svg class="w-3.5 h-3.5" th:classappend="${selectedCategory == null} ? 'text-rose-600' : 'text-white'" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
@@ -97,12 +97,12 @@
                   </svg>
                   <span class="whitespace-nowrap">Todas</span>
                 </a>
-                <!-- Dinámicas -->
+                <!--/* Dinámicas */-->
                 <a th:each="c, iterStat : ${categories}" 
                    th:href="@{/feed(category=${c})}" 
                    th:classappend="${selectedCategory == c} ? 'bg-white text-rose-600 font-extrabold shadow-md' : 'bg-black/20 text-white font-medium border border-white/15' + ' stagger-' + ${iterStat.index + 2}"
                    class="category-pill opacity-0 animate-stagger flex-shrink-0 inline-flex items-center gap-1.5 text-xs px-5 py-2.5 rounded-xl transition-all active:scale-95">
-                  <span class="whitespace-nowrap" th:text="${c}">Categoria</span>
+                  <span class="whitespace-nowrap" th:text="${c.label}">Categoria</span>
                 </a>
               </div>
             </div>
@@ -114,163 +114,12 @@
         <img th:src="@{/img/empty-feed.svg}" alt="Sin experiencias">
         <p><strong>Todavía no hay experiencias por acá</strong></p>
         <p class="hint">¡Creá la primera y estrená el feed!</p>
-        <a class="btn-primary" th:href="@{/experiences/new}">Crear experiencia</a>
+        <a class="btn-primary" th:if="${puedePublicar}" th:href="@{/experiences/new}">Crear experiencia</a>
+        <a class="btn-secondary" th:unless="${puedePublicar}" th:href="@{/verificacion}">Verificá tu identidad para publicar</a>
     </div>
 
     <div id="feed-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-20">
-        <div th:each="dto : ${feedPage.content}" th:if="${dto != null}" th:id="'card-' + ${dto.id}" class="card feed-card w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden font-sans transition-transform duration-300 hover:scale-[1.02]" style="border: 1px solid var(--border-subtle)">
-          
-          <div class="relative w-full overflow-hidden group feed-card-cover">
-            <img th:if="${(dto.images == null or #lists.isEmpty(dto.images)) and dto.coverBase64 != null}"
-                 th:src="'data:image/jpeg;base64,' + ${dto.coverBase64}" 
-                 alt="Experiencia" 
-                 class="w-full h-full object-cover">
-            
-            <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none z-10"></div>
-
-            <div class="absolute top-4 left-4 z-20">
-              <button class="bg-white/90 hover:bg-white text-gray-800 p-2.5 rounded-full backdrop-blur-md shadow-md transition-all active:scale-95 flex items-center justify-center" onclick="history.back()">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-              </button>
-            </div>
-
-            <div class="absolute top-4 right-4 flex items-center gap-2 z-20">
-              <button class="bg-white/90 hover:bg-white text-gray-800 p-2.5 rounded-full backdrop-blur-md shadow-md transition-all active:scale-95 flex items-center justify-center" th:attr="data-share-experience=${dto.id}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-              </button>
-              <form th:action="${dto.favorite} ? @{/favorites/{id}/remove(id=${dto.id})} : @{/favorites/{id}/add(id=${dto.id})}" method="post" class="inline">
-                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-                <button type="submit" class="bg-white/90 hover:bg-white text-gray-800 p-2.5 rounded-full backdrop-blur-md shadow-md transition-all active:scale-95 flex items-center justify-center">
-                  <svg class="w-4 h-4" th:classappend="${dto.favorite} ? 'fill-rose-500 stroke-rose-500' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                </button>
-              </form>
-            </div>
-
-            <div class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-lg flex items-center gap-2 z-20 border border-white/40">
-              <span class="text-amber-500 text-base">★</span>
-              <div class="flex flex-col leading-none">
-                <span class="text-xs font-bold text-gray-900" th:text="${dto.ratingAverage > 0 ? #numbers.formatDecimal(dto.ratingAverage, 1, 1) : '0.0'}">0.0</span>
-                <span class="text-[10px] text-gray-500 font-medium" th:text="${dto.ratingAverage > 0 ? 'Reseñas' : 'Nuevo'}">Nuevo</span>
-              </div>
-            </div>
-
-            <div class="absolute inset-0 z-10" data-carousel th:if="${dto.images != null and not #lists.isEmpty(dto.images)}">
-                <div class="relative h-full w-full overflow-hidden" data-carousel-track>
-                    <div class="flex h-full transition-transform duration-300 ease-out">
-                        <img th:each="imgData : ${dto.images}" th:src="'data:image/jpeg;base64,' + ${imgData}" 
-                             class="flex-shrink-0 w-full h-full object-cover" th:alt="${dto.name}">
-                    </div>
-                </div>
-                <div class="absolute bottom-4 right-4 bg-black/50 backdrop-blur-md text-white text-xs font-medium px-3.5 py-1.5 rounded-full flex items-center gap-3 shadow-lg border border-white/20 z-20">
-                  <button type="button" data-carousel-prev class="hover:text-amber-400 transition-colors font-bold text-sm">‹</button>
-                  <span class="tracking-widest" data-carousel-counter>1 / 5</span>
-                  <button type="button" data-carousel-next class="hover:text-amber-400 transition-colors font-bold text-sm">›</button>
-                </div>
-            </div>
-          </div>
-
-          <div class="space-y-4 feed-card-body">
-            <div class="flex items-start justify-between gap-2">
-              <div class="max-w-[70%]">
-                <h2 class="font-black text-gray-900 tracking-tight flex items-center gap-2 feed-card-title" th:text="${dto.name}">Nombre</h2>
-              </div>
-              <button class="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3.5 py-1.5 rounded-full transition-colors shadow-sm">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                Save
-              </button>
-            </div>
-
-            <div class="inline-flex items-center gap-2 bg-gray-100/80 px-3 py-1.5 rounded-full text-xs text-gray-700 font-medium" th:if="${dto.creatorName != null}">
-              <div class="w-5 h-5 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                <img th:if="${dto.creatorAvatar != null and !#strings.isEmpty(dto.creatorAvatar)}"
-                     th:src="'data:image/jpeg;base64,' + ${dto.creatorAvatar}" alt="" class="w-full h-full object-cover">
-                <span th:if="${dto.creatorAvatar == null or #strings.isEmpty(dto.creatorAvatar)}"
-                      th:text="${#strings.substring(dto.creatorName, 0, 1)}">L</span>
-              </div>
-              <span>Organizado por <strong class="text-gray-900" th:text="${dto.creatorName}">Lionel</strong></span>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2 py-3 text-center text-xs text-gray-600 border-y border-gray-100">
-              <div class="flex flex-col items-center gap-1.5">
-                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span class="font-bold text-gray-900" th:text="${dto.nextDate} ?: 'Sin fecha'">2026-10-24</span>
-              </div>
-              <div class="flex flex-col items-center gap-1.5 border-x border-gray-100 px-2">
-                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 و 0 0118 0z"/></svg>
-                <span class="font-bold text-gray-900" th:text="${dto.durationMinutes >= 60 ? T(java.lang.Math).floorDiv(dto.durationMinutes, 60) + ' h' + (T(java.lang.Math).floorMod(dto.durationMinutes, 60) > 0 ? ' ' + T(java.lang.Math).floorMod(dto.durationMinutes, 60) + ' min' : '') : dto.durationMinutes + ' min'}">5 horas</span>
-              </div>
-              <div class="flex flex-col items-center gap-1.5">
-                <a th:with="firstStop=${dto.stops != null and !#lists.isEmpty(dto.stops) ? dto.stops[0] : null}" 
-                   th:href="${firstStop != null} ? 'https://www.google.com/maps/search/?api=1&query=' + ${firstStop.lat} + ',' + ${firstStop.lng} : 'https://www.google.com/maps/search/?api=1&query=' + ${dto.meetingPointLabel}" 
-                   target="_blank" class="flex flex-col items-center gap-1.5 hover:text-teal-600 transition-colors group">
-                  <svg class="w-5 h-5 text-gray-700 group-hover:text-teal-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                  <span class="font-bold text-gray-900 truncate w-full group-hover:text-teal-600" th:text="${dto.meetingPointLabel}">Recorrido</span>
-                </a>
-              </div>
-            </div>
-
-            <!-- SECCIÓN DE PARADAS (Dropdown colapsable) -->
-            <div th:if="${dto.stops != null and !#lists.isEmpty(dto.stops)}" class="border-b border-gray-100 pb-2">
-              <button type="button" 
-                      th:onclick="'this.nextElementSibling.classList.toggle(\'hidden\')'"
-                      class="w-full flex items-center justify-between py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors">
-                <div class="flex items-center gap-2">
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.89M15 20l5.447-2.89M12 20V4"/></svg>
-                  Ver Recorrido
-                </div>
-                <svg class="w-3 h-3 transform transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div class="hidden space-y-2 py-2 px-1">
-                <div th:each="stop, iterStat : ${dto.stops}" class="flex items-start gap-3">
-                  <div class="flex flex-col items-center">
-                    <div class="w-2 h-2 rounded-full bg-teal-600 mt-1" th:classappend="${iterStat.first} ? 'ring-4 ring-teal-100' : ''"></div>
-                    <div th:if="${!iterStat.last}" class="w-px h-4 bg-gray-200"></div>
-                  </div>
-                  <div class="flex flex-col">
-                    <span class="text-[11px] font-bold text-gray-800" th:text="${stop.placeName}">Parada</span>
-                    <span class="text-[9px] text-gray-500" th:text="${stop.city + ', ' + stop.country}">Ciudad, Pais</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="grid grid-cols-5 gap-3">
-              <div class="col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between space-y-3">
-                <div class="flex justify-between items-center text-xs">
-                  <span class="font-semibold text-gray-800">Lugares libres</span>
-                  <span class="text-gray-400 font-medium text-[11px]" th:text="${dto.maxCapacity != null ? dto.maxCapacity + ' cupos totales' : '0 cupos totales'}">8 cupos totales</span>
-                </div>
-                <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                  <div class="bg-teal-700 h-full rounded-full transition-all duration-300" th:style="'width:' + ${dto.maxCapacity != null and dto.maxCapacity > 0 ? T(java.lang.Math).round(dto.reservedCount * 100.0 / dto.maxCapacity) : 0} + '%'"></div>
-                </div>
-                <div class="flex items-center justify-between text-[11px] text-gray-500">
-                  <div class="flex items-center gap-1.5">
-                    <div class="flex -space-x-1.5">
-                      <img th:each="av : ${dto.reservedAvatars}" class="w-4 h-4 rounded-full ring-1 ring-white object-cover" th:src="'data:image/jpeg;base64,' + ${av}" alt="">
-                    </div>
-                    <span th:text="${dto.reservedCount} + ' reservaron'">2 reservaron</span>
-                  </div>
-                  <span class="font-bold text-teal-700" th:text="${dto.availableCapacity != null ? dto.availableCapacity + ' libres' : '0 libres'}">6 libres</span>
-                </div>
-              </div>
-              <div class="col-span-2 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between text-center">
-                <span class="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">Precio Total</span>
-                <div class="my-auto">
-                  <div class="text-gray-900 font-black text-sm tracking-tight" th:text="${dto.currencyCode + ' ' + dto.price}">$2.000.000</div>
-                  <span class="text-[10px] font-semibold text-gray-500">COP</span>
-                </div>
-                <a class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-1.5 rounded-xl shadow-md transition-all active:scale-95 block text-center" th:href="@{/experiences/{id}(id=${dto.id})}">CTA</a>
-              </div>
-            </div>
-            
-            <a class="w-full bg-gray-100 hover:bg-gray-200 active:scale-[0.99] text-gray-900 font-bold py-3.5 px-5 rounded-2xl flex items-center justify-between border border-gray-200 transition-all shadow-sm" th:href="@{/experiences/{id}(id=${dto.id})}">
-              <span class="mx-auto text-sm">Reservar ahora</span>
-              <div class="flex items-center gap-1.5 opacity-60">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              </div>
-            </a>
-          </div>
-        </div>
+        <th:block th:replace="~{fragments/feed-card :: cards(${feedPage})}"></th:block>
     </div>
 
     <div id="feed-sentinel" style="height:1px"></div>

@@ -5,8 +5,8 @@
 <link rel="stylesheet" th:href="@{/vendor/leaflet/leaflet.css}">
 <main class="app-main app-main--wide pt-0 pb-32">
 
-    <!-- HERO: misma foto, mismos controles y mismo badge de rating que la card del feed.
-         Full-bleed en móvil; contenido y alineado con el texto en escritorio. -->
+    <!--/* HERO: misma foto, mismos controles y mismo badge de rating que la card del feed.
+         Full-bleed en móvil; contenido y alineado con el texto en escritorio. */-->
     <div class="max-w-3xl mx-auto sm:px-6 sm:pt-6">
     <div class="relative w-full overflow-hidden bg-gray-900 sm:rounded-3xl">
         <div class="carousel carousel--flush" data-carousel th:if="${not #lists.isEmpty(images)}">
@@ -58,7 +58,7 @@
 
     <div class="max-w-3xl mx-auto px-4 sm:px-6 pt-6 space-y-8">
 
-        <!-- TÍTULO + ORGANIZADOR + CATEGORÍA -->
+        <!--/* TÍTULO + ORGANIZADOR + CATEGORÍA */-->
         <div>
             <h1 class="text-3xl font-black tracking-tight text-gray-900" th:text="${experience.name}">Nombre</h1>
 
@@ -79,14 +79,14 @@
             </div>
         </div>
 
-        <!-- FECHA / DURACIÓN / PUNTO DE ENCUENTRO -->
+        <!--/* FECHA / DURACIÓN / PUNTO DE ENCUENTRO */-->
         <div class="grid grid-cols-3 gap-2 py-4 text-center text-xs text-gray-600 border-y border-gray-100">
             <div class="flex flex-col items-center gap-1.5">
                 <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
                 <span class="font-bold text-gray-900"
-                      th:text="${#lists.isEmpty(instances) ? 'Sin fecha' : #temporals.format(instances[0].date, 'dd MMM')}">24 oct</span>
+                      th:text="${#lists.isEmpty(instances) ? 'Sin fecha' : T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(instances[0].date)}">24 oct</span>
                 <span class="text-[10px] text-gray-500"
                       th:text="${#lists.isEmpty(instances) ? 'Próximamente' : 'Próxima fecha'}">Próxima fecha</span>
             </div>
@@ -108,7 +108,7 @@
             </div>
         </div>
 
-        <!-- PRECIO + CUPOS (mismo bloque que la card) -->
+        <!--/* PRECIO + CUPOS (mismo bloque que la card) */-->
         <div class="grid grid-cols-5 gap-3">
             <div class="col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between space-y-3">
                 <div class="flex justify-between items-center text-xs">
@@ -125,8 +125,7 @@
                 <span class="text-[9px] font-extrabold uppercase tracking-wider text-gray-400">Precio por persona</span>
                 <div class="my-auto">
                     <div class="text-gray-900 font-black text-base tracking-tight"
-                         th:text="${experienceCurrency + ' ' + experience.price}">MXN 190</div>
-                    <span class="text-[10px] font-semibold text-gray-500" th:text="${experienceCurrency}">MXN</span>
+                         th:text="${experienceCurrency + ' ' + #numbers.formatDecimal(experience.price, 1, 'COMMA', 2, 'POINT')}">MXN 190.00</div>
                 </div>
                 <a href="#fechas"
                    class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-1.5 rounded-xl shadow-md transition-all active:scale-95 block text-center">
@@ -135,19 +134,32 @@
             </div>
         </div>
 
-        <!-- DESCRIPCIÓN -->
+        <!--/* DESCRIPCIÓN */-->
         <section th:if="${experience.description != null and !#strings.isEmpty(experience.description)}">
             <h2 class="text-lg font-extrabold tracking-tight text-gray-900 mb-2">Sobre esta experiencia</h2>
             <p class="text-gray-600 leading-relaxed" th:text="${experience.description}">Descripción</p>
         </section>
 
-        <!-- RECORRIDO -->
+        <!--/* QUÉ INCLUYE / QUÉ LLEVAR (spec §7: secciones fijas en el detalle) */-->
+        <section th:if="${experience.includes != null and !#strings.isEmpty(experience.includes)}">
+            <h2 class="text-lg font-extrabold tracking-tight text-gray-900 mb-2">Qué incluye</h2>
+            <p class="text-gray-600 leading-relaxed whitespace-pre-line"
+               th:text="${experience.includes}">Entrada al museo</p>
+        </section>
+
+        <section th:if="${experience.bring != null and !#strings.isEmpty(experience.bring)}">
+            <h2 class="text-lg font-extrabold tracking-tight text-gray-900 mb-2">Qué llevar</h2>
+            <p class="text-gray-600 leading-relaxed whitespace-pre-line"
+               th:text="${experience.bring}">Calzado cómodo</p>
+        </section>
+
+        <!--/* RECORRIDO */-->
         <section id="recorrido">
             <h2 class="text-lg font-extrabold tracking-tight text-gray-900 mb-2">
                 Recorrido
                 <span class="text-sm font-medium text-gray-400"
                       th:if="${stops != null and not #lists.isEmpty(stops)}"
-                      th:text="${'· ' + #lists.size(stops) + ' paradas'}">· 3 paradas</span>
+                      th:text="${'· ' + #lists.size(stops) + (#lists.size(stops) == 1 ? ' parada' : ' paradas')}">· 3 paradas</span>
             </h2>
 
             <div th:if="${stops != null and not #lists.isEmpty(stops)}">
@@ -179,7 +191,7 @@
             </div>
         </section>
 
-        <!-- RESEÑAS -->
+        <!--/* RESEÑAS */-->
         <section>
             <h2 class="text-lg font-extrabold tracking-tight text-gray-900 mb-2">
                 Reseñas <span class="text-sm font-medium text-gray-400" th:text="${'(' + reviews.size() + ')'}">(3)</span>
@@ -195,7 +207,7 @@
                     <div class="flex items-center justify-between gap-2 mb-1">
                         <strong class="text-sm text-gray-900" th:text="${rv.username}">usuario</strong>
                         <span class="text-xs text-gray-400"
-                              th:text="${rv.date != null ? #temporals.format(rv.date, 'MMM yyyy') : ''}">oct 2026</span>
+                              th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).mesAnio(rv.date)}">oct 2026</span>
                     </div>
                     <div class="flex items-center gap-1 text-amber-500 mb-2">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -209,7 +221,7 @@
             </div>
         </section>
 
-        <!-- FECHAS -->
+        <!--/* FECHAS */-->
         <section id="fechas" class="scroll-mt-24">
             <h2 class="text-lg font-extrabold tracking-tight text-gray-900 mb-2">Próximas fechas</h2>
             <div th:replace="~{fragments/refund-notice :: notice}"></div>
@@ -226,7 +238,6 @@
                     <form th:if="${esDueno}"
                           th:action="@{/instances/{id}/cancel(id=${inst.id})}" method="post"
                           onsubmit="return confirm('¿Cancelar esta fecha? Se reembolsa el 100% a los inscritos.');">
-                        <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                         <button type="submit" class="btn-secondary">Cancelar fecha</button>
                     </form>
                 </div>
@@ -235,13 +246,13 @@
     </div>
 </main>
 
-<!-- Barra fija: solo escritorio. En móvil chocaría con el nav inferior. -->
+<!--/* Barra fija: solo escritorio. En móvil chocaría con el nav inferior. */-->
 <div class="hidden lg:flex fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-100 shadow-lg">
     <div class="max-w-3xl w-full mx-auto px-6 py-3 flex items-center justify-between gap-4">
         <div>
             <span class="block text-[11px] font-semibold uppercase tracking-wider text-gray-400">Precio por persona</span>
             <span class="block text-xl font-black tracking-tight text-gray-900"
-                  th:text="${experienceCurrency + ' ' + experience.price}">MXN 190</span>
+                  th:text="${experienceCurrency + ' ' + #numbers.formatDecimal(experience.price, 1, 'COMMA', 2, 'POINT')}">MXN 190.00</span>
         </div>
         <a th:if="${!esDueno}" href="#fechas"
            class="bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold px-6 py-3 rounded-xl shadow-md transition-all active:scale-95">

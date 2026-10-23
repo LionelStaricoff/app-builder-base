@@ -545,6 +545,12 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
   margin-bottom: 1rem;
 }
 
+/* Acción persistente de la página: crear experiencia o verificar identidad.
+   Vive fuera del estado vacío, así no desaparece cuando ya hay contenido. */
+.page-actions {
+  margin-bottom: 1rem;
+}
+
 .page-hero h1, .page-hero h2 {
   margin: 0 0 0.2rem;
   font-size: 1.35rem;
@@ -1967,3 +1973,31 @@ input.missing, select.missing, textarea.missing {
 [data-visual-style="4"] .theme-swatch { background: #2563EB; }
 [data-visual-style="5"] .theme-swatch { background: #0F766E; }
 [data-visual-style="6"] .theme-swatch { background: #60A5FA; }
+
+/* ============================================================
+   Feed: disclosure del recorrido.
+   <details>/<summary> nativo: el navegador se encarga del foco,
+   del teclado (Enter/Space) y de exponer el estado expandido.
+   El summary no necesita `aria-expanded`: es implícito.
+   ============================================================ */
+.feed-details > summary {
+  list-style: none;
+}
+
+.feed-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.feed-details > summary:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: var(--radius-pill);
+}
+
+.feed-details[open] .feed-details-chevron {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feed-details .feed-details-chevron { transition: none !important; }
+}

@@ -42,6 +42,14 @@ public class Experience {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
+    /** Qué incluye el precio. Texto libre, un ítem por línea. Nullable. */
+    @Column(columnDefinition = "TEXT")
+    private String includes;
+
+    /** Qué tiene que llevar el huésped. Texto libre, un ítem por línea. Nullable. */
+    @Column(columnDefinition = "TEXT")
+    private String bring;
+
     @Column(nullable = false)
     private int durationMinutes;
 

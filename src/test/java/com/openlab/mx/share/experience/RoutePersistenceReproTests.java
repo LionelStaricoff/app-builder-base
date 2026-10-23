@@ -23,7 +23,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
@@ -111,7 +113,7 @@ class RoutePersistenceReproTests {
                 .andExpect(content().string(containsString("Mirador del Cerro")))
                 .andExpect(content().string(containsString("Playa Escondida")));
 
-        // El feed (página server + API del scroll infinito) muestra recorrido y fecha.
+        // El feed (página server + HTML del scroll infinito) muestra recorrido y fecha.
         var dto = feedService.dtoFor(
                 experienceService.get(id),
                 userRepository.findByUsername("demo_creator").orElseThrow().getId());
@@ -120,20 +122,26 @@ class RoutePersistenceReproTests {
         org.junit.jupiter.api.Assertions.assertTrue(dto.stopsJson() != null && dto.stopsJson().contains("Mirador"),
                 "el DTO del feed lleva el JSON del recorrido");
 
-        // La API del scroll infinito expone paradas y fecha en JSON.
+        // El HTML que consume el scroll infinito lleva paradas y fecha.
         String nombre = dto.name();
         boolean encontrado = false;
         for (int page = 0; page < 10 && !encontrado; page++) {
-            MvcResult api = mockMvc.perform(get("/feed/api").param("page", String.valueOf(page)))
+            MvcResult cards = mockMvc.perform(get("/feed/cards").param("page", String.valueOf(page)))
                     .andExpect(status().isOk())
                     .andReturn();
-            String json = api.getResponse().getContentAsString();
-            if (json.contains(nombre)) {
+            String html = cards.getResponse().getContentAsString();
+            if (html.contains(nombre)) {
                 encontrado = true;
-                org.junit.jupiter.api.Assertions.assertTrue(json.contains("Mirador del Cerro"),
-                        "el JSON del feed lleva las paradas");
-                org.junit.jupiter.api.Assertions.assertTrue(json.contains(dto.nextDate().toString()),
-                        "el JSON del feed lleva la próxima fecha");
+                org.junit.jupiter.api.Assertions.assertTrue(html.contains("Mirador del Cerro"),
+                        "la card del feed lleva las paradas");
+                // La card formatea la fecha con el mismo patron y locale que la plantilla
+                // (#temporals.format con es fijo), no como ISO crudo.
+                String fechaCard = DateTimeFormatter.ofPattern("dd MMM", Locale.forLanguageTag("es"))
+                        .format(dto.nextDate());
+                org.junit.jupiter.api.Assertions.assertTrue(html.contains(fechaCard),
+                        "la card del feed lleva la próxima fecha formateada");
+                org.junit.jupiter.api.Assertions.assertFalse(html.contains(dto.nextDate().toString()),
+                        "la card del feed no lleva la fecha ISO cruda");
             }
         }
         org.junit.jupiter.api.Assertions.assertTrue(encontrado, "la experiencia aparece en el feed");
@@ -150,7 +158,7 @@ class RoutePersistenceReproTests {
                         19.4326, -99.1332,
                         List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(30), null,
                                 LocalTime.of(14, 30), LocalTime.of(16, 45), null, null)),
-                        List.of(image)),
+                        List.of(image), null, null),
                 userRepository.findByUsername("demo_creator").orElseThrow());
 
         mockMvc.perform(get("/experiences/" + experience.getId() + "/edit"))
@@ -220,7 +228,7 @@ class RoutePersistenceReproTests {
                         19.4326, -99.1332,
                         List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(30), null,
                                 LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                        List.of(image)),
+                        List.of(image), null, null),
                 userRepository.findByUsername("demo_creator").orElseThrow());
         Long id = experience.getId();
         int antes = imageRepository.findByExperienceIdOrderByIdAsc(id).size();
@@ -258,7 +266,7 @@ class RoutePersistenceReproTests {
                         19.4326, -99.1332,
                         List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(30), null,
                                 LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                        List.of(img1, img2)),
+                        List.of(img1, img2), null, null),
                 userRepository.findByUsername("demo_creator").orElseThrow());
         Long id = experience.getId();
         var guardadas = imageRepository.findByExperienceIdOrderByIdAsc(id);
@@ -304,7 +312,7 @@ class RoutePersistenceReproTests {
                         19.4326, -99.1332,
                         List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(30), null,
                                 LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                        List.of(image)),
+                        List.of(image), null, null),
                 userRepository.findByUsername("demo_creator").orElseThrow());
         Long expId = experience.getId();
         Long instanceId = instanceRepository.findByExperienceIdOrderByDateAsc(expId).get(0).getId();
@@ -411,7 +419,7 @@ class RoutePersistenceReproTests {
                         19.4326, -99.1332,
                         List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(30), null,
                                 LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                        List.of(image)),
+                        List.of(image), null, null),
                 userRepository.findByUsername("demo_creator").orElseThrow());
         Long id = experience.getId();
         Long unica = imageRepository.findByExperienceIdOrderByIdAsc(id).get(0).getId();
@@ -445,11 +453,61 @@ class RoutePersistenceReproTests {
         var paradas = List.of(
                 new com.openlab.mx.share.experience.dto.ExperienceStopDTO(0, "Mirador del Cerro", "—", "—", 19.44, -99.14),
                 new com.openlab.mx.share.experience.dto.ExperienceStopDTO(1, "Playa Escondida", "—", "—", 19.45, -99.15));
-        var dto = new com.openlab.mx.share.experience.dto.ExperienceFeedDTO(
+        var dto = dtoDeFeed(paradas, "Entrada al museo\nGuía bilingüe", "Calzado cómodo\nProtector solar");
+
+        String html = renderFeed(dto);
+
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Ver Recorrido"),
+                "la tarjeta del feed muestra el recorrido");
+        // El recorrido es un <details> nativo: teclado y estado expandido los
+        // resuelve el navegador. Un `onclick` con nextElementSibling se rompía
+        // en las tarjetas del scroll infinito, que se generan por JS.
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("<details class=\"feed-details"),
+                "el recorrido se despliega con <details> nativo");
+        org.junit.jupiter.api.Assertions.assertFalse(html.contains("nextElementSibling"),
+                "el recorrido no depende de un onclick con nextElementSibling");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Playa Escondida"),
+                "la tarjeta del feed nombra inicio y fin");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("google.com/maps/search/"),
+                "la tarjeta del feed enlaza el recorrido en el mapa");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("19.44,-99.14"),
+                "el enlace del recorrido apunta a la primera parada");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Qué incluye"),
+                "la tarjeta del feed muestra qué incluye");
+        // El salto de línea viaja literal y se respeta con white-space:
+        // pre-line. Si se partiera en <ul>, este assert fallaría.
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Entrada al museo\nGuía bilingüe"),
+                "los ítems de qué incluye conservan el salto de línea");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Qué llevar"),
+                "la tarjeta del feed muestra qué llevar");
+        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Protector solar"),
+                "la tarjeta lista cada ítem de qué llevar");
+    }
+
+    @Test
+    void feedSinContenidoEstructuradoNoDejaBloquesVacios() {
+        var paradas = List.of(
+                new com.openlab.mx.share.experience.dto.ExperienceStopDTO(0, "Mirador del Cerro", "—", "—", 19.44, -99.14));
+
+        String html = renderFeed(dtoDeFeed(paradas, null, ""));
+
+        org.junit.jupiter.api.Assertions.assertFalse(html.contains("Qué incluye"),
+                "sin datos no se renderiza un bloque vacío");
+        org.junit.jupiter.api.Assertions.assertFalse(html.contains("Qué llevar"),
+                "sin datos no se renderiza un bloque vacío");
+    }
+
+    private com.openlab.mx.share.experience.dto.ExperienceFeedDTO dtoDeFeed(
+            List<com.openlab.mx.share.experience.dto.ExperienceStopDTO> paradas,
+            String includes, String bring) {
+        return new com.openlab.mx.share.experience.dto.ExperienceFeedDTO(
                 999L, "Ruta test", "Desc", "QUJD", List.of("QUJD"), "Mirador del Cerro · —",
                 150, LocalDate.now().plusDays(7), BigDecimal.valueOf(250), 4.5, false,
                 "MXN", paradas, "[{\"placeName\":\"Mirador del Cerro\"}]",
-                "creador-demo", null, 4, 2, 2, List.of());
+                "creador-demo", null, 4, 2, 2, List.of(), includes, bring);
+    }
+
+    private String renderFeed(com.openlab.mx.share.experience.dto.ExperienceFeedDTO dto) {
         var variables = new java.util.HashMap<String, Object>();
         variables.put("feedPage",
                 new org.springframework.data.domain.PageImpl<>(List.of(dto)));
@@ -457,6 +515,7 @@ class RoutePersistenceReproTests {
         variables.put("selectedCategory", null);
         variables.put("searchedCity", null);
         variables.put("savedCity", "CDMX");
+        variables.put("puedePublicar", true);
         variables.put("_csrf",
                 new org.springframework.security.web.csrf.DefaultCsrfToken("X-CSRF-TOKEN", "_csrf", "tok"));
         var webApp = org.thymeleaf.web.servlet.JakartaServletWebApplication
@@ -467,16 +526,7 @@ class RoutePersistenceReproTests {
         var ctx = new org.thymeleaf.context.WebContext(
                 exchange, java.util.Locale.forLanguageTag("es"), variables);
 
-        String html = templateEngine.process("feed", ctx);
-
-        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Ver Recorrido"),
-                "la tarjeta del feed muestra el recorrido");
-        org.junit.jupiter.api.Assertions.assertTrue(html.contains("Playa Escondida"),
-                "la tarjeta del feed nombra inicio y fin");
-        org.junit.jupiter.api.Assertions.assertTrue(html.contains("google.com/maps/search/"),
-                "la tarjeta del feed enlaza el recorrido en el mapa");
-        org.junit.jupiter.api.Assertions.assertTrue(html.contains("19.44,-99.14"),
-                "el enlace del recorrido apunta a la primera parada");
+        return templateEngine.process("feed", ctx);
     }
 
     @Test
@@ -524,7 +574,7 @@ class RoutePersistenceReproTests {
                                 new ScheduleEntryRequest(null, java.time.DayOfWeek.FRIDAY,
                                         LocalTime.of(19, 0), LocalTime.of(21, 0),
                                         LocalDate.now().plusDays(1), LocalDate.now().plusDays(60))),
-                        List.of(image)),
+                        List.of(image), null, null),
                 userRepository.findByUsername("demo_creator").orElseThrow());
 
         mockMvc.perform(get("/experiences/" + experience.getId() + "/edit"))

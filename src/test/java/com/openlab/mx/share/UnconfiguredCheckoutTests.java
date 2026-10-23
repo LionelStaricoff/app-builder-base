@@ -65,7 +65,7 @@ class UnconfiguredCheckoutTests {
                 19.4326, -99.1332,
                 List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(20), null,
                         LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                List.of(image)),
+                List.of(image), null, null),
                 userRepository.findByUsername("demo_creator").orElseThrow());
         return instanceRepository.findByExperienceIdOrderByDateAsc(experience.getId())
                 .get(0).getId();

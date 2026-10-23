@@ -101,6 +101,29 @@ class ExperienceDetailReviewsTests {
                 .andExpect(content().string(containsString("Todavía no hay reseñas")));
     }
 
+    @Test
+    void detalleMuestraQueIncluyeYQueLlevar() throws Exception {
+        var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+        Long expId = experienceService.create(new ExperienceFormRequest(
+                "Exp Contenido " + UUID.randomUUID(), "Desc", 120, 1, 4, BigDecimal.valueOf(100),
+                ExperienceCategory.CULTURAL, RecurrenceType.UNIQUE,
+                19.4326, -99.1332,
+                List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(20), null,
+                        LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
+                List.of(image),
+                "Entrada al museo\nGuía bilingüe",
+                "Calzado cómodo\nProtector solar"),
+                crearUsuario("creador")).getId();
+        User observador = crearUsuario("observador-contenido");
+
+        mockMvc.perform(get("/experiences/" + expId).with(user(observador.getUsername())))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Qué incluye")))
+                .andExpect(content().string(containsString("Guía bilingüe")))
+                .andExpect(content().string(containsString("Qué llevar")))
+                .andExpect(content().string(containsString("Protector solar")));
+    }
+
     private Long crearExperiencia() {
         var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
         return experienceService.create(new ExperienceFormRequest(
@@ -109,7 +132,7 @@ class ExperienceDetailReviewsTests {
                 19.4326, -99.1332,
                 List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(20), null,
                         LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                List.of(image)), crearUsuario("creador")).getId();
+                List.of(image), null, null), crearUsuario("creador")).getId();
     }
 
     /** Fecha terminada: es la que sostiene la reseña (rate() exige COMPLETED). */

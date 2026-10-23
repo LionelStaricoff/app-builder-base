@@ -194,6 +194,8 @@ public class ExperienceService {
                 .creator(creator)
                 .name(request.name())
                 .description(request.description())
+                .includes(normalizeLines(request.includes()))
+                .bring(normalizeLines(request.bring()))
                 .durationMinutes(request.durationMinutes())
                 .minCapacity(request.minCapacity())
                 .maxCapacity(request.maxCapacity())
@@ -224,6 +226,35 @@ public class ExperienceService {
         experience.setRecurrenceType(request.recurrenceType());
         experience.setMeetingLat(request.meetingLat());
         experience.setMeetingLng(request.meetingLng());
+        experience.setIncludes(normalizeLines(request.includes()));
+        experience.setBring(normalizeLines(request.bring()));
+    }
+
+    /**
+     * Un ítem por línea: normaliza CRLF, recorta cada línea y descarta las vacías.
+     * Devuelve {@code null} si no queda nada, para que la card y el detalle omitan
+     * el bloque en vez de renderizar un contenedor vacío.
+     *
+     * <p>Se normaliza al escribir y no al leer: así los dos renderers de la card
+     * (Thymeleaf y el template literal de feed-infinite.js) reciben el mismo
+     * string limpio y el HTML no arrastra {@code \r}.
+     */
+    static String normalizeLines(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        StringBuilder out = new StringBuilder();
+        for (String linea : raw.replace("\r\n", "\n").replace('\r', '\n').split("\n")) {
+            String limpia = linea.trim();
+            if (limpia.isEmpty()) {
+                continue;
+            }
+            if (!out.isEmpty()) {
+                out.append('\n');
+            }
+            out.append(limpia);
+        }
+        return out.isEmpty() ? null : out.toString();
     }
 
     private String resolveCurrency(String currencyCode, User creator) {

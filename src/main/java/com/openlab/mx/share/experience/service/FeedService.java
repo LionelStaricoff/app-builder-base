@@ -361,7 +361,9 @@ public class FeedService {
                 experience.getMaxCapacity(),
                 availableCapacityFor(experience),
                 reservedCountFor(experience),
-                reservedAvatarsFor(experience)
+                reservedAvatarsFor(experience),
+                experience.getIncludes(),
+                experience.getBring()
         );
     }
 

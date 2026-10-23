@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -35,7 +36,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -77,7 +77,7 @@ class FeedAndFavoritesControllerTests {
                 19.4326, -99.1332,
                 List.of(new ScheduleEntryRequest(LocalDate.of(2026, 12, 1), null,
                         LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                List.of(image)), creator()).getId();
+                List.of(image), null, null), creator()).getId();
     }
 
     /** Deja la categoría vacía para poder assertear el empty-state de forma determinística. */
@@ -144,23 +144,36 @@ class FeedAndFavoritesControllerTests {
 
     @Test
     @WithMockUser("demo_user")
-    void feedApiDevuelveJsonConUnaTarjeta() throws Exception {
+    void feedCardsDevuelveLaCardYaRenderizada() throws Exception {
         vaciar(ExperienceCategory.SOCIAL);
-        createExperience("API Exp " + UUID.randomUUID(), ExperienceCategory.SOCIAL);
+        String nombre = "Cards Exp " + UUID.randomUUID();
+        createExperience(nombre, ExperienceCategory.SOCIAL);
 
-        mockMvc.perform(get("/feed/api").param("page", "0"))
+        // La página 0 trae una sola card: se filtra por categoría para que la
+        // experiencia recién creada sea esa y no una sobrante de otro test.
+        mockMvc.perform(get("/feed/cards").param("page", "0").param("category", "SOCIAL"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.page.size").isNumber());
+                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                .andExpect(content().string(containsString("feed-card-body")))
+                .andExpect(content().string(containsString(nombre)))
+                // El form del corazón necesita el token en el HTML inyectado.
+                .andExpect(content().string(containsString("name=\"_csrf\"")));
     }
 
     @Test
     @WithMockUser("demo_user")
-    void feedApiPaginaAllaDelFinalDevuelveVacia() throws Exception {
-        mockMvc.perform(get("/feed/api").param("page", "999"))
+    void feedCardsPaginaAllaDelFinalDevuelveCuerpoVacio() throws Exception {
+        // Cuerpo vacío es el contrato que corta el scroll infinito.
+        mockMvc.perform(get("/feed/cards").param("page", "999"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isEmpty());
+                .andExpect(content().string(not(containsString("feed-card-body"))));
+    }
+
+    @Test
+    void feedCardsSinSesionRedirigeALogin() throws Exception {
+        mockMvc.perform(get("/feed/cards"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
     }
 
     @Test
@@ -277,11 +290,10 @@ class FeedAndFavoritesControllerTests {
 
     @Test
     @WithMockUser("demo_user")
-    void feedApiAceptaElFiltroDePais() throws Exception {
+    void feedCardsAceptaElFiltroDePais() throws Exception {
         vaciarTodo(); // sin activas sin paradas: el fallback no debe geocodificar en tests
-        mockMvc.perform(get("/feed/api").param("page", "0").param("country", "Argentina"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").isArray());
+        mockMvc.perform(get("/feed/cards").param("page", "0").param("country", "Argentina"))
+                .andExpect(status().isOk());
     }
 
     // ---------- Favoritos ----------

@@ -15,6 +15,7 @@ import com.openlab.mx.share.experience.service.RatingService;
 import com.openlab.mx.share.reservation.service.RefundPolicy;
 import com.openlab.mx.share.shared.JacksonHelper;
 import com.openlab.mx.share.shared.exception.DomainException;
+import com.openlab.mx.share.user.entity.Role;
 import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
 import jakarta.validation.Valid;
@@ -51,6 +52,7 @@ public class ExperienceController {
     private final RatingService ratingService;
 
     @GetMapping("/experiences/new")
+    @PreAuthorize("hasRole('CREATOR')")
     public String form(Model model) {
         model.addAttribute("experienceForm", emptyForm());
         model.addAttribute("experienceCurrency", currentUser().getCurrencyCode());
@@ -189,6 +191,7 @@ public class ExperienceController {
         User user = currentUser();
         List<Experience> experiencias = experienceService.mine(user.getId());
         model.addAttribute("experiencias", experiencias);
+        model.addAttribute("puedePublicar", user.getRole() == Role.CREATOR);
         // Todas las fotos por experiencia para el carousel de la lista.
         java.util.Map<Long, List<String>> covers = new java.util.HashMap<>();
         for (Experience e : experiencias) {
@@ -211,7 +214,7 @@ public class ExperienceController {
                 null, RecurrenceType.UNIQUE, 19.4326, -99.1332,
                 List.of(new ScheduleEntryRequest(null, null, LocalTime.of(10, 0),
                         LocalTime.of(12, 0), null, null)),
-                List.of());
+                List.of(), null, null);
     }
 
     private ExperienceFormRequest toForm(Experience experience) {
@@ -228,7 +231,9 @@ public class ExperienceController {
                 experience.getMeetingLat(),
                 experience.getMeetingLng(),
                 schedules,
-                List.of());
+                List.of(),
+                experience.getIncludes(),
+                experience.getBring());
     }
 
     private List<ScheduleEntryRequest> experienceSchedules(Experience experience) {

@@ -129,6 +129,24 @@
                                     th:selected="${experienceCurrency != null ? experienceCurrency == m : m == 'MXN'}">MXN</option>
                         </select>
                     </label>
+
+                    <div class="form-grid-full">
+                        <label>Qué incluye el precio
+                            <span class="hint block">Una cosa por línea. Opcional.</span>
+                            <textarea th:field="*{includes}" rows="3" maxlength="2000"
+                                      placeholder="Entrada al museo, guía bilingüe"></textarea>
+                        </label>
+                        <span class="error" th:if="${#fields.hasErrors('includes')}" th:errors="*{includes}">Error</span>
+                    </div>
+
+                    <div class="form-grid-full">
+                        <label>Qué tiene que llevar la gente
+                            <span class="hint block">Una cosa por línea. Opcional.</span>
+                            <textarea th:field="*{bring}" rows="3" maxlength="2000"
+                                      placeholder="Calzado cómodo, protector solar"></textarea>
+                        </label>
+                        <span class="error" th:if="${#fields.hasErrors('bring')}" th:errors="*{bring}">Error</span>
+                    </div>
                 </div>
             </section>
 

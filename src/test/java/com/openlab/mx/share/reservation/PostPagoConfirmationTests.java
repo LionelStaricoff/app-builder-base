@@ -160,7 +160,7 @@ class PostPagoConfirmationTests {
                 19.4326, -99.1332,
                 List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(20), null,
                         LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                List.of(image)), creador).getId();
+                List.of(image), null, null), creador).getId();
     }
 
     /** Fecha futura 19:00–21:30: los extremos que tiene que reflejar el .ics. */

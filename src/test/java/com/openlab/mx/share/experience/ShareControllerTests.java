@@ -53,7 +53,7 @@ class ShareControllerTests {
                         19.4326, -99.1332,
                         List.of(new ScheduleEntryRequest(LocalDate.of(2026, 12, 1), null,
                                 LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                        List.of(image)),
+                        List.of(image), null, null),
                 userRepository.findByUsername("demo_creator").orElseThrow()).getId();
     }
 

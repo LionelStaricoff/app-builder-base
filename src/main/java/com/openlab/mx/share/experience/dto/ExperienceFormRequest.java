@@ -24,6 +24,10 @@ public record ExperienceFormRequest(
         @NotNull Double meetingLat,
         @NotNull Double meetingLng,
         @Size(max = 10) List<ScheduleEntryRequest> schedules,
-        @Size(max = 5) List<MultipartFile> images
+        @Size(max = 5) List<MultipartFile> images,
+        /** Qué incluye el precio: texto libre, un ítem por línea. Opcional. */
+        @Size(max = 2000, message = "Qué incluye admite hasta 2000 caracteres") String includes,
+        /** Qué llevar: texto libre, un ítem por línea. Opcional. */
+        @Size(max = 2000, message = "Qué llevar admite hasta 2000 caracteres") String bring
 ) {
 }

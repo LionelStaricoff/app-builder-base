@@ -63,7 +63,7 @@ class RefundPolicyViewTests {
                 19.4326, -99.1332,
                 List.of(new ScheduleEntryRequest(LocalDate.now().plusDays(20), null,
                         LocalTime.of(10, 0), LocalTime.of(12, 0), null, null)),
-                List.of(image)), usuario("demo_creator"));
+                List.of(image), null, null), usuario("demo_creator"));
         return instanceRepository.findByExperienceIdOrderByDateAsc(experience.getId()).get(0).getId();
     }
 

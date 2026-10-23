@@ -31,6 +31,9 @@ public record ExperienceFeedDTO(
         int maxCapacity,
         int availableCapacity,
         int reservedCount,
-        List<String> reservedAvatars
+        List<String> reservedAvatars,
+        /** Qué incluye el precio y qué llevar. Nullable: la card los omite si vienen vacíos. */
+        String includes,
+        String bring
 ) {
 }

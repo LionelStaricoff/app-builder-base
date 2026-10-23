@@ -95,10 +95,12 @@ class OnboardingControllerTests {
     }
 
     @Test
-    void feedApiNoGatea() throws Exception {
+    void feedCardsNoGatea() throws Exception {
+        // El scroll infinito no puede recibir el redirect del onboarding:
+        // inyectaría la pantalla de intereses dentro de la lista de cards.
         User nuevo = usuarioNuevo();
 
-        mockMvc.perform(get("/feed/api").param("page", "0").with(user(nuevo.getUsername())))
+        mockMvc.perform(get("/feed/cards").param("page", "0").with(user(nuevo.getUsername())))
                 .andExpect(status().isOk());
     }
 
