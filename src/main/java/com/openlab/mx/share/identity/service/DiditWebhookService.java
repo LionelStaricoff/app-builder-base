@@ -6,6 +6,8 @@ import com.openlab.mx.share.identity.entity.DiditWebhookEvent;
 import com.openlab.mx.share.identity.entity.VerificationStatus;
 import com.openlab.mx.share.identity.repository.DiditVerificationRepository;
 import com.openlab.mx.share.identity.repository.DiditWebhookEventRepository;
+import com.openlab.mx.share.user.entity.Role;
+import com.openlab.mx.share.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class DiditWebhookService {
 
     private final DiditVerificationRepository verificationRepository;
     private final DiditWebhookEventRepository eventRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public WebhookOutcome handle(WebhookDelivery delivery) {
@@ -60,7 +63,31 @@ public class DiditWebhookService {
         verification.applyDecision(
                 VerificationStatus.fromDidit(delivery.diditStatus()), delivery.diditStatus());
         verificationRepository.save(verification);
+        if (verification.isVerified()) {
+            promoverACreador(verification.getUserId());
+        }
         return WebhookOutcome.PROCESSED;
+    }
+
+    /**
+     * Regla de producto (decisión B): quien completa el KYC puede publicar.
+     * Se promueve USER → CREATOR y <strong>nunca se revierte</strong>: si la
+     * verificación caduca después, el creador conserva sus experiencias, sus
+     * ventas y el acceso a cobros. Degradar el rol rompería datos ya creados.
+     *
+     * <p>Ojo: este webhook lo llama Didit, no el navegador del usuario. La
+     * sesión abierta sigue con la authority vieja; {@code RoleRefreshFilter}
+     * la refresca en el siguiente request.
+     */
+    private void promoverACreador(Long userId) {
+        userRepository.findById(userId).ifPresentOrElse(user -> {
+            if (user.getRole() == Role.CREATOR) {
+                return;
+            }
+            user.setRole(Role.CREATOR);
+            userRepository.save(user);
+            log.info("Usuario {} promovido a CREATOR por verificación de identidad", user.getUsername());
+        }, () -> log.warn("Verificación VERIFIED sin usuario con id {}", userId));
     }
 
     /**

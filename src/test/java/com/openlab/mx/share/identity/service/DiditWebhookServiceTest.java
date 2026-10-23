@@ -5,6 +5,9 @@ import com.openlab.mx.share.identity.entity.DiditVerification;
 import com.openlab.mx.share.identity.entity.VerificationStatus;
 import com.openlab.mx.share.identity.repository.DiditVerificationRepository;
 import com.openlab.mx.share.identity.repository.DiditWebhookEventRepository;
+import com.openlab.mx.share.user.entity.Role;
+import com.openlab.mx.share.user.entity.User;
+import com.openlab.mx.share.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,6 +32,8 @@ class DiditWebhookServiceTest {
     private DiditVerificationRepository verificationRepository;
     @Mock
     private DiditWebhookEventRepository eventRepository;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private DiditWebhookService service;
@@ -147,5 +152,47 @@ class DiditWebhookServiceTest {
         assertEquals(WebhookOutcome.IGNORED, outcome);
         verify(eventRepository).save(any());
         verify(verificationRepository, never()).save(any());
+    }
+
+    /**
+     * Decisión de producto B: completar el KYC habilita publicar, así que la
+     * aprobación de Didit promueve USER → CREATOR. Sin esto el usuario
+     * verificado seguiría rebotando en el @PreAuthorize de /experiences.
+     */
+    @Test
+    void approved_promueve_al_usuario_a_creador() {
+        DiditVerification row = DiditVerification.started(7L, "s1");
+        when(verificationRepository.findByUserId(7L)).thenReturn(Optional.of(row));
+        User usuario = User.builder().id(7L).username("nuevo").role(Role.USER).build();
+        when(userRepository.findById(7L)).thenReturn(Optional.of(usuario));
+
+        service.handle(delivery("e1", "s1", "7", "Approved"));
+
+        assertEquals(Role.CREATOR, usuario.getRole());
+        verify(userRepository).save(usuario);
+    }
+
+    @Test
+    void declined_no_promueve_a_creador() {
+        DiditVerification row = DiditVerification.started(7L, "s1");
+        when(verificationRepository.findByUserId(7L)).thenReturn(Optional.of(row));
+
+        service.handle(delivery("e1", "s1", "7", "Declined"));
+
+        verify(userRepository, never()).save(any());
+    }
+
+    /** Idempotencia: un creador que ya lo era no se vuelve a escribir. */
+    @Test
+    void approved_de_un_creador_existente_no_lo_guarda_de_nuevo() {
+        DiditVerification row = DiditVerification.started(7L, "s1");
+        when(verificationRepository.findByUserId(7L)).thenReturn(Optional.of(row));
+        User usuario = User.builder().id(7L).username("ya-creador").role(Role.CREATOR).build();
+        when(userRepository.findById(7L)).thenReturn(Optional.of(usuario));
+
+        service.handle(delivery("e1", "s1", "7", "Approved"));
+
+        assertEquals(Role.CREATOR, usuario.getRole());
+        verify(userRepository, never()).save(any());
     }
 }
