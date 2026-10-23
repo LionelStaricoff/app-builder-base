@@ -1,4 +1,4 @@
-﻿package com.openlab.mx.share.shared;
+package com.openlab.mx.share.shared;
 
 import com.openlab.mx.share.shared.config.H2DatasourceCondition;
 import com.openlab.mx.share.user.entity.Role;
@@ -7,9 +7,9 @@ import com.openlab.mx.share.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.annotation.Order;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 

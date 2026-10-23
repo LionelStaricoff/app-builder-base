@@ -1,4 +1,4 @@
-﻿package com.openlab.mx.share.experience;
+package com.openlab.mx.share.experience;
 
 import com.openlab.mx.share.experience.entity.Subrubro;
 import com.openlab.mx.share.experience.repository.SubrubroRepository;
