@@ -40,3 +40,7 @@ data/
 /.env
 .worktrees/
 .superpowers/
+
+# Export del prototipo de Figma (~8 MB de HTML/assets): material de diseño,
+# no código. Se referencia desde docs/superpowers/specs, no se versiona.
+/features/
