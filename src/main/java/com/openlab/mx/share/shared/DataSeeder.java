@@ -67,6 +67,7 @@ public class DataSeeder implements CommandLineRunner {
                 .currencyCode("MXN")
                 .role(Role.CREATOR)
                 .spPoints(0)
+                .interestsOnboarded(true)
                 .build());
         userRepository.save(User.builder()
                 .username("demo_user")
@@ -81,6 +82,7 @@ public class DataSeeder implements CommandLineRunner {
                 .currencyCode("MXN")
                 .role(Role.USER)
                 .spPoints(0)
+                .interestsOnboarded(true)
                 .build());
     }
 }

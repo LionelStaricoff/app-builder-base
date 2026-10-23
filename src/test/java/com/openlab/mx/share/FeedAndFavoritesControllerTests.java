@@ -250,6 +250,9 @@ class FeedAndFavoritesControllerTests {
                 .currencyCode("MXN")
                 .role(Role.USER)
                 .spPoints(0)
+                // El feed gatea a quien no pasó por el onboarding de intereses;
+                // estos tests verifican ubicación, no onboarding.
+                .interestsOnboarded(true)
                 .build());
         return base;
     }

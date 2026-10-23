@@ -31,6 +31,12 @@ public class FeedController {
                        @RequestParam(required = false) String country,
                        Model model) {
         User user = currentUser.get();
+        // Onboarding de intereses: el login entra directo acá
+        // (defaultSuccessUrl("/feed", true)), así que este es el único punto de
+        // gate. /feed/api NO se gatea: el scroll infinito espera JSON.
+        if (user != null && !user.isInterestsOnboarded()) {
+            return "redirect:/onboarding/intereses";
+        }
         // Búsqueda manual de otro lugar (país y/o ciudad) pisa la ciudad del perfil.
         String effectiveCity = city != null && !city.isBlank() ? city.trim() : (user != null ? user.getCity() : null);
         Page<ExperienceFeedDTO> feedPage = feedService.page(
