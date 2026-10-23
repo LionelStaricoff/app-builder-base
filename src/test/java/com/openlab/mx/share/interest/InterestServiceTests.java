@@ -208,4 +208,21 @@ class InterestServiceTests {
         assertEquals("AVENTURA", intereses.get(0).getSubrubro().getCategoria());
         assertEquals("SOCIAL", intereses.get(1).getSubrubro().getCategoria());
     }
+
+    @Test
+    void ordenarPoneElOrdenDelCatalogo() {
+        Subrubro social = unoDe("SOCIAL");
+        Subrubro aventura = unoDe("AVENTURA");
+
+        var ordenados = service.ordenar(List.of(social, aventura));
+
+        assertEquals(aventura.getId(), ordenados.get(0).getId());
+        assertEquals(social.getId(), ordenados.get(1).getId());
+    }
+
+    @Test
+    void ordenarToleraNullYVacio() {
+        assertEquals(List.of(), service.ordenar(null));
+        assertEquals(List.of(), service.ordenar(List.of()));
+    }
 }

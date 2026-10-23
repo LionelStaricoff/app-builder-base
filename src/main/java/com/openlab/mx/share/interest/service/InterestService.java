@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,11 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class InterestService {
+
+    /** Rubro primero, después nombre: el orden de lectura de toda la feature. */
+    private static final Comparator<Subrubro> ORDEN_CATALOGO = Comparator
+            .comparingInt((Subrubro s) -> ordenCategoria(s.getCategoria()))
+            .thenComparing(Subrubro::getNombre, String.CASE_INSENSITIVE_ORDER);
 
     /** Techo de intereses: con 21 subrubros en el catálogo, más que esto deja
      *  de ser una señal y el paso de niveles se vuelve una lista eterna. */
@@ -79,9 +85,22 @@ public class InterestService {
             return List.of();
         }
         return userInterestRepository.findByUserId(user.getId()).stream()
-                .sorted(Comparator
-                        .comparingInt((UserInterest i) -> ordenCategoria(i.getSubrubro().getCategoria()))
-                        .thenComparing(i -> i.getSubrubro().getNombre(), String.CASE_INSENSITIVE_ORDER))
+                .sorted(Comparator.comparing(UserInterest::getSubrubro, ORDEN_CATALOGO))
+                .toList();
+    }
+
+    /**
+     * Normaliza una colección arbitraria de subrubros al orden del catálogo.
+     * El paso 2 lo usa porque el POST del paso 1 llega en el orden del DOM, no
+     * en el orden en que el usuario eligió.
+     */
+    public List<Subrubro> ordenar(Collection<Subrubro> subrubros) {
+        if (subrubros == null) {
+            return List.of();
+        }
+        return subrubros.stream()
+                .filter(Objects::nonNull)
+                .sorted(ORDEN_CATALOGO)
                 .toList();
     }
 
