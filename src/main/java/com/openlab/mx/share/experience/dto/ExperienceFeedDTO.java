@@ -34,6 +34,12 @@ public record ExperienceFeedDTO(
         List<String> reservedAvatars,
         /** Qué incluye el precio y qué llevar. Nullable: la card los omite si vienen vacíos. */
         String includes,
-        String bring
+        String bring,
+        /**
+         * Distancia en km del usuario al punto de encuentro. Null cuando no hay
+         * cómo medirla (sin ubicación del usuario o sin coordenadas del punto):
+         * la card entonces no muestra el chip.
+         */
+        Double distanceKm
 ) {
 }

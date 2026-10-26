@@ -67,6 +67,22 @@ class ExperienceGoingTests {
         mockMvc.perform(get("/experiences/" + expId).with(user(observador.getUsername())))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString(ana.getUsername())))
+                // Una sola persona: el detalle concuerda en singular ("1 persona
+                // ya reservó"). El plural tiene su propio test.
+                .andExpect(content().string(containsString("persona ya reservó")));
+    }
+
+    @Test
+    void usaElPluralCuandoReservaronVariasPersonas() throws Exception {
+        User duenio = crearUsuario("duenio-van4");
+        Long expId = crearExperiencia(duenio);
+        ExperienceInstance fecha = instanciaFutura(expId);
+        reservar(fecha, crearUsuario("ana"), ReservationStatus.CONFIRMADA);
+        reservar(fecha, crearUsuario("beto"), ReservationStatus.CONFIRMADA);
+        User observador = crearUsuario("observador-van4");
+
+        mockMvc.perform(get("/experiences/" + expId).with(user(observador.getUsername())))
+                .andExpect(status().isOk())
                 .andExpect(content().string(containsString("personas ya reservaron")));
     }
 
@@ -100,7 +116,8 @@ class ExperienceGoingTests {
 
         mockMvc.perform(get("/experiences/" + expId).with(user(observador.getUsername())))
                 .andExpect(status().isOk())
-                .andExpect(content().string(not(containsString("personas ya reservaron"))));
+                // Sin nadie confirmado no hay sección, ni en singular ni en plural.
+                .andExpect(content().string(not(containsString("id=\"quienes-van\""))));
     }
 
     private void reservar(ExperienceInstance fecha, User quien, ReservationStatus estado) {

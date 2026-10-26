@@ -22,7 +22,11 @@
     if (loading) loading.hidden = false;
     try {
       const query = new URLSearchParams({ page: String(page) });
-      ['category', 'country', 'city'].forEach((key) => {
+      // Al agregar un filtro nuevo hay que sumarlo acá: la página 0 sale del
+      // servidor con todos los filtros del query, pero las siguientes solo con
+      // los que se copian a mano. Si falta, la lista cambia de criterio a mitad
+      // del scroll (el filtro de distancia era el último que faltaba).
+      ['category', 'country', 'city', 'distance'].forEach((key) => {
         const value = params.get(key);
         if (value) query.set(key, value);
       });

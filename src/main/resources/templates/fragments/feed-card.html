@@ -24,6 +24,19 @@
             
             <div class="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent pointer-events-none z-10"></div>
 
+            <!--/* Distancia al punto de encuentro. Solo aparece cuando se pudo
+                 medir (dto.distanceKm != null): en favoritos, o sin ubicación,
+                 no se inventa un número. */-->
+            <div th:if="${dto.distanceKm != null}"
+                 class="absolute top-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 z-20 border border-white/40">
+              <svg class="w-3.5 h-3.5 text-teal-700" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <span class="text-[11px] font-bold text-teal-700"
+                    th:text="|a ${#numbers.formatDecimal(dto.distanceKm, 1, 1)} km|">a 2,4 km</span>
+            </div>
+
             <div class="absolute top-4 right-4 flex items-center gap-2 z-20">
               <button class="bg-white/90 hover:bg-white text-gray-800 p-2.5 rounded-full backdrop-blur-md shadow-md transition-all active:scale-95 flex items-center justify-center" th:attr="data-share-experience=${dto.id}">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>

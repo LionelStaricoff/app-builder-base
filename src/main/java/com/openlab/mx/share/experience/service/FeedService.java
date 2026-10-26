@@ -70,7 +70,14 @@ public class FeedService {
     /** Firma original: sin buscador libre (delega con cityQuery = null). */
     public Page<ExperienceFeedDTO> page(Long userId, String userCity, Double lat, Double lng,
                                         ExperienceCategory category, String country, int pageNumber) {
-        return page(userId, userCity, lat, lng, category, country, null, pageNumber);
+        return page(userId, userCity, lat, lng, category, country, null, null, pageNumber);
+    }
+
+    /** Igual que la firma con buscador libre, pero sin radio (maxDistanceKm = null). */
+    public Page<ExperienceFeedDTO> page(Long userId, String userCity, Double lat, Double lng,
+                                        ExperienceCategory category, String country,
+                                        String cityQuery, int pageNumber) {
+        return page(userId, userCity, lat, lng, category, country, cityQuery, null, pageNumber);
     }
 
     /**
@@ -78,10 +85,15 @@ public class FeedService {
      * sin distinguir mayúsculas) contra cualquier parada, la ciudad del
      * creador o el punto de reunión geocodificado. Se combina (AND) con el
      * filtro exacto {@code country} del dropdown.
+     *
+     * <p>{@code maxDistanceKm} es el radio en km desde {@code lat}/{@code lng}
+     * al punto de encuentro: es un FILTRO, no solo un orden. Las experiencias
+     * sin coordenadas quedan fuera cuando hay radio, porque de ellas no se
+     * puede afirmar que estén cerca (y colarlas rompería la promesa del chip).
      */
     public Page<ExperienceFeedDTO> page(Long userId, String userCity, Double lat, Double lng,
                                         ExperienceCategory category, String country,
-                                        String cityQuery, int pageNumber) {
+                                        String cityQuery, Integer maxDistanceKm, int pageNumber) {
         List<Experience> experiences = category != null
                 ? experienceRepository.findByStatusAndCategory(ExperienceStatus.ACTIVE, category)
                 : experienceRepository.findByStatus(ExperienceStatus.ACTIVE);
@@ -98,6 +110,15 @@ public class FeedService {
                     allActiveStopsById();
             experiences = experiences.stream()
                     .filter(e -> matchesLocationQuery(e, wanted, stopsByExperience))
+                    .toList();
+        }
+        // Radio: sin ubicación para medir, no se puede filtrar (se ignora, no se
+        // asume "cero km"). Con ubicación, las experiencias sin punto de
+        // encuentro quedan fuera porque su distancia es desconocida.
+        if (maxDistanceKm != null && maxDistanceKm > 0) {
+            int radio = maxDistanceKm;
+            experiences = experiences.stream()
+                    .filter(e -> distance(lat, lng, e) <= radio)
                     .toList();
         }
 
@@ -141,7 +162,8 @@ public class FeedService {
         }
         int to = Math.min(from + PAGE_SIZE, entries.size());
         List<ExperienceFeedDTO> content = entries.subList(from, to).stream()
-                .map(entry -> toDto(entry.experience(), entry.nextDate(), userId))
+                .map(entry -> toDto(entry.experience(), entry.nextDate(), userId,
+                        distanceKm(lat, lng, entry.experience())))
                 .toList();
         return new PageImpl<>(content, PageRequest.of(Math.max(pageNumber, 0), PAGE_SIZE),
                 entries.size());
@@ -273,7 +295,8 @@ public class FeedService {
 
     /** DTO público con próxima fecha calculada (usado por favoritos). */
     public ExperienceFeedDTO dtoFor(Experience experience, Long userId) {
-        return toDto(experience, nextDateOf(experience, LocalDate.now(ZoneId.systemDefault())), userId);
+        return toDto(experience, nextDateOf(experience, LocalDate.now(ZoneId.systemDefault())),
+                userId, null);
     }
 
     /** Marca una experiencia como vista para el usuario actual. */
@@ -310,6 +333,17 @@ public class FeedService {
         return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
+    /**
+     * Distancia para el chip de la card: null cuando no hay cómo medirla (sin
+     * ubicación del usuario o sin punto de encuentro). Sin este null la card
+     * mostraría "a 20015086,6 km" porque {@link #distance} usa MAX_VALUE como
+     * "muy lejos" para el orden.
+     */
+    private Double distanceKm(Double lat, Double lng, Experience experience) {
+        double km = distance(lat, lng, experience);
+        return km == Double.MAX_VALUE ? null : km;
+    }
+
     private LocalDate nextDateOf(Experience experience, LocalDate today) {
         return instanceRepository
                 .findFirstByExperienceIdAndDateGreaterThanEqualAndStatusOrderByDateAsc(
@@ -318,7 +352,8 @@ public class FeedService {
                 .orElse(null);
     }
 
-    private ExperienceFeedDTO toDto(Experience experience, LocalDate nextDate, Long userId) {
+    private ExperienceFeedDTO toDto(Experience experience, LocalDate nextDate, Long userId,
+                                    Double distanceKm) {
         List<String> images = imageRepository
                 .findByExperienceIdOrderByIdAsc(experience.getId()).stream()
                 .map(img -> img.getData())
@@ -363,7 +398,8 @@ public class FeedService {
                 reservedCountFor(experience),
                 reservedAvatarsFor(experience),
                 experience.getIncludes(),
-                experience.getBring()
+                experience.getBring(),
+                distanceKm
         );
     }
 

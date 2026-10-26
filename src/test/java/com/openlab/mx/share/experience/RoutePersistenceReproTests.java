@@ -125,11 +125,19 @@ class RoutePersistenceReproTests {
         // El HTML que consume el scroll infinito lleva paradas y fecha.
         String nombre = dto.name();
         boolean encontrado = false;
-        for (int page = 0; page < 10 && !encontrado; page++) {
+        // El feed pagina de a 1 (FeedService.PAGE_SIZE) y esta experiencia queda
+        // ultima entre las que empatan en ciudad/distancia/fecha, asi que un tope
+        // fijo de paginas hacia que el test dependiera de cuantas activas dejo la
+        // suite. Se recorre hasta que /feed/cards devuelve cuerpo vacio (no hay
+        // mas paginas), con un tope de seguridad para no colgarse.
+        for (int page = 0; page < 300 && !encontrado; page++) {
             MvcResult cards = mockMvc.perform(get("/feed/cards").param("page", String.valueOf(page)))
                     .andExpect(status().isOk())
                     .andReturn();
             String html = cards.getResponse().getContentAsString();
+            if (html.isBlank()) {
+                break;
+            }
             if (html.contains(nombre)) {
                 encontrado = true;
                 org.junit.jupiter.api.Assertions.assertTrue(html.contains("Mirador del Cerro"),
@@ -497,14 +505,46 @@ class RoutePersistenceReproTests {
                 "sin datos no se renderiza un bloque vacío");
     }
 
+    /**
+     * DTO de feed para renderizar la card sin base de datos.
+     *
+     * <p>OJO: {@code ExperienceFeedDTO} es un record y se construye por
+     * POSICIÓN. Cada componente nuevo (el último fue {@code distanceKm}) hay que
+     * agregarlo acá o el test deja de compilar.
+     */
     private com.openlab.mx.share.experience.dto.ExperienceFeedDTO dtoDeFeed(
             List<com.openlab.mx.share.experience.dto.ExperienceStopDTO> paradas,
             String includes, String bring) {
+        return dtoDeFeed(paradas, includes, bring, null);
+    }
+
+    private com.openlab.mx.share.experience.dto.ExperienceFeedDTO dtoDeFeed(
+            List<com.openlab.mx.share.experience.dto.ExperienceStopDTO> paradas,
+            String includes, String bring, Double distanceKm) {
         return new com.openlab.mx.share.experience.dto.ExperienceFeedDTO(
                 999L, "Ruta test", "Desc", "QUJD", List.of("QUJD"), "Mirador del Cerro · —",
                 150, LocalDate.now().plusDays(7), BigDecimal.valueOf(250), 4.5, false,
                 "MXN", paradas, "[{\"placeName\":\"Mirador del Cerro\"}]",
-                "creador-demo", null, 4, 2, 2, List.of(), includes, bring);
+                "creador-demo", null, 4, 2, 2, List.of(), includes, bring, distanceKm);
+    }
+
+    @Test
+    void laCardMuestraLaDistanciaSoloCuandoSePudoMedir() {
+        var paradas = List.of(
+                new com.openlab.mx.share.experience.dto.ExperienceStopDTO(
+                        0, "Mirador del Cerro", "—", "—", 19.44, -99.14));
+
+        // Con distancia: el chip aparece con un decimal y coma decimal (locale es).
+        String conDistancia = renderFeed(dtoDeFeed(paradas, null, null, 2.4));
+        org.junit.jupiter.api.Assertions.assertTrue(conDistancia.contains("a 2,4 km"),
+                "con distancia medida la card la muestra en km");
+        org.junit.jupiter.api.Assertions.assertTrue(conDistancia.contains("absolute top-4 left-4"),
+                "el chip de distancia va arriba a la izquierda, sin tapar favoritos ni compartir");
+
+        // Sin distancia (favoritos, o usuario sin ubicación): no se inventa nada.
+        String sinDistancia = renderFeed(dtoDeFeed(paradas, null, null));
+        org.junit.jupiter.api.Assertions.assertFalse(sinDistancia.contains("absolute top-4 left-4"),
+                "sin distancia no se renderiza el chip");
     }
 
     private String renderFeed(com.openlab.mx.share.experience.dto.ExperienceFeedDTO dto) {

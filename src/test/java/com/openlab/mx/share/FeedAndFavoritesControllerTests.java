@@ -103,6 +103,14 @@ class FeedAndFavoritesControllerTests {
                 .build());
     }
 
+    /** Mueve el punto de encuentro: createExperience siempre cae en CDMX. */
+    private void moverPuntoDeEncuentro(Long expId, double lat, double lng) {
+        var exp = experienceRepository.findById(expId).orElseThrow();
+        exp.setMeetingLat(lat);
+        exp.setMeetingLng(lng);
+        experienceRepository.save(exp);
+    }
+
     // ---------- Feed ----------
 
     @Test
@@ -294,6 +302,44 @@ class FeedAndFavoritesControllerTests {
         vaciarTodo(); // sin activas sin paradas: el fallback no debe geocodificar en tests
         mockMvc.perform(get("/feed/cards").param("page", "0").param("country", "Argentina"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void feedConRadioExcluyeLoQueQuedaLejos() throws Exception {
+        // demo_user está en CDMX (19.4326,-99.1332): la única activa está en
+        // Madrid, así que un radio de 5 km tiene que dejarla afuera.
+        vaciarTodo();
+        String lejos = "Madrid Exp " + UUID.randomUUID();
+        Long id = createExperience(lejos, ExperienceCategory.CULTURAL);
+        moverPuntoDeEncuentro(id, 40.4168, -3.7038);
+
+        mockMvc.perform(get("/feed"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString(lejos)));
+
+        mockMvc.perform(get("/feed").param("distance", "5"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString(lejos))));
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void feedMuestraLosChipsDeDistancia() throws Exception {
+        mockMvc.perform(get("/feed").param("distance", "5"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("distance-pill")))
+                .andExpect(content().string(containsString("Hasta 5 km")));
+    }
+
+    @Test
+    void feedSinCoordenadasNoMuestraChipsDeDistancia() throws Exception {
+        // Sin coordenadas no hay de dónde medir: el chip no se muestra en vez
+        // de quedar ahí sin efecto.
+        String username = crearUsuarioSinCiudad();
+        mockMvc.perform(get("/feed").param("distance", "5").with(user(username)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("distance-pill"))));
     }
 
     // ---------- Favoritos ----------
