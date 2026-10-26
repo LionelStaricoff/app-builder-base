@@ -36,7 +36,18 @@
     var buttons = form.querySelectorAll('button[type="submit"], button:not([type])');
     Array.prototype.forEach.call(buttons, function (b) {
       if (b.disabled) return;
-      b.disabled = true;
+      // El navegador arma la lista de campos DESPUÉS de este evento y descarta
+      // los controles con el atributo `disabled`. Por eso al botón que disparó
+      // el envío NO se lo deshabilita acá: se perdería su name/value y el form
+      // viajaría sin ese dato (los chips de distancia mandaban "/feed?" vacío).
+      // Se lo deshabilita en el tick siguiente, cuando la lista ya está armada.
+      if (e.submitter === b) {
+        setTimeout(function () {
+          b.disabled = true;
+        }, 0);
+      } else {
+        b.disabled = true;
+      }
       b.classList.add('is-loading');
       // Sin regex: la etiqueta original puede traer los puntos suspensivos
       // que el propio loader agrega.
