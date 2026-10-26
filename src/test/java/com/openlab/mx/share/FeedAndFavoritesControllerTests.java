@@ -333,6 +333,31 @@ class FeedAndFavoritesControllerTests {
     }
 
     @Test
+    @WithMockUser("demo_user")
+    void chipsDeCategoriaConservanElRadioElegido() throws Exception {
+        // Los chips de categoría son links, así que tienen que arrastrar el
+        // radio activo: si no, tocar una categoría borraba en silencio la
+        // distancia elegida y el feed volvía a mostrar lo de siempre.
+        mockMvc.perform(get("/feed").param("distance", "5"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("category=CULTURAL&amp;distance=5")))
+                // "Todas" limpia la categoría pero NO el radio.
+                .andExpect(content().string(containsString("href=\"/feed?distance=5\"")));
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void chipsDeCategoriaNoLlevanRadioVacioSinFiltro() throws Exception {
+        // Sin radio activo el link tiene que quedar limpio: Thymeleaf emite
+        // "distance=" cuando el parámetro es null, así que la plantilla elige
+        // entre dos links en vez de pasar el null.
+        mockMvc.perform(get("/feed"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("href=\"/feed?category=CULTURAL\"")))
+                .andExpect(content().string(not(containsString("category=CULTURAL&amp;distance="))));
+    }
+
+    @Test
     void feedSinCoordenadasNoMuestraChipsDeDistancia() throws Exception {
         // Sin coordenadas no hay de dónde medir: el chip no se muestra en vez
         // de quedar ahí sin efecto.
