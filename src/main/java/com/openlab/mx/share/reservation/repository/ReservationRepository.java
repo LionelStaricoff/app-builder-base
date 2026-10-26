@@ -40,4 +40,28 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     /** La instancia tiene reservas vigentes (las canceladas liberan el slot). */
     boolean existsByInstanceIdAndStatusNot(Long instanceId, ReservationStatus status);
+
+    /**
+     * "Quiénes van" del detalle: personas con reserva CONFIRMADA en alguna fecha
+     * futura de la experiencia, sin repetir a quien reservó varias veces.
+     *
+     * <p>Solo {@code CONFIRMADA}: las PENDIENTES todavía no pagaron y las
+     * CANCELADAS liberaron su lugar, así que mostrarlas sería mentirle a quien
+     * está por comprar. Se proyecta a DTO para no arrastrar la entidad entera.
+     */
+    @Query("""
+            select distinct new com.openlab.mx.share.reservation.dto.ExperienceGoerDTO(
+                u.username, u.avatarBase64)
+            from Reservation r
+            join r.instance i
+            join r.user u
+            where i.experience.id = :experienceId
+              and r.status = :status
+              and i.date >= :today
+            order by u.username
+            """)
+    List<com.openlab.mx.share.reservation.dto.ExperienceGoerDTO> goersForExperience(
+            @Param("experienceId") Long experienceId,
+            @Param("status") ReservationStatus status,
+            @Param("today") java.time.LocalDate today);
 }

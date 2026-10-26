@@ -11,7 +11,10 @@ import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
+import com.openlab.mx.share.experience.service.QuestionService;
 import com.openlab.mx.share.experience.service.RatingService;
+import com.openlab.mx.share.reservation.entity.ReservationStatus;
+import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.reservation.service.RefundPolicy;
 import com.openlab.mx.share.shared.JacksonHelper;
 import com.openlab.mx.share.shared.exception.DomainException;
@@ -51,6 +54,8 @@ public class ExperienceController {
     private final JacksonHelper jacksonHelper;
     private final RefundPolicy refundPolicy;
     private final RatingService ratingService;
+    private final QuestionService questionService;
+    private final ReservationRepository reservationRepository;
 
     @Value("${identity.verification.enabled:true}")
     private boolean verificationEnabled;
@@ -132,8 +137,16 @@ public class ExperienceController {
         }
         model.addAttribute("refundPercentByInstance", reembolso);
         var usuario = currentUser();
-        model.addAttribute("esDueno", usuario != null && experience.getCreator() != null
-                && usuario.getId().equals(experience.getCreator().getId()));
+        boolean esDueno = usuario != null && experience.getCreator() != null
+                && usuario.getId().equals(experience.getCreator().getId());
+        model.addAttribute("esDueno", esDueno);
+        // Piezas de UI que el detalle no tenia: quien va (reservas confirmadas
+        // en fechas futuras) y las preguntas publicas. La anfitriona responde,
+        // no pregunta; quien no tiene cuenta ve la seccion pero no el formulario.
+        model.addAttribute("goers", reservationRepository.goersForExperience(
+                id, ReservationStatus.CONFIRMADA, LocalDate.now(ZoneId.systemDefault())));
+        model.addAttribute("questions", questionService.questionsFor(id));
+        model.addAttribute("puedePreguntar", usuario != null && !esDueno);
         // El organizador se muestra en la card del feed pero el detalle lo
         // omitía (auditoría UI). Se resuelve acá para no exponer el proxy lazy
         // en la vista ni cambiar la entidad.

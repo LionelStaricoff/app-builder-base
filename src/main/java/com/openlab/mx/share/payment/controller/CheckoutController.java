@@ -55,6 +55,10 @@ public class CheckoutController {
         model.addAttribute("instance", instance);
         model.addAttribute("attendees", cupos);
         model.addAttribute("total", total);
+        // Desglose de la revisión previa al pago: precio unitario × personas.
+        // El comprador no paga ninguna comisión extra (el 5% se descuenta del
+        // payout del creador), así que el total es exactamente esa cuenta.
+        model.addAttribute("unitPrice", instance.getExperience().getPrice());
         model.addAttribute("currencyCode", instance.getExperience().getCurrencyCode() == null
                 ? "MXN" : instance.getExperience().getCurrencyCode());
         // Política de reembolso visible antes de pagar (cartel) + el % que
