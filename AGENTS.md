@@ -8,7 +8,8 @@ request dado, no que el cliente genere el request correcto.
 Todo cambio de UI se verifica en un navegador real antes de darlo por listo.
 
 - Automatizado: `cd e2e; npx playwright test`. Levanta la app sola en el puerto
-  8081 contra H2 en memoria y siembra 3 experiencias a 0 / 2,6 / 9,1 km.
+  8081 contra H2 en memoria y siembra 3 experiencias a 0 / 2,6 / 9,1 km. La
+  primera vez (o tras un pull): `npm ci` + `npx playwright install chromium`.
 - Manual: `SPRING_DATASOURCE_URL=jdbc:h2:mem:dev;DB_CLOSE_DELAY=-1` +
   `SPRING_DATASOURCE_USERNAME=sa` + `SPRING_DATASOURCE_PASSWORD=` +
   `IDENTITY_VERIFICATION_ENABLED=false` en la MISMA invocación del shell (las
