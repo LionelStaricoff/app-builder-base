@@ -15,6 +15,7 @@
   let page = 1; // la 0 ya vino renderizada en el HTML
   let loadingPage = false;
   let done = false;
+  let sentinelVisible = false;
 
   async function loadNext() {
     if (loadingPage || done) return;
@@ -51,10 +52,19 @@
       }
 
       list.insertAdjacentHTML('beforeend', html);
-      window.initCarousels?.(list);
-      window.dispatchEvent(new CustomEvent('feed-cards-added', { detail: { list } }));
+      // La página ya está en el DOM: se avanza ANTES de cualquier otra cosa
+      // para que un fallo posterior no vuelva a pedir la misma y duplique cards.
       page += 1;
+      // Un carrusel roto no puede cortar el feed: antes esta llamada estaba
+      // dentro del try grande y su excepción marcaba done = true en silencio.
+      try {
+        window.initCarousels?.(list);
+      } catch (e) {
+        console.error('No se pudieron inicializar los carruseles nuevos', e);
+      }
+      window.dispatchEvent(new CustomEvent('feed-cards-added', { detail: { list } }));
     } catch (e) {
+      console.error('No se pudieron cargar más experiencias', e);
       done = true;
     } finally {
       loadingPage = false;
@@ -62,8 +72,26 @@
     }
   }
 
+  /**
+   * El observer avisa SOLO cuando el centinela cruza el umbral. Si después de
+   * insertar las cards sigue a la vista (feed corto, pantalla grande o el
+   * rootMargin de 400px), no hay un segundo aviso y el feed se quedaba clavado
+   * con la mitad de las experiencias. Por eso se sigue pidiendo hasta llenar la
+   * pantalla o hasta que el servidor devuelva vacío.
+   */
+  async function drain() {
+    while (sentinelVisible && !done) {
+      const antes = page;
+      await loadNext();
+      if (page === antes) return; // no entró nada nuevo: se terminó o falló
+    }
+  }
+
   const observer = new IntersectionObserver(
-    (entries) => entries.forEach((entry) => entry.isIntersecting && loadNext()),
+    (entries) => entries.forEach((entry) => {
+      sentinelVisible = entry.isIntersecting;
+      if (entry.isIntersecting) drain();
+    }),
     { rootMargin: '400px' }
   );
   observer.observe(sentinel);
