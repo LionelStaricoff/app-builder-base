@@ -48,3 +48,8 @@ data/
 # Artefactos de Playwright MCP (snapshots de página, logs de consola):
 # se regeneran en cada sesión, no se versionan.
 .playwright-mcp/
+
+### E2E (Playwright) ###
+e2e/node_modules/
+e2e/test-results/
+e2e/playwright-report/

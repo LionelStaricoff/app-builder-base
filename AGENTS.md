@@ -1,3 +1,21 @@
+## Verificación en navegador (obligatoria para cambios de UI)
+
+La suite Java (MockMvc + Thymeleaf) NO ejecuta JavaScript: sola, no puede ver
+bugs de submits, de URLs que arma el cliente, del scroll infinito ni de estados
+de botones. Una suite verde solo prueba que el servidor responde bien a un
+request dado, no que el cliente genere el request correcto.
+
+Todo cambio de UI se verifica en un navegador real antes de darlo por listo.
+
+- Automatizado: `cd e2e; npx playwright test`. Levanta la app sola en el puerto
+  8081 contra H2 en memoria y siembra 3 experiencias a 0 / 2,6 / 9,1 km.
+- Manual: `SPRING_DATASOURCE_URL=jdbc:h2:mem:dev;DB_CLOSE_DELAY=-1` +
+  `SPRING_DATASOURCE_USERNAME=sa` + `SPRING_DATASOURCE_PASSWORD=` +
+  `IDENTITY_VERIFICATION_ENABLED=false` en la MISMA invocación del shell (las
+  env var no persisten entre comandos; si faltan, la app toma el `.env` y apunta
+  a la Postgres remota). Usuarios: `demo_user` / `demo_creator`, password
+  `Clave1234!`. El seeder solo carga usuarios: las experiencias hay que crearlas.
+
 <!-- graft:start -->
 ## Graft — repo context graph
 

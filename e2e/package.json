@@ -1,0 +1,13 @@
+{
+  "name": "share-e2e",
+  "private": true,
+  "description": "Smoke E2E de la UI que la suite MockMvc no puede ver: lo que el navegador arma (URLs, scroll infinito, favoritos).",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1"
+  }
+}
