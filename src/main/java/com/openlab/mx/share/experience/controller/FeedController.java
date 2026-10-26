@@ -7,6 +7,7 @@ import com.openlab.mx.share.shared.CurrentUser;
 import com.openlab.mx.share.user.entity.Role;
 import com.openlab.mx.share.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,6 +30,9 @@ public class FeedController {
 
     private final FeedService feedService;
     private final CurrentUser currentUser;
+
+    @Value("${identity.verification.enabled:true}")
+    private boolean verificationEnabled;
 
     @GetMapping("/feed")
     public String feed(@RequestParam(required = false) ExperienceCategory category,
@@ -59,7 +63,12 @@ public class FeedController {
         // Publicar exige KYC completado, y completarlo promueve a CREATOR
         // (DiditWebhookService). El CTA del empty state se muestra según esto:
         // sin el atributo, un USER vería un botón que lo rebota al feed.
-        model.addAttribute("puedePublicar", user != null && user.getRole() == Role.CREATOR);
+        // Con el kill-switch desactivado, cualquier usuario autenticado puede
+        // publicar (no hay KYC ni promoción a CREATOR).
+        boolean puedePublicar = user != null && (verificationEnabled
+                ? user.getRole() == Role.CREATOR
+                : true);
+        model.addAttribute("puedePublicar", puedePublicar);
         // "Activado" = hay ubicación guardada (coords o ciudad), no que se haya
         // resuelto la ciudad: el GPS puede no traer ciudad y igual estar conectado.
         model.addAttribute("hasLocation", user != null

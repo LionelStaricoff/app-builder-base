@@ -20,6 +20,7 @@ import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -51,17 +52,24 @@ public class ExperienceController {
     private final RefundPolicy refundPolicy;
     private final RatingService ratingService;
 
+    @Value("${identity.verification.enabled:true}")
+    private boolean verificationEnabled;
+
     @GetMapping("/experiences/new")
-    @PreAuthorize("hasRole('CREATOR')")
+    @PreAuthorize("isAuthenticated()")
     public String form(Model model) {
+        User user = currentUser();
+        if (verificationEnabled && user.getRole() != Role.CREATOR) {
+            return "redirect:/verificacion";
+        }
         model.addAttribute("experienceForm", emptyForm());
-        model.addAttribute("experienceCurrency", currentUser().getCurrencyCode());
+        model.addAttribute("experienceCurrency", user.getCurrencyCode());
         model.addAttribute("stops", List.of());
         return "experience/form";
     }
 
     @PostMapping("/experiences")
-    @PreAuthorize("hasRole('CREATOR')")
+    @PreAuthorize("isAuthenticated()")
     public String create(@Valid @ModelAttribute("experienceForm") ExperienceFormRequest request,
                          BindingResult bindingResult,
                          @RequestParam(required = false) String currencyCode,
@@ -72,6 +80,10 @@ public class ExperienceController {
                          @RequestParam(required = false, name = "stopLng") List<Double> stopLng,
                          Model model,
                          RedirectAttributes redirectAttributes) {
+        User user = currentUser();
+        if (verificationEnabled && user.getRole() != Role.CREATOR) {
+            return "redirect:/verificacion";
+        }
         if (bindingResult.hasErrors()) {
             repopulateForm(model, currencyCode,
                     toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
@@ -191,7 +203,9 @@ public class ExperienceController {
         User user = currentUser();
         List<Experience> experiencias = experienceService.mine(user.getId());
         model.addAttribute("experiencias", experiencias);
-        model.addAttribute("puedePublicar", user.getRole() == Role.CREATOR);
+        model.addAttribute("puedePublicar", verificationEnabled
+                ? user.getRole() == Role.CREATOR
+                : true);
         // Todas las fotos por experiencia para el carousel de la lista.
         java.util.Map<Long, List<String>> covers = new java.util.HashMap<>();
         for (Experience e : experiencias) {
