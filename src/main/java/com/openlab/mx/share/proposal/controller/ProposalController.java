@@ -61,8 +61,20 @@ public class ProposalController {
                            Model model) {
         User user = currentUser.require();
         cargar(model, user, next, draft);
-        model.addAttribute("form", new ProposalForm(null, null, null, null, null));
+        // Spec §5: los campos salen prellenados del borrador (?draft= o el
+        // último propio). Sin esto el select de categoría queda vacío y el
+        // `required` ni siquiera manda el POST de "Crear experiencia".
+        model.addAttribute("form", aForm((ExperienceDraft) model.getAttribute("borrador")));
         return "proposal/onboarding";
+    }
+
+    /** Contenido del borrador sobre un form vacío; sin borrador ⇒ form vacío. */
+    static ProposalForm aForm(ExperienceDraft borrador) {
+        if (borrador == null) {
+            return new ProposalForm(null, null, null, null, null);
+        }
+        return new ProposalForm(borrador.getName(), borrador.getDescription(),
+                borrador.getCategory(), borrador.getIncludes(), borrador.getBring());
     }
 
     /**

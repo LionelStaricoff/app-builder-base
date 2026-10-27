@@ -12,11 +12,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.repository.SubrubroRepository;
 import com.openlab.mx.share.interest.entity.UserInterest;
 import com.openlab.mx.share.interest.repository.UserInterestRepository;
 import com.openlab.mx.share.proposal.generator.ProposalGenerationException;
 import com.openlab.mx.share.proposal.generator.ProposalGenerator;
+import com.openlab.mx.share.proposal.entity.ExperienceDraft;
 import com.openlab.mx.share.proposal.repository.ExperienceDraftRepository;
 import com.openlab.mx.share.user.entity.Role;
 import com.openlab.mx.share.user.entity.User;
@@ -210,6 +212,34 @@ class ProposalControllerTests {
         mockMvc.perform(get("/onboarding/propuesta")
                         .with(user(user.getUsername())).param("draft", "abc"))
                 .andExpect(status().isOk());
+    }
+
+    /**
+     * Spec §5: los campos del form salen prellenados del borrador (?draft= o
+     * el ultimo propio). Sin esto, "Crear experiencia" falla en el navegador:
+     * el select de categoría queda vacío y el `required` ni siquiera manda el
+     * POST (lo cubrió el e2e antes que la suite Java).
+     */
+    @Test
+    void getPrecargaElFormDesdeElBorrador() throws Exception {
+        User user = usuarioNuevo();
+        ExperienceDraft draft = draftRepository.save(ExperienceDraft.builder()
+                .user(user)
+                .name("Nombre borrador unico")
+                .description("Descripcion del borrador para el form")
+                .category(ExperienceCategory.CULTURAL)
+                .build());
+
+        mockMvc.perform(get("/onboarding/propuesta")
+                        .with(user(user.getUsername()))
+                        .param("draft", String.valueOf(draft.getId())))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().string(org.hamcrest.Matchers.containsString(
+                                "value=\"Nombre borrador unico\"")))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().string(org.hamcrest.Matchers.containsString(
+                                "Descripcion del borrador para el form")));
     }
 
     @Test
