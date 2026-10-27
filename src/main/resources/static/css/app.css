@@ -177,7 +177,13 @@ h1, h2, h3, .brand-name {
 .feed-search.is-open { display: block; }
 .feed-search-toggle { color: #fecdd3; }
 .feed-search-toggle:hover { color: #fff; background-color: rgba(255, 255, 255, 0.2); }
-.feed-search-toggle.is-active { color: #fff; background-color: rgba(255, 255, 255, 0.25); }
+.feed-search-toggle.is-active { color: #fff; background-color: rgba(255, 255, 255, 0.38); }
+
+/* Fondo del nav del feed: patrón de puntos sobre el gradiente de marca. */
+.nav-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
 
 .card {
   background: var(--surface);
