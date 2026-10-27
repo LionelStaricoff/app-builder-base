@@ -18,6 +18,7 @@ import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.reservation.service.RefundPolicy;
 import com.openlab.mx.share.shared.JacksonHelper;
+import com.openlab.mx.share.shared.Ids;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.user.entity.Role;
 import com.openlab.mx.share.user.entity.User;
@@ -65,6 +66,7 @@ public class ExperienceController {
     @GetMapping("/experiences/new")
     @PreAuthorize("isAuthenticated()")
     public String form(@RequestParam(name = "draft", required = false) String draft,
+                       @RequestParam(name = "subtipo", required = false) String subtipo,
                        Model model) {
         User user = currentUser();
         // El gate de KYC va antes que cualquier prefill: sin rol CREATOR ni
@@ -75,6 +77,9 @@ public class ExperienceController {
         model.addAttribute("experienceForm", rellenar(user, draft));
         model.addAttribute("experienceCurrency", user.getCurrencyCode());
         model.addAttribute("stops", List.of());
+        // Subtipo elegido en la tarjeta de propuesta: entra por URL (parseado
+        // a mano, basura ⇒ null) y sale en el hidden del form para el POST.
+        model.addAttribute("subrubroId", Ids.parse(subtipo));
         return "experience/form";
     }
 
@@ -100,6 +105,7 @@ public class ExperienceController {
     public String create(@Valid @ModelAttribute("experienceForm") ExperienceFormRequest request,
                          BindingResult bindingResult,
                          @RequestParam(required = false) String currencyCode,
+                         @RequestParam(required = false, name = "subtipo") String subtipo,
                          @RequestParam(required = false, name = "stopPlace") List<String> stopPlace,
                          @RequestParam(required = false, name = "stopCity") List<String> stopCity,
                          @RequestParam(required = false, name = "stopCountry") List<String> stopCountry,
@@ -111,6 +117,7 @@ public class ExperienceController {
         if (verificationEnabled && user.getRole() != Role.CREATOR) {
             return "redirect:/verificacion";
         }
+        model.addAttribute("subrubroId", Ids.parse(subtipo));
         if (bindingResult.hasErrors()) {
             repopulateForm(model, currencyCode,
                     toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
@@ -119,6 +126,7 @@ public class ExperienceController {
         try {
             Experience experience = experienceService.create(request, currentUser(),
                     currencyCode, toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
+            experienceService.asignarSubrubro(experience.getId(), Ids.parse(subtipo), request.category());
             return "redirect:/experiences/" + experience.getId();
         } catch (com.openlab.mx.share.shared.exception.UnverifiedIdentityException e) {
             // KYC (Didit): no se traga con el catch de DomainException de
@@ -183,6 +191,9 @@ public class ExperienceController {
         Experience experience = experienceService.getOwned(id, currentUser());
         model.addAttribute("experienceForm", toForm(experience));
         model.addAttribute("experienceId", id);
+        // El subtipo guardado vuelve al hidden para que editar no lo pierda.
+        model.addAttribute("subrubroId", experience.getSubrubro() == null
+                ? null : experience.getSubrubro().getId());
         model.addAttribute("experienceCurrency",
                 experience.getCurrencyCode() == null ? "MXN" : experience.getCurrencyCode());
         model.addAttribute("stops", experienceService.stopsOf(id));
@@ -195,6 +206,7 @@ public class ExperienceController {
                          @Valid @ModelAttribute("experienceForm") ExperienceFormRequest request,
                          BindingResult bindingResult,
                          @RequestParam(required = false) String currencyCode,
+                         @RequestParam(required = false, name = "subtipo") String subtipo,
                          @RequestParam(required = false, name = "stopPlace") List<String> stopPlace,
                          @RequestParam(required = false, name = "stopCity") List<String> stopCity,
                          @RequestParam(required = false, name = "stopCountry") List<String> stopCountry,
@@ -204,6 +216,7 @@ public class ExperienceController {
                           Model model,
                           RedirectAttributes redirectAttributes) {
         model.addAttribute("experienceId", id);
+        model.addAttribute("subrubroId", Ids.parse(subtipo));
         if (bindingResult.hasErrors()) {
             repopulateForm(model, currencyCode,
                     toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
@@ -212,6 +225,7 @@ public class ExperienceController {
         try {
             experienceService.update(id, request, currentUser(),
                     currencyCode, toStops(stopPlace, stopCity, stopCountry, stopLat, stopLng));
+            experienceService.asignarSubrubro(id, Ids.parse(subtipo), request.category());
             // Sin imágenes nuevas rige borrado selectivo; con nuevas ya hubo reemplazo total.
             if (request.images() == null || request.images().isEmpty()) {
                 experienceService.removeImages(id, currentUser(), removeImageIds);

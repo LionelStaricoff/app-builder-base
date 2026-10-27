@@ -1402,6 +1402,15 @@ input.missing, select.missing, textarea.missing {
    margin-bottom de .card (diseñado para el flujo de .app-main) los desalinearía. */
 .interest-page .card { margin-bottom: 0; }
 
+/* Respiración de las cards de formulario de la pantalla de propuesta: con los
+   campos apilados en card, el ritmo global (label abraza a su control en el
+   flujo de línea) se veía pegado. Padding y gap un toque más amplios, y cada
+   control con su margen respecto del texto que lo etiqueta. */
+.interest-page .card.section { padding: 1.25rem; gap: 1rem; }
+.interest-page .card :is(textarea, select),
+.interest-page .card input:not([type="hidden"]) { display: block; margin-top: 0.45rem; }
+.interest-page .card .hint { display: block; margin-top: 0.3rem; }
+
 /* --- cabecera ------------------------------------------------------- */
 .interest-head-top { display: flex; justify-content: flex-end; }
 

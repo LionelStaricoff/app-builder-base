@@ -1,6 +1,7 @@
 package com.openlab.mx.share.proposal.controller;
 
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
+import com.openlab.mx.share.experience.repository.SubrubroRepository;
 import com.openlab.mx.share.interest.service.InterestService;
 import com.openlab.mx.share.proposal.dto.ProposalForm;
 import com.openlab.mx.share.proposal.entity.ExperienceDraft;
@@ -8,6 +9,7 @@ import com.openlab.mx.share.proposal.generator.ProposalGenerationException;
 import com.openlab.mx.share.proposal.generator.ProposalGenerator;
 import com.openlab.mx.share.proposal.service.ProposalService;
 import com.openlab.mx.share.shared.CurrentUser;
+import com.openlab.mx.share.shared.Ids;
 import com.openlab.mx.share.user.entity.User;
 
 import jakarta.validation.Valid;
@@ -53,6 +55,7 @@ public class ProposalController {
     private final CurrentUser currentUser;
     private final ProposalService service;
     private final InterestService interestService;
+    private final SubrubroRepository subrubroRepository;
     private final ObjectProvider<ProposalGenerator> generatorProvider;
 
     @GetMapping
@@ -107,19 +110,26 @@ public class ProposalController {
     public String crear(@Valid @ModelAttribute("form") ProposalForm form,
                         BindingResult binding,
                         @RequestParam(name = "draft", required = false) String draft,
+                        @RequestParam(name = "subtipo", required = false) String subtipo,
                         @RequestParam(defaultValue = "feed") String next,
                         Model model) {
         User user = currentUser.require();
+        Long subtipoId = Ids.parse(subtipo);
         if (binding.hasErrors()) {
             cargar(model, user, next, draft);
             // Tras un POST con errores el form SIEMPRE se muestra, aunque el
             // borrador sea null: si no, th:errors quedaría invisible.
             model.addAttribute("mostrarForm", true);
+            // Y la elección de subtipo se conserva (parseada: basura ⇒ null).
+            model.addAttribute("subrubroId", subtipoId);
             return "proposal/onboarding";
         }
         ExperienceDraft guardado = service.guardar(user, draft, form);
         service.marcarOnboarded(user);
-        return "redirect:/experiences/new?draft=" + guardado.getId();
+        // El subtipo vive en la URL hasta el POST de crear: el borrador es
+        // sólo contenido (spec §1) y no hay columna para él.
+        return "redirect:/experiences/new?draft=" + guardado.getId()
+                + (subtipoId != null ? "&subtipo=" + subtipoId : "");
     }
 
     /**
@@ -150,6 +160,14 @@ public class ProposalController {
         // queda deshabilitado en vez de fallar en el POST.
         model.addAttribute("generatorPresent", generatorProvider.getIfAvailable() != null);
         model.addAttribute("categorias", ExperienceCategory.values());
+        // Subtipos (subrubros) para la tarjeta de edición: el select los filtra
+        // por categoría en el cliente (mismo criterio que país→moneda en
+        // register.html). El borrador no almacena subtipo (spec §1: sólo
+        // contenido), así que el prefill sólo llega por re-render de errores.
+        model.addAttribute("subrubros", subrubroRepository.findAll().stream()
+                .filter(s -> Boolean.TRUE.equals(s.getActivo()))
+                .toList());
+        model.addAttribute("subrubroId", null);
     }
 
     /** Whitelist: sólo "feed"/"new"; el resto (incluido {@code //evil.com}) ⇒ feed. */

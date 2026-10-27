@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.SubrubroRepository;
 import com.openlab.mx.share.interest.repository.UserInterestRepository;
 
@@ -24,6 +25,9 @@ class SubrubroSeederTests {
     @Autowired
     private UserInterestRepository userInterests;
 
+    @Autowired
+    private ExperienceRepository experiencias;
+
     /**
      * Todo borrado de subrubros empieza acá: {@code user_interests.subrubro_id}
      * es FK con RESTRICT, y {@link com.openlab.mx.share.interest.DemoInterestSeeder}
@@ -31,11 +35,22 @@ class SubrubroSeederTests {
      * revierte todo al terminar.
      */
     private void limpiarCatalogo() {
+        desacoplarExperiencias();
         userInterests.deleteAll();
         // Flush explícito: Hibernate agrupa los DELETE y sin esto el de subrubros
         // puede salir primero y chocar contra la FK.
         userInterests.flush();
         subrubros.deleteAll();
+    }
+
+    /**
+     * {@code experiences.subrubro_id} es FK RESTRICT desde que la tarjeta de
+     * propuesta persiste el subtipo: sin esto, borrar el catálogo choca contra
+     * las experiencias creadas por otros tests de la misma base.
+     */
+    private void desacoplarExperiencias() {
+        experiencias.findAll().forEach(e -> e.setSubrubro(null));
+        experiencias.flush();
     }
 
     @Test
@@ -75,6 +90,7 @@ class SubrubroSeederTests {
             .orElseThrow();
         // Senderismo es de los que el seeder de demo usa: hay que soltar la FK
         // antes de borrarlo, si no la base (con razón) lo impide.
+        desacoplarExperiencias();
         userInterests.deleteAll();
         userInterests.flush();
         subrubros.delete(senderismo);

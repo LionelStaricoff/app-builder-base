@@ -182,6 +182,40 @@ class ProposalControllerTests {
                 draftRepository.findByUserIdOrderByUpdatedAtDesc(user.getId()).isEmpty());
     }
 
+    /** El subtipo elegido en la tarjeta viaja al form final en la URL. */
+    @Test
+    void crearConSubtipoRedirigeAlFormConElSubtipo() throws Exception {
+        User user = usuarioNuevo();
+        Long subtipo = subrubroRepository.findAll().stream()
+                .filter(s -> Boolean.TRUE.equals(s.getActivo()))
+                .findFirst().orElseThrow().getId();
+
+        mockMvc.perform(post("/onboarding/propuesta/crear")
+                        .with(user(user.getUsername())).with(csrf())
+                        .param("name", "Con subtipo")
+                        .param("description", "Descripción")
+                        .param("category", "CULTURAL")
+                        .param("subtipo", String.valueOf(subtipo)))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern(
+                        "/experiences/new?draft=*&subtipo=" + subtipo));
+    }
+
+    /** Basura en el param (como draft=abc): nunca 400, se ignora y sigue. */
+    @Test
+    void crearConSubtipoDeBasuraLoIgnora() throws Exception {
+        User user = usuarioNuevo();
+
+        mockMvc.perform(post("/onboarding/propuesta/crear")
+                        .with(user(user.getUsername())).with(csrf())
+                        .param("name", "Subtipo basura")
+                        .param("description", "Descripción")
+                        .param("category", "CULTURAL")
+                        .param("subtipo", "abc"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/experiences/new?draft=*"));
+    }
+
     @Test
     void saltearPoneElFlagYRedirigeAlDestino() throws Exception {
         User user = usuarioNuevo();

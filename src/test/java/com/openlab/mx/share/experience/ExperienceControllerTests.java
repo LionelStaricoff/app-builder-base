@@ -56,6 +56,9 @@ class ExperienceControllerTests {
     @Autowired
     private ExperienceDraftRepository draftRepository;
 
+    @Autowired
+    private com.openlab.mx.share.experience.repository.SubrubroRepository subrubros;
+
     private User creator() {
         return userRepository.findByUsername("demo_creator").orElseThrow();
     }
@@ -217,5 +220,106 @@ class ExperienceControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(
                         "href=\"/onboarding/propuesta?next=new\"")));
+    }
+
+    /**
+     * El subtipo elegido en la tarjeta de propuesta llega en la URL y el form
+     * lo pone en un hidden para que el POST de crear lo persista.
+     */
+    @Test
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
+    void subtipoSePrefillEnElFormComoOculto() throws Exception {
+        Long subtipo = subrubros.findAll().stream()
+                .filter(s -> Boolean.TRUE.equals(s.getActivo()))
+                .findFirst().orElseThrow().getId();
+
+        mockMvc.perform(get("/experiences/new").param("subtipo", String.valueOf(subtipo)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "name=\"subtipo\" value=\"" + subtipo + "\"")));
+    }
+
+    /** El param basura (como draft=abc) se ignora: 200, nunca 400. */
+    @Test
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
+    void subtipoDeBasuraNoRompeElForm() throws Exception {
+        mockMvc.perform(get("/experiences/new").param("subtipo", "abc"))
+                .andExpect(status().isOk());
+    }
+
+    /** El subtipo válido termina como FK de la experiencia al crear. */
+    @Test
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
+    void crearConSubtipoPersisteElFk() throws Exception {
+        var subtipo = subrubros.findAll().stream()
+                .filter(s -> Boolean.TRUE.equals(s.getActivo()))
+                .filter(s -> "GASTRONOMIA".equals(s.getCategoria()))
+                .findFirst().orElseThrow();
+        var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+
+        var resultado = mockMvc.perform(multipart("/experiences")
+                        .file(image)
+                        .param("name", "Con subtipo " + UUID.randomUUID())
+                        .param("description", "Descripción de prueba")
+                        .param("durationMinutes", "120")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "8")
+                        .param("price", "190.00")
+                        .param("category", "GASTRONOMIA")
+                        .param("recurrenceType", "UNIQUE")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].date", "2026-12-01")
+                        .param("schedules[0].startTime", "10:00")
+                        .param("schedules[0].endTime", "12:00")
+                        .param("subtipo", String.valueOf(subtipo.getId()))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrlPattern("/experiences/*"))
+                .andReturn();
+
+        String location = resultado.getResponse().getRedirectedUrl();
+        Long id = Long.valueOf(location.replaceAll("[^0-9]", ""));
+        // getSubrubro() vuelve como proxy lazy (Subrubro no tiene equals por
+        // identidad): el contrato es el id de la FK, no la instancia.
+        var guardado = experienceRepository.findById(id).orElseThrow().getSubrubro();
+        org.junit.jupiter.api.Assertions.assertNotNull(guardado);
+        org.junit.jupiter.api.Assertions.assertEquals(subtipo.getId(), guardado.getId());
+    }
+
+    /** Un subtipo de OTRA categoría no se asigna (la categoría manda). */
+    @Test
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
+    void crearConSubtipoDeOtraCategoriaNoSeAsigna() throws Exception {
+        var ajeno = subrubros.findAll().stream()
+                .filter(s -> Boolean.TRUE.equals(s.getActivo()))
+                .filter(s -> !"GASTRONOMIA".equals(s.getCategoria()))
+                .findFirst().orElseThrow();
+        var image = new MockMultipartFile("images", "f.png", "image/png", "abc".getBytes());
+
+        var resultado = mockMvc.perform(multipart("/experiences")
+                        .file(image)
+                        .param("name", "Subtipo ajeno " + UUID.randomUUID())
+                        .param("description", "Descripción de prueba")
+                        .param("durationMinutes", "120")
+                        .param("minCapacity", "2")
+                        .param("maxCapacity", "8")
+                        .param("price", "190.00")
+                        .param("category", "GASTRONOMIA")
+                        .param("recurrenceType", "UNIQUE")
+                        .param("meetingLat", "19.4326")
+                        .param("meetingLng", "-99.1332")
+                        .param("schedules[0].date", "2026-12-01")
+                        .param("schedules[0].startTime", "10:00")
+                        .param("schedules[0].endTime", "12:00")
+                        .param("subtipo", String.valueOf(ajeno.getId()))
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+
+        String location = resultado.getResponse().getRedirectedUrl();
+        Long id = Long.valueOf(location.replaceAll("[^0-9]", ""));
+        org.junit.jupiter.api.Assertions.assertNull(
+                experienceRepository.findById(id).orElseThrow().getSubrubro());
     }
 }

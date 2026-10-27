@@ -4,17 +4,20 @@ import com.openlab.mx.share.experience.dto.ExperienceFormRequest;
 import com.openlab.mx.share.experience.dto.ExperienceStopDTO;
 import com.openlab.mx.share.experience.dto.ScheduleEntryRequest;
 import com.openlab.mx.share.experience.entity.Experience;
+import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.entity.ExperienceImage;
 import com.openlab.mx.share.experience.entity.ExperienceInstance;
 import com.openlab.mx.share.experience.entity.ExperienceSchedule;
 import com.openlab.mx.share.experience.entity.ExperienceStatus;
 import com.openlab.mx.share.experience.entity.ExperienceStop;
 import com.openlab.mx.share.experience.entity.RecurrenceType;
+import com.openlab.mx.share.experience.entity.Subrubro;
 import com.openlab.mx.share.experience.repository.ExperienceImageRepository;
 import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.repository.ExperienceScheduleRepository;
 import com.openlab.mx.share.experience.repository.ExperienceStopRepository;
+import com.openlab.mx.share.experience.repository.SubrubroRepository;
 import com.openlab.mx.share.shared.exception.DomainException;
 import com.openlab.mx.share.shared.exception.NotOwnerException;
 import com.openlab.mx.share.shared.location.GeocodingService;
@@ -42,6 +45,7 @@ public class ExperienceService {
     private final ExperienceScheduleRepository scheduleRepository;
     private final ExperienceStopRepository stopRepository;
     private final ExperienceInstanceRepository instanceRepository;
+    private final SubrubroRepository subrubroRepository;
     private final InstanceGenerationService generationService;
     private final GeocodingService geocodingService;
     private final com.openlab.mx.share.identity.service.RequireVerifiedIdentityService
@@ -99,6 +103,34 @@ public class ExperienceService {
         instanceRepository.saveAll(
                 generationService.regenerateFutures(saved, schedules, existing, LocalDate.now(ZoneId.systemDefault())));
         return saved;
+    }
+
+    /**
+     * Asigna el subtipo elegido en la tarjeta de propuesta (viaja por la URL
+     * hasta el POST de crear/actualizar). Sólo se acepta si el subrubro está
+     * activo y su categoría coincide con la de la experiencia: si el usuario
+     * cambió la categoría en este form, el subtipo viejo se limpia en vez de
+     * quedar cruzado. Id inexistente o null → no hace nada (basura jamás tira
+     * el submit).
+     */
+    @Transactional
+    public void asignarSubrubro(Long experienceId, Long subrubroId, ExperienceCategory categoria) {
+        if (subrubroId == null) {
+            return;
+        }
+        Experience experience = experienceRepository.findById(experienceId).orElse(null);
+        if (experience == null) {
+            return;
+        }
+        Subrubro subrubro = subrubroRepository.findById(subrubroId)
+                .filter(s -> Boolean.TRUE.equals(s.getActivo()))
+                .orElse(null);
+        if (subrubro == null) {
+            return;
+        }
+        boolean coincide = categoria != null && subrubro.getCategoria().equals(categoria.name());
+        experience.setSubrubro(coincide ? subrubro : null);
+        experienceRepository.save(experience);
     }
 
     /**

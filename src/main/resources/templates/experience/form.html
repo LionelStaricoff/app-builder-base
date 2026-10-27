@@ -20,6 +20,9 @@
         <form th:action="${experienceId} != null ? @{/experiences/{id}(id=${experienceId})} : @{/experiences}"
               th:object="${experienceForm}" method="post" enctype="multipart/form-data" id="experience-form"
               class="space-y-5">
+            <!-- Subtipo elegido en la tarjeta de propuesta: viaja oculto (visible
+                 sólo ahí, decisión del usuario) y lo persiste el POST. -->
+            <input type="hidden" name="subtipo" th:value="${subrubroId}">
 
             <!-- 1 · LO BÁSICO -->
             <section class="card section">
