@@ -13,6 +13,7 @@ import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
 import com.openlab.mx.share.experience.service.QuestionService;
 import com.openlab.mx.share.experience.service.RatingService;
+import com.openlab.mx.share.proposal.service.ProposalService;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
 import com.openlab.mx.share.reservation.repository.ReservationRepository;
 import com.openlab.mx.share.reservation.service.RefundPolicy;
@@ -56,21 +57,42 @@ public class ExperienceController {
     private final RatingService ratingService;
     private final QuestionService questionService;
     private final ReservationRepository reservationRepository;
+    private final ProposalService proposalService;
 
     @Value("${identity.verification.enabled:true}")
     private boolean verificationEnabled;
 
     @GetMapping("/experiences/new")
     @PreAuthorize("isAuthenticated()")
-    public String form(Model model) {
+    public String form(@RequestParam(name = "draft", required = false) String draft,
+                       Model model) {
         User user = currentUser();
+        // El gate de KYC va antes que cualquier prefill: sin rol CREATOR ni
+        // kill-switch, el form no se ve (spec §6).
         if (verificationEnabled && user.getRole() != Role.CREATOR) {
             return "redirect:/verificacion";
         }
-        model.addAttribute("experienceForm", emptyForm());
+        model.addAttribute("experienceForm", rellenar(user, draft));
         model.addAttribute("experienceCurrency", user.getCurrencyCode());
         model.addAttribute("stops", List.of());
         return "experience/form";
+    }
+
+    /**
+     * Prefill desde un borrador de propuesta: sólo contenido (name/description/
+     * category/includes/bring); lo logístico y las fotos siguen en blanco. El
+     * borrador ajeno o el id no numérico lo descarta {@code borradorPropio}
+     * antes de tocar nada → form vacío, nunca un 400.
+     */
+    private ExperienceFormRequest rellenar(User user, String draft) {
+        ExperienceFormRequest base = emptyForm();
+        return proposalService.borradorPropio(user, draft)
+                .map(d -> new ExperienceFormRequest(
+                        d.getName(), d.getDescription(),
+                        base.durationMinutes(), base.minCapacity(), base.maxCapacity(), base.price(),
+                        d.getCategory(), base.recurrenceType(), base.meetingLat(), base.meetingLng(),
+                        base.schedules(), base.images(), d.getIncludes(), d.getBring()))
+                .orElse(base);
     }
 
     @PostMapping("/experiences")

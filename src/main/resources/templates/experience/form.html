@@ -11,6 +11,8 @@
             <p class="text-sm text-gray-500">
                 Cinco bloques. Podés volver a editarla cuando quieras.
             </p>
+            <a class="btn-secondary" th:if="${experienceId == null}"
+               th:href="@{/onboarding/propuesta(next='new')}">Crear con IA</a>
         </header>
 
         <div class="error" th:if="${error}" th:text="${error}">Error</div>

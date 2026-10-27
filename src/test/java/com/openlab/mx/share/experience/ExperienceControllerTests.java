@@ -7,6 +7,8 @@ import com.openlab.mx.share.experience.entity.ExperienceCategory;
 import com.openlab.mx.share.experience.entity.RecurrenceType;
 import com.openlab.mx.share.experience.repository.ExperienceRepository;
 import com.openlab.mx.share.experience.service.ExperienceService;
+import com.openlab.mx.share.proposal.entity.ExperienceDraft;
+import com.openlab.mx.share.proposal.repository.ExperienceDraftRepository;
 import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -50,6 +52,9 @@ class ExperienceControllerTests {
 
     @Autowired
     private ExperienceRepository experienceRepository;
+
+    @Autowired
+    private ExperienceDraftRepository draftRepository;
 
     private User creator() {
         return userRepository.findByUsername("demo_creator").orElseThrow();
@@ -155,5 +160,62 @@ class ExperienceControllerTests {
 
         mockMvc.perform(get("/experiences/" + id + "/edit"))
                 .andExpect(status().isForbidden());
+    }
+
+    // ── Prefill desde un borrador de propuesta (?draft={id}) ──────────────
+
+    @Test
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
+    void draftPropioPrecargaElContenido() throws Exception {
+        var draft = draftRepository.save(ExperienceDraft.builder()
+                .user(creator())
+                .name("Nombre borrador " + UUID.randomUUID())
+                .description("Descripción del borrador lista para editar")
+                .category(ExperienceCategory.GASTRONOMIA)
+                .includes("Entrada al recorrido")
+                .bring("Calzado cómodo")
+                .build());
+
+        mockMvc.perform(get("/experiences/new").param("draft", String.valueOf(draft.getId())))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "value=\"" + draft.getName() + "\"")))
+                // Thymeleaf escapa los acentos como entidades (&oacute;), así que
+                // el match va contra el trozo sin acentos: sigue siendo exclusivo
+                // de la descripción prellenada.
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "del borrador lista para editar")));
+    }
+
+    @Test
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
+    void draftAjenoIgnoraElPrefill() throws Exception {
+        var ajeno = draftRepository.save(ExperienceDraft.builder()
+                .user(userRepository.findByUsername("demo_user").orElseThrow())
+                .name("Borrador ajeno secreto")
+                .description("No debería verse en este form")
+                .category(ExperienceCategory.CULTURAL)
+                .build());
+
+        mockMvc.perform(get("/experiences/new").param("draft", String.valueOf(ajeno.getId())))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("Borrador ajeno secreto"))));
+    }
+
+    @Test
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
+    void draftNoNumericoNoRompeElForm() throws Exception {
+        mockMvc.perform(get("/experiences/new").param("draft", "abc"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "demo_creator", roles = {"CREATOR"})
+    void linkCrearConIaVisible() throws Exception {
+        mockMvc.perform(get("/experiences/new"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"/onboarding/propuesta?next=new\"")));
     }
 }
