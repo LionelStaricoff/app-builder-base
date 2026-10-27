@@ -52,7 +52,7 @@
                     <span class="meta" th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(l.date)}">24 oct</span>
                 </div>
                 <p class="meta">
-                    <span class="stars" aria-hidden="true">★</span>
+                    <span class="stars" aria-hidden="true"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span>
                     <span th:text="${l.stars}">5</span>
                     <span th:if="${l.comment != null && !l.comment.isEmpty()}"
                           th:text="'· ' + ${l.comment}">Comentario</span>

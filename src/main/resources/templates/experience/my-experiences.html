@@ -66,15 +66,15 @@
         </p>
         <div class="mine-actions">
             <a class="btn-primary" th:href="@{/experiences/{id}/edit(id=${e.id})}">Editar</a>
-            <form th:action="@{/experiences/{id}/delete(id=${e.id})}" method="post"
-                  onsubmit="return confirm('¿Eliminar esta experiencia?')">
-                <button type="submit" class="btn-danger-outline">Eliminar</button>
-            </form>
+            <button type="button" class="btn-danger-outline"
+                    th:attr="data-modal-open=${'modal-delete-' + e.id}">Eliminar</button>
         </div>
+        <div th:replace="~{fragments/modal :: confirm('modal-delete-' + ${e.id}, '¿Eliminar esta experiencia?', @{/experiences/{id}/delete(id=${e.id})})}"></div>
         </div>
     </div>
 </main>
 <nav th:replace="~{fragments/layout :: nav('mine')}"></nav>
 <script th:src="@{/js/carousel.js}"></script>
+<script th:src="@{/js/confirm-modal.js}"></script>
 </body>
 </html>

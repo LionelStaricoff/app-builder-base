@@ -20,10 +20,11 @@
         <a class="btn-primary" th:href="@{/feed}">Buscar experiencias</a>
     </div>
 
-    <a class="card" style="padding:1rem" th:each="g : ${grupos}" th:href="@{/chats/{id}(id=${g.id})}">
+    <a class="card section" th:each="g : ${grupos}" th:href="@{/chats/{id}(id=${g.id})}">
         <strong th:text="${g.experience.name}">Experiencia</strong>
         <p class="meta">
-            📅 <span th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(g.date)}">24 oct</span>
+            <svg class="w-3.5 h-3.5 self-center" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <span th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(g.date)}">24 oct</span>
             <span th:if="${g.archived}" class="chip">Archivado</span>
         </p>
     </a>

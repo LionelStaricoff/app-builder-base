@@ -2047,3 +2047,40 @@ input.missing, select.missing, textarea.missing {
 @media (prefers-reduced-motion: reduce) {
   .feed-details .feed-details-chevron { transition: none !important; }
 }
+
+/* ============================================================
+   Modal de confirmación (fragments/modal::confirm, confirm-modal.js).
+   El <dialog> nativo se centra en la top-layer y cierra con Esc;
+   ::backdrop pone el fondo. Solo se restylea lo que trae el UA
+   (borde, padding, fondo blanco) para que use los tokens del tema.
+   ============================================================ */
+.modal {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  max-width: min(24rem, calc(100vw - 2rem));
+}
+.modal::backdrop {
+  background: rgba(15, 23, 42, .55);
+}
+.modal-box {
+  margin: 0;
+  padding: var(--space-4);
+}
+.modal-box form {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.modal-box form button {
+  flex: 1 1 0;
+  min-height: 44px;
+}
+
+/* Chat (room.html): fila de envío. Antes era un style="display:flex…" inline. */
+.chat-form {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}

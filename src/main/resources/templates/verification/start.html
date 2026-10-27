@@ -11,15 +11,15 @@
         <p>Un paso corto para reservar y publicar experiencias</p>
     </div>
 
-    <div class="card" style="padding:1rem" th:if="${status == 'VERIFIED'}">
-        <p><strong>✅ Tu identidad está verificada</strong></p>
+    <div class="card section" th:if="${status == 'VERIFIED'}">
+        <p class="flex items-center gap-1.5"><svg class="w-4 h-4 shrink-0 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><strong>Tu identidad está verificada</strong></p>
         <p class="hint" th:if="${verifiedAt != null}"
            th:text="'Verificada el ' + ${#temporals.format(verifiedAt, 'dd/MM/yyyy HH:mm')}"></p>
         <a class="btn-primary btn-block" th:href="${returnUrl}">Continuar</a>
     </div>
 
     <!-- Qué vas a necesitar: documento + selfie (explicación visual) -->
-    <div class="card" style="padding:1rem" th:if="${status != 'VERIFIED'}">
+    <div class="card section" th:if="${status != 'VERIFIED'}">
         <h3>¿Qué necesitás tener a mano?</h3>
         <p class="meta">Tu documento de identidad y unos minutos con buena luz.</p>
         <div class="verify-steps">
@@ -57,7 +57,7 @@
         </div>
     </div>
 
-    <div class="card" style="padding:1rem" th:if="${status != 'VERIFIED'}">
+    <div class="card section" th:if="${status != 'VERIFIED'}">
         <p th:if="${status == 'NOT_STARTED'}">
             Para reservar o publicar experiencias necesitamos verificar tu identidad.
             El proceso toma unos minutos.

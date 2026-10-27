@@ -349,11 +349,11 @@
                     <p class="text-sm font-bold text-gray-900"
                        th:text="${#temporals.format(inst.date, 'dd/MM/yyyy')} + ' — ' + ${#temporals.format(inst.startTime, 'HH:mm')}">01/11/2026 — 10:00</p>
                     <div th:replace="~{experience/picker-modal :: picker(${inst.id}, ${refundPercentByInstance[inst.id]})}"></div>
-                    <form th:if="${esDueno}"
-                          th:action="@{/instances/{id}/cancel(id=${inst.id})}" method="post"
-                          onsubmit="return confirm('¿Cancelar esta fecha? Se reembolsa el 100% a los inscritos.');">
-                        <button type="submit" class="btn-secondary">Cancelar fecha</button>
-                    </form>
+                    <th:block th:if="${esDueno}">
+                        <button type="button" class="btn-secondary"
+                                th:attr="data-modal-open=${'modal-cancel-' + inst.id}">Cancelar fecha</button>
+                        <div th:replace="~{fragments/modal :: confirm('modal-cancel-' + ${inst.id}, '¿Cancelar esta fecha? Se reembolsa el 100% a los inscritos.', @{/instances/{id}/cancel(id=${inst.id})})}"></div>
+                    </th:block>
                 </div>
             </div>
         </section>
@@ -383,5 +383,6 @@
 <script th:src="@{/vendor/leaflet/leaflet.js}"></script>
 <script th:src="@{/js/map.js}"></script>
 <script th:src="@{/js/carousel.js}"></script>
+<script th:src="@{/js/confirm-modal.js}"></script>
 </body>
 </html>

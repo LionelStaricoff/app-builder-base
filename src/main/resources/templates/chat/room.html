@@ -13,7 +13,7 @@
 
     <div class="empty" th:if="${archivado}">Esta fecha fue cancelada: el chat está en solo-lectura.</div>
 
-    <div id="chat-messages" class="card" style="padding:1rem;display:flex;flex-direction:column;gap:.6rem">
+    <div id="chat-messages" class="card section">
         <p class="chat-msg" th:each="m : ${mensajes}">
             <strong th:text="${m.user.username}">usuario</strong>:
             <span th:text="${m.text}">hola</span>
@@ -24,7 +24,7 @@
 
     <form id="chat-form" th:if="${!archivado}"
           th:action="@{/chats/{id}/send(id=${instanceId})}" method="post"
-          style="display:flex;gap:.5rem;margin-top:1rem">
+          class="chat-form">
         <input id="chat-text" name="text" placeholder="Escribí un mensaje…" required
                aria-label="Mensaje" class="form-input">
         <button type="submit" class="btn-primary">Enviar</button>

@@ -14,7 +14,7 @@
   true el POST va a /favorites/{id}/remove, si no a /add. Por eso el mismo
   fragmento sirve en las dos pantallas sin parametro de modo.
 */-->
-        <div th:fragment="card(dto)" th:if="${dto != null}" th:id="'card-' + ${dto.id}" class="card feed-card w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden font-sans transition-transform duration-300 hover:scale-[1.02]" style="border: 1px solid var(--border-subtle)">
+        <div th:fragment="card(dto)" th:if="${dto != null}" th:id="'card-' + ${dto.id}" class="card feed-card w-full bg-white rounded-3xl shadow-xl overflow-hidden font-sans transition-transform duration-300 hover:scale-[1.02]">
           
           <div class="relative w-full overflow-hidden group feed-card-cover">
             <img th:if="${(dto.images == null or #lists.isEmpty(dto.images)) and dto.coverBase64 != null}"
@@ -49,7 +49,7 @@
             </div>
 
             <div class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-lg flex items-center gap-2 z-20 border border-white/40">
-              <span class="text-amber-500 text-base">★</span>
+              <span class="text-amber-500" aria-hidden="true"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/></svg></span>
               <div class="flex flex-col leading-none">
                 <span class="text-xs font-bold text-gray-900" th:text="${dto.ratingAverage > 0 ? #numbers.formatDecimal(dto.ratingAverage, 1, 1) : '0.0'}">0.0</span>
                 <span class="text-[10px] text-gray-500 font-medium" th:text="${dto.ratingAverage > 0 ? 'Reseñas' : 'Nuevo'}">Nuevo</span>

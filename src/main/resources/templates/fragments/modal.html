@@ -1,14 +1,21 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <body>
-<div th:fragment="confirm(id, message, action)" class="modal" th:id="${id}" hidden>
+<!-- Confirmación de acciones destructivas: reemplaza al confirm() nativo
+     (bloqueante, no estilizable y fuera del sistema visual).
+     Se abre con data-modal-open="id" desde confirm-modal.js; se cierra con
+     Cancelar, con un clic afuera de la caja o con Esc (nativo del <dialog>).
+     El form hace el POST: th:action inyecta el _csrf igual que en cualquier
+     otro form del proyecto. -->
+<dialog th:fragment="confirm(id, message, action)" class="modal" th:id="${id}"
+        th:attr="aria-labelledby=${'msg-' + id}">
     <div class="modal-box card">
-        <p th:text="${message}">Mensaje</p>
+        <p th:id="${'msg-' + id}" th:text="${message}">Mensaje</p>
         <form th:action="${action}" method="post">
             <button type="submit" class="btn-primary">Confirmar</button>
-            <button type="button" th:onclick="'document.getElementById(\'' + ${id} + '\').setAttribute(\'hidden\', \'hidden\')'">Cancelar</button>
+            <button type="button" class="btn-secondary" data-modal-close>Cancelar</button>
         </form>
     </div>
-</div>
+</dialog>
 </body>
 </html>
