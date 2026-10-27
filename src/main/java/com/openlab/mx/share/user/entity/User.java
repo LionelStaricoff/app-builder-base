@@ -80,4 +80,13 @@ public class User {
     @Builder.Default
     @Column(nullable = false)
     private boolean interestsOnboarded = false;
+
+    /**
+     * {@code false} = todavía no vio la pantalla de propuesta con IA (paso 3
+     * del onboarding). Se muestra una vez: "Crear experiencia" y "Saltear"
+     * lo ponen en true.
+     */
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean proposalOnboarded = false;
 }

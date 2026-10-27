@@ -70,6 +70,7 @@ public class DataSeeder implements CommandLineRunner {
                 .role(Role.CREATOR)
                 .spPoints(0)
                 .interestsOnboarded(true)
+                .proposalOnboarded(true)
                 .build());
         userRepository.save(User.builder()
                 .username("demo_user")
@@ -85,6 +86,7 @@ public class DataSeeder implements CommandLineRunner {
                 .role(Role.USER)
                 .spPoints(0)
                 .interestsOnboarded(true)
+                .proposalOnboarded(true)
                 .build());
     }
 }
