@@ -1,5 +1,6 @@
 package com.openlab.mx.share.user.service;
 
+import com.openlab.mx.share.shared.exception.DuplicateEmailException;
 import com.openlab.mx.share.shared.exception.DuplicateUsernameException;
 import com.openlab.mx.share.shared.exception.MenorDeEdadException;
 import com.openlab.mx.share.user.dto.RegisterRequest;
@@ -26,6 +27,11 @@ public class UserService {
         }
         if (userRepository.existsByUsername(request.username())) {
             throw new DuplicateUsernameException();
+        }
+        // Sin esta verificación el insert pega contra el unique de email y la
+        // excepción llega como 500 en vez de un error en el formulario.
+        if (userRepository.existsByEmail(request.email())) {
+            throw new DuplicateEmailException();
         }
         User user = User.builder()
                 .username(request.username())

@@ -4,6 +4,7 @@ import com.openlab.mx.share.user.dto.RegisterRequest;
 import com.openlab.mx.share.user.entity.Role;
 import com.openlab.mx.share.user.entity.User;
 import com.openlab.mx.share.user.repository.UserRepository;
+import com.openlab.mx.share.shared.exception.DuplicateEmailException;
 import com.openlab.mx.share.shared.exception.DuplicateUsernameException;
 import com.openlab.mx.share.shared.exception.MenorDeEdadException;
 import org.junit.jupiter.api.Test;
@@ -60,5 +61,13 @@ class UserServiceTest {
 
         assertThrows(DuplicateUsernameException.class, () -> userService.register(
                 new RegisterRequest("dup", "dup@x.com", "Clave1234!", LocalDate.of(1990, 1, 1), null, null)));
+    }
+
+    @Test
+    void testRechazaEmailDuplicado() {
+        when(userRepository.existsByEmail("lionel1@gmail.com")).thenReturn(true);
+
+        assertThrows(DuplicateEmailException.class, () -> userService.register(
+                new RegisterRequest("otro-user", "lionel1@gmail.com", "Clave1234!", LocalDate.of(1990, 1, 1), null, null)));
     }
 }

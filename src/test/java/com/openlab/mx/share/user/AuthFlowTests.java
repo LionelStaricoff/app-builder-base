@@ -56,6 +56,27 @@ class AuthFlowTests {
     }
 
     @Test
+    void registroConEmailDuplicadoVuelveAlFormSinCinco() throws Exception {
+        // Regresión: sin la verificación de email el insert chocaba con el
+        // unique de Postgres y el usuario veía un 500 con stacktrace.
+        String username = "dup-mail-" + UUID.randomUUID();
+        mockMvc.perform(post("/register").with(csrf())
+                        .param("username", username)
+                        .param("email", username + "@x.com")
+                        .param("password", "Clave1234!")
+                        .param("birthDate", LocalDate.of(1995, 4, 12).toString()))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/register").with(csrf())
+                        .param("username", "otro-" + UUID.randomUUID())
+                        .param("email", username + "@x.com")
+                        .param("password", "Clave1234!")
+                        .param("birthDate", LocalDate.of(1995, 4, 12).toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("email ya está registrado")));
+    }
+
+    @Test
     void sinSesionEnFeedRedirigeALogin() throws Exception {
         mockMvc.perform(get("/feed"))
                 .andExpect(status().is3xxRedirection())
