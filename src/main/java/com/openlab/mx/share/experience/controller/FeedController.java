@@ -52,6 +52,13 @@ public class FeedController {
         if (user != null && !user.isInterestsOnboarded()) {
             return "redirect:/onboarding/intereses";
         }
+        // Onboarding de propuesta (gate 2, spec §3): si el usuario todavia no
+        // creo ni salteo una experiencia, la pantalla 3 va antes que el feed.
+        // Igual que arriba, /feed/cards NO se gatea: el scroll infinito pide ese
+        // HTML tambien a usuarios con el flag en false.
+        if (user != null && !user.isProposalOnboarded()) {
+            return "redirect:/onboarding/propuesta";
+        }
         // Búsqueda manual de otro lugar (país y/o ciudad) pisa la ciudad del perfil.
         String effectiveCity = ciudadEfectiva(user, city);
         // El radio se mide desde las coordenadas del perfil: con solo ciudad

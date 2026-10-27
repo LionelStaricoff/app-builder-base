@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head th:replace="~{fragments/layout :: head('Tu propuesta de experiencia')}"></head>
+<body class="interest-body">
+
+<!-- Fuera de los forms de abajo: un form no puede anidarse. El botón lo envía por id. -->
+<form id="proposal-skip-form" method="post" th:action="@{/onboarding/propuesta/saltear}">
+    <input type="hidden" name="next" th:value="${next}">
+</form>
+
+<main class="interest-page">
+
+    <header class="interest-head">
+        <div class="interest-head-top">
+            <button type="submit" form="proposal-skip-form" class="interest-skip">Saltear</button>
+        </div>
+
+        <p class="interest-step">Paso 2 de 2</p>
+        <div class="interest-progress" role="progressbar" aria-label="Paso 2 de 2"
+             aria-valuemin="1" aria-valuemax="2" aria-valuenow="2">
+            <span class="interest-progress-bar is-done"></span>
+            <span class="interest-progress-bar is-done"></span>
+        </div>
+
+        <h1 class="interest-title">Tu propuesta de experiencia</h1>
+        <p class="interest-lead">Generamos una propuesta con tus intereses. Revisala, editala y creá tu experiencia.</p>
+    </header>
+
+    <!-- Región aria-live: el error de generación entra acá sin robar el foco -->
+    <p class="interest-alert" role="status" aria-live="polite" th:if="${error}"
+       th:text="${error}">Error</p>
+
+    <section class="card section">
+        <h2 class="section-title">Tus intereses</h2>
+        <ul class="interest-chips" th:if="${!#lists.isEmpty(intereses)}">
+            <li class="interest-chip" th:each="i : ${intereses}">
+                <span th:text="${i.subrubro.nombre}">Subrubro</span>
+                <span class="interest-level-rubro" th:text="${i.level.label}">Nivel</span>
+            </li>
+        </ul>
+        <p class="interest-empty" th:if="${#lists.isEmpty(intereses)}">Todavía no elegiste intereses.</p>
+    </section>
+
+    <!-- Generar / Regenerar: mismo endpoint; tras un error el mismo botón hace de Reintentar -->
+    <form class="interest-form" id="proposal-generar-form" method="post"
+          th:action="@{/onboarding/propuesta/generar}">
+        <input type="hidden" name="next" th:value="${next}">
+        <label>Contá qué te gustaría ofrecer
+            <textarea name="textoLibre" rows="3" maxlength="1000"
+                      placeholder="Contá qué te gustaría ofrecer"></textarea>
+        </label>
+        <button type="submit" class="btn-primary" id="proposal-generar"
+                th:disabled="${!generatorPresent}"
+                th:text="${borrador == null} ? 'Generar propuesta' : 'Regenerar'">Generar propuesta</button>
+    </form>
+
+    <form class="interest-form" id="proposal-crear-form" method="post"
+          th:action="@{/onboarding/propuesta/crear}" th:object="${form}">
+        <input type="hidden" name="next" th:value="${next}">
+        <input type="hidden" name="draft" th:value="${draftId}">
+
+        <section class="card section">
+            <h2 class="section-title">Editá tu propuesta</h2>
+            <p class="hint">Sólo el contenido: el resto de los datos los completás en el próximo paso.</p>
+
+            <label>Nombre
+                <input type="text" th:field="*{name}" required>
+            </label>
+            <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Error</span>
+
+            <label>Descripción
+                <textarea th:field="*{description}" rows="4" required></textarea>
+            </label>
+            <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Error</span>
+
+            <label>Categoría
+                <select th:field="*{category}" required>
+                    <option value="">Elegí una</option>
+                    <option th:each="c : ${categorias}" th:value="${c}"
+                            th:text="${c.label}">Categoría</option>
+                </select>
+            </label>
+            <span class="error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">Error</span>
+
+            <label>Qué incluye el precio
+                <span class="hint block">Una cosa por línea. Opcional.</span>
+                <textarea th:field="*{includes}" rows="3" maxlength="2000"
+                          placeholder="Entrada al museo, guía bilingüe"></textarea>
+            </label>
+            <span class="error" th:if="${#fields.hasErrors('includes')}" th:errors="*{includes}">Error</span>
+
+            <label>Qué tiene que llevar la gente
+                <span class="hint block">Una cosa por línea. Opcional.</span>
+                <textarea th:field="*{bring}" rows="3" maxlength="2000"
+                          placeholder="Calzado cómodo, protector solar"></textarea>
+            </label>
+            <span class="error" th:if="${#fields.hasErrors('bring')}" th:errors="*{bring}">Error</span>
+
+            <button type="submit" class="btn-primary">Crear experiencia</button>
+        </section>
+    </form>
+</main>
+
+</body>
+</html>

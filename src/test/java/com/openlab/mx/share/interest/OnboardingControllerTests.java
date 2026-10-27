@@ -241,7 +241,11 @@ class OnboardingControllerTests {
         mockMvc.perform(post("/onboarding/intereses/saltear").with(csrf()).with(user(nuevo.getUsername())))
                 .andExpect(redirectedUrl("/feed"));
 
+        // El gate de intereses ya no aplica: si siguiera activo, la URL sería
+        // /onboarding/intereses. Ahora pisa el gate 2 (pantalla de propuesta),
+        // que es el siguiente paso del onboarding para un usuario nuevo.
         mockMvc.perform(get("/feed").with(user(nuevo.getUsername())))
-                .andExpect(status().isOk());
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/onboarding/propuesta"));
     }
 }
