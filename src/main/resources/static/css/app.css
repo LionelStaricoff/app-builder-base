@@ -511,7 +511,7 @@ button.is-loading > .loader-svg--inline { display: block; margin: 0 auto; }
 .tab.active { border-color: var(--color-primary); color: var(--text); font-weight: 600; }
 .tab-divider { height: 1px; background: #eee; margin: 1.5rem 0; }
 .hint { font-size: .8rem; color: var(--text-muted); }
-.btn-secondary { background: var(--surface); border: 1px solid #ccc; border-radius: var(--radius); padding: .5rem 1rem; cursor: pointer; }
+.btn-secondary { display: inline-block; background: var(--surface); border: 1px solid #ccc; border-radius: var(--radius); padding: .5rem 1rem; cursor: pointer; }
 .field-error, span.error, div.error, p.error { color: var(--color-primary); font-size: .85rem; }
 label { display: block; margin: .75rem 0; font-size: .9rem; }
 input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], textarea { width: 100%; padding: .65rem .75rem; border: 1.5px solid #e2e2e6; border-radius: 10px; font-size: 1rem; background: #fff; color: #111827; transition: border-color 0.15s ease, box-shadow 0.15s ease; }

@@ -46,16 +46,19 @@
           th:action="@{/onboarding/propuesta/generar}">
         <input type="hidden" name="next" th:value="${next}">
         <label>Contá qué te gustaría ofrecer
-            <textarea name="textoLibre" rows="3" maxlength="1000"
-                      placeholder="Contá qué te gustaría ofrecer"></textarea>
+            <!-- Sin placeholder: el label ya dice exactamente lo mismo (copy del plan) -->
+            <textarea name="textoLibre" rows="3" maxlength="1000"></textarea>
         </label>
         <button type="submit" class="btn-primary" id="proposal-generar"
                 th:disabled="${!generatorPresent}"
                 th:text="${borrador == null} ? 'Generar propuesta' : 'Regenerar'">Generar propuesta</button>
     </form>
 
+    <!-- Spec §5: los campos editables aparecen TRAS la propuesta; sin borrador
+         no hay nada que editar (y el form vacío duplicaría /experiences/new). -->
     <form class="interest-form" id="proposal-crear-form" method="post"
-          th:action="@{/onboarding/propuesta/crear}" th:object="${form}">
+          th:action="@{/onboarding/propuesta/crear}" th:object="${form}"
+          th:if="${mostrarForm}">
         <input type="hidden" name="next" th:value="${next}">
         <input type="hidden" name="draft" th:value="${draftId}">
 

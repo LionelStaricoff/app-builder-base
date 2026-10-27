@@ -112,6 +112,9 @@ public class ProposalController {
         User user = currentUser.require();
         if (binding.hasErrors()) {
             cargar(model, user, next, draft);
+            // Tras un POST con errores el form SIEMPRE se muestra, aunque el
+            // borrador sea null: si no, th:errors quedaría invisible.
+            model.addAttribute("mostrarForm", true);
             return "proposal/onboarding";
         }
         ExperienceDraft guardado = service.guardar(user, draft, form);
@@ -139,6 +142,10 @@ public class ProposalController {
         model.addAttribute("borrador", borrador);
         model.addAttribute("draftId", borrador != null ? borrador.getId() : null);
         model.addAttribute("intereses", interestService.intereses(user));
+        // Sin borrador no hay propuesta todavía: el form de edición se oculta
+        // (spec §5, "tras propuesta"). El error de validación lo re-muestra
+        // pase lo que pase (ver crear()).
+        model.addAttribute("mostrarForm", borrador != null);
         // Sin proveedor configurado (p.ej. spring.ai.model.chat=none) el botón
         // queda deshabilitado en vez de fallar en el POST.
         model.addAttribute("generatorPresent", generatorProvider.getIfAvailable() != null);

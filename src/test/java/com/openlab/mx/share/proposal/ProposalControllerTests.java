@@ -95,6 +95,12 @@ class ProposalControllerTests {
                         .content().string(org.hamcrest.Matchers.containsString("Tu propuesta de experiencia")))
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
                         .content().string(org.hamcrest.Matchers.containsString("Generar propuesta")));
+        // Spec §5: sin borrador no hay nada que editar todavía ("tras propuesta").
+        mockMvc.perform(get("/onboarding/propuesta").with(user(user.getUsername())))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().string(org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString("Editá tu propuesta"))));
     }
 
     @Test
@@ -240,6 +246,13 @@ class ProposalControllerTests {
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
                         .content().string(org.hamcrest.Matchers.containsString(
                                 "Descripcion del borrador para el form")));
+        // Con borrador, el form de edición sí se muestra.
+        mockMvc.perform(get("/onboarding/propuesta")
+                        .with(user(user.getUsername()))
+                        .param("draft", String.valueOf(draft.getId())))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().string(org.hamcrest.Matchers.containsString("Editá tu propuesta")));
     }
 
     @Test
