@@ -11,7 +11,7 @@
  * Un worker y sin paralelo ya los garantiza playwright.config.ts; ademas los
  * tests comparten base H2.
  */
-import { expect, test, request, type APIRequestContext } from '@playwright/test';
+import { expect, test, request, type APIRequestContext, type Locator } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { BASE_URL, DEMO_PASSWORD, USER, login } from './helpers';
 
@@ -135,6 +135,56 @@ test('saltear-no-vuelve-a-aparecer', async ({ page }) => {
     // Con el flag puesto, recargar /feed ya no redirige a la pantalla 3.
     await page.reload();
     await expect(page).toHaveURL(/\/feed$/);
+  } finally {
+    await api.dispose();
+  }
+});
+
+/**
+ * Los estilos del form de propuesta viven en app.css, pero el preflight del
+ * Tailwind CDN se inyecta DESPUÉS y empata en especificidad: sin regla que
+ * gane el empate, textarea y select quedan con padding:0 y el control se
+ * achata. Se mide en el navegador porque es exactamente el bug que se vio.
+ */
+function estilo(el: Locator, prop: 'paddingTop' | 'marginTop' | 'paddingLeft'): Promise<number> {
+  return el.evaluate((node, p) => parseFloat(getComputedStyle(node)[p]), prop);
+}
+
+test('tarjeta-sin-categoria-ni-subtipo-y-subtipo-derivado', async ({ page }) => {
+  const api = await request.newContext({ baseURL: BASE_URL });
+  try {
+    const username = await registrarUsuario(api);
+    await login(page, username);
+    await completarIntereses(page);
+    await expect(page).toHaveURL(/\/onboarding\/propuesta/);
+
+    await page.getByRole('button', { name: 'Generar propuesta' }).click();
+    await expect(page).toHaveURL(/\/onboarding\/propuesta\?next=feed&draft=\d+/);
+
+    // Categoría y subtipo ya se eligieron en el paso anterior: la tarjeta no
+    // los repite. La categoría viaja como hidden (se cambia en el form final).
+    await expect(page.locator('#proposal-crear-form select')).toHaveCount(0);
+    const categoria = page.locator('#proposal-crear-form input[name="category"]');
+    await expect(categoria).toHaveAttribute('type', 'hidden');
+    await expect(categoria).not.toHaveValue('');
+
+    // Los campos respiran: el label se despegue del control y el texto del
+    // textarea no toca el borde (padding del preflight ganado por app.css).
+    const nombre = page.locator('#proposal-crear-form input[type="text"]').first();
+    expect(await estilo(nombre, 'marginTop'), 'label pegado al input').toBeGreaterThanOrEqual(10);
+    const descripcion = page.locator('#proposal-crear-form textarea').first();
+    expect(await estilo(descripcion, 'paddingTop'), 'textarea sin padding').toBeGreaterThan(0);
+    await page.screenshot({ path: 'test-results/ui-review/ui-tarjeta-sin-selects.png', fullPage: true });
+
+    await page.getByRole('button', { name: 'Crear experiencia' }).click();
+    await expect(page).toHaveURL(/\/experiences\/new\?draft=\d+&subtipo=\d+/);
+
+    // El subtipo derivado del interés llega al form final como hidden…
+    await expect(page.locator('input[name="subtipo"]')).toHaveValue(/\d+/);
+    // …y el select del form final también tiene su padding (misma regla CSS).
+    const tipo = page.locator('select[name="category"]');
+    expect(await estilo(tipo, 'paddingLeft'), 'select sin padding').toBeGreaterThan(0);
+    await page.screenshot({ path: 'test-results/ui-review/ui-form-con-subtipo.png', fullPage: true });
   } finally {
     await api.dispose();
   }

@@ -1,7 +1,7 @@
 package com.openlab.mx.share.proposal.controller;
 
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
-import com.openlab.mx.share.experience.repository.SubrubroRepository;
+import com.openlab.mx.share.interest.entity.UserInterest;
 import com.openlab.mx.share.interest.service.InterestService;
 import com.openlab.mx.share.proposal.dto.ProposalForm;
 import com.openlab.mx.share.proposal.entity.ExperienceDraft;
@@ -9,7 +9,6 @@ import com.openlab.mx.share.proposal.generator.ProposalGenerationException;
 import com.openlab.mx.share.proposal.generator.ProposalGenerator;
 import com.openlab.mx.share.proposal.service.ProposalService;
 import com.openlab.mx.share.shared.CurrentUser;
-import com.openlab.mx.share.shared.Ids;
 import com.openlab.mx.share.user.entity.User;
 
 import jakarta.validation.Valid;
@@ -26,6 +25,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
 
 /**
  * Pantalla 3 del onboarding (spec §6): propuesta generada por IA que se edita
@@ -55,7 +56,6 @@ public class ProposalController {
     private final CurrentUser currentUser;
     private final ProposalService service;
     private final InterestService interestService;
-    private final SubrubroRepository subrubroRepository;
     private final ObjectProvider<ProposalGenerator> generatorProvider;
 
     @GetMapping
@@ -110,26 +110,37 @@ public class ProposalController {
     public String crear(@Valid @ModelAttribute("form") ProposalForm form,
                         BindingResult binding,
                         @RequestParam(name = "draft", required = false) String draft,
-                        @RequestParam(name = "subtipo", required = false) String subtipo,
                         @RequestParam(defaultValue = "feed") String next,
                         Model model) {
         User user = currentUser.require();
-        Long subtipoId = Ids.parse(subtipo);
         if (binding.hasErrors()) {
             cargar(model, user, next, draft);
             // Tras un POST con errores el form SIEMPRE se muestra, aunque el
             // borrador sea null: si no, th:errors quedaría invisible.
             model.addAttribute("mostrarForm", true);
-            // Y la elección de subtipo se conserva (parseada: basura ⇒ null).
-            model.addAttribute("subrubroId", subtipoId);
             return "proposal/onboarding";
         }
         ExperienceDraft guardado = service.guardar(user, draft, form);
         service.marcarOnboarded(user);
-        // El subtipo vive en la URL hasta el POST de crear: el borrador es
-        // sólo contenido (spec §1) y no hay columna para él.
+        // Categoría y subtipo no se eligen en esta tarjeta: los elegiste en el
+        // paso de intereses. El subtipo sale de ahí (interés de la categoría
+        // elegida o, en su defecto, el primero) y viaja en la URL hasta el
+        // form final; sin intereses ⇒ la URL va sin subtipo.
+        Long subtipoId = subtipoSugerido(user, form.category());
         return "redirect:/experiences/new?draft=" + guardado.getId()
                 + (subtipoId != null ? "&subtipo=" + subtipoId : "");
+    }
+
+    /** Primero el interés de la categoría del borrador; si no, el primer interés; sin ninguno ⇒ null. */
+    private Long subtipoSugerido(User user, ExperienceCategory categoria) {
+        List<UserInterest> intereses = interestService.intereses(user);
+        return intereses.stream()
+                .filter(i -> i.getSubrubro() != null && categoria != null
+                        && categoria.name().equals(i.getSubrubro().getCategoria()))
+                .findFirst()
+                .or(() -> intereses.stream().filter(i -> i.getSubrubro() != null).findFirst())
+                .map(i -> i.getSubrubro().getId())
+                .orElse(null);
     }
 
     /**
@@ -159,15 +170,6 @@ public class ProposalController {
         // Sin proveedor configurado (p.ej. spring.ai.model.chat=none) el botón
         // queda deshabilitado en vez de fallar en el POST.
         model.addAttribute("generatorPresent", generatorProvider.getIfAvailable() != null);
-        model.addAttribute("categorias", ExperienceCategory.values());
-        // Subtipos (subrubros) para la tarjeta de edición: el select los filtra
-        // por categoría en el cliente (mismo criterio que país→moneda en
-        // register.html). El borrador no almacena subtipo (spec §1: sólo
-        // contenido), así que el prefill sólo llega por re-render de errores.
-        model.addAttribute("subrubros", subrubroRepository.findAll().stream()
-                .filter(s -> Boolean.TRUE.equals(s.getActivo()))
-                .toList());
-        model.addAttribute("subrubroId", null);
     }
 
     /** Whitelist: sólo "feed"/"new"; el resto (incluido {@code //evil.com}) ⇒ feed. */

@@ -526,6 +526,13 @@ select.form-input option, select option { background: #fff; color: #111827; }
 input[type=text]:focus, input[type=email]:focus, input[type=password]:focus, input[type=number]:focus, input[type=date]:focus, input[type=time]:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.15); }
 input[type=text], input[type=email], input[type=password], input[type=number], input[type=date], input[type=time], select, textarea { -webkit-appearance: none; }
 
+/* El preflight del Tailwind CDN se inyecta DESPUÉS de app.css y empata en
+   especificidad (selector de elemento) con las reglas de arriba: sin este
+   empuje, textarea y select quedan con padding:0 (letras pegadas al borde y
+   control achatado a 24px en vez de 47px). Los inputs sobreviven solos porque
+   sus selectores llevan atributo (0,1,1). body = (0,0,2) gana el empate. */
+body textarea, body select { padding: .65rem .75rem; }
+
 .confirm-screen {
   min-height: 100vh;
   background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
@@ -1408,7 +1415,7 @@ input.missing, select.missing, textarea.missing {
    control con su margen respecto del texto que lo etiqueta. */
 .interest-page .card.section { padding: 1.25rem; gap: 1rem; }
 .interest-page .card :is(textarea, select),
-.interest-page .card input:not([type="hidden"]) { display: block; margin-top: 0.45rem; }
+.interest-page .card input:not([type="hidden"]) { display: block; margin-top: 0.75rem; }
 .interest-page .card .hint { display: block; margin-top: 0.3rem; }
 
 /* --- cabecera ------------------------------------------------------- */

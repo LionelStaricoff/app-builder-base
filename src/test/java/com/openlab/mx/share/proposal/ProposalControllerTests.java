@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.openlab.mx.share.experience.entity.ExperienceCategory;
+import com.openlab.mx.share.experience.entity.Subrubro;
 import com.openlab.mx.share.experience.repository.SubrubroRepository;
 import com.openlab.mx.share.interest.entity.UserInterest;
 import com.openlab.mx.share.interest.repository.UserInterestRepository;
@@ -75,13 +76,15 @@ class ProposalControllerTests {
                 .build());
     }
 
-    private void conUnInteres(User user) {
+    /** Crea un interés activo y devuelve su subrubro (para assertear el subtipo derivado). */
+    private Subrubro conUnInteres(User user) {
         var subrubro = subrubroRepository.findAll().stream()
                 .filter(s -> Boolean.TRUE.equals(s.getActivo()))
                 .findFirst()
                 .orElseThrow();
         userInterestRepository.save(UserInterest.builder()
                 .user(user).subrubro(subrubro).build());
+        return subrubro;
     }
 
     @Test
@@ -182,38 +185,68 @@ class ProposalControllerTests {
                 draftRepository.findByUserIdOrderByUpdatedAtDesc(user.getId()).isEmpty());
     }
 
-    /** El subtipo elegido en la tarjeta viaja al form final en la URL. */
+    /** El subtipo no se elige en la tarjeta: se deriva del interés del paso anterior. */
     @Test
-    void crearConSubtipoRedirigeAlFormConElSubtipo() throws Exception {
+    void crearDerivaElSubtipoDelInteresDeLaCategoria() throws Exception {
         User user = usuarioNuevo();
-        Long subtipo = subrubroRepository.findAll().stream()
-                .filter(s -> Boolean.TRUE.equals(s.getActivo()))
-                .findFirst().orElseThrow().getId();
+        Subrubro sub = conUnInteres(user);
 
         mockMvc.perform(post("/onboarding/propuesta/crear")
                         .with(user(user.getUsername())).with(csrf())
                         .param("name", "Con subtipo")
                         .param("description", "Descripción")
-                        .param("category", "CULTURAL")
-                        .param("subtipo", String.valueOf(subtipo)))
+                        .param("category", sub.getCategoria()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrlPattern(
-                        "/experiences/new?draft=*&subtipo=" + subtipo));
+                        "/experiences/new?draft=*&subtipo=" + sub.getId()));
     }
 
-    /** Basura en el param (como draft=abc): nunca 400, se ignora y sigue. */
+    /** Sin intereses no hay subtipo: la URL va exacta, sin &subtipo (y el param viejo se ignora). */
     @Test
-    void crearConSubtipoDeBasuraLoIgnora() throws Exception {
+    void crearSinInteresesNoMandaSubtipo() throws Exception {
         User user = usuarioNuevo();
+        mockMvc.perform(post("/onboarding/propuesta/generar")
+                        .with(user(user.getUsername())).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        Long draftId = draftRepository.findByUserIdOrderByUpdatedAtDesc(user.getId()).get(0).getId();
 
         mockMvc.perform(post("/onboarding/propuesta/crear")
                         .with(user(user.getUsername())).with(csrf())
-                        .param("name", "Subtipo basura")
+                        .param("draft", String.valueOf(draftId))
+                        .param("name", "Sin intereses")
                         .param("description", "Descripción")
                         .param("category", "CULTURAL")
                         .param("subtipo", "abc"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("/experiences/new?draft=*"));
+                .andExpect(redirectedUrl("/experiences/new?draft=" + draftId));
+    }
+
+    /** La tarjeta no repite categoría ni subtipo: ya se eligieron en los pasos anteriores. */
+    @Test
+    void laTarjetaNoRepiteCategoriaNiSubtipo() throws Exception {
+        User user = usuarioNuevo();
+        conUnInteres(user);
+        mockMvc.perform(post("/onboarding/propuesta/generar")
+                        .with(user(user.getUsername())).with(csrf()))
+                .andExpect(status().is3xxRedirection());
+        Long draftId = draftRepository.findByUserIdOrderByUpdatedAtDesc(user.getId()).get(0).getId();
+
+        mockMvc.perform(get("/onboarding/propuesta")
+                        .with(user(user.getUsername()))
+                        .param("draft", String.valueOf(draftId)))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().string(org.hamcrest.Matchers.containsString("Editá tu propuesta")))
+                // La categoría sigue viajando, pero es un hidden (se cambia en el form final).
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().string(org.hamcrest.Matchers.containsString("name=\"category\"")))
+                // Y ya no hay selects para volver a elegir ninguna de las dos.
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().string(org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString("Elegí una"))))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                        .content().string(org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString("id=\"subtipo\""))));
     }
 
     @Test

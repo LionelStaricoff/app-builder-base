@@ -76,25 +76,11 @@
         </label>
         <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Error</span>
 
-        <label>Categoría
-            <select th:field="*{category}" required>
-                <option value="">Elegí una</option>
-                <option th:each="c : ${categorias}" th:value="${c}"
-                        th:text="${c.label}">Categoría</option>
-            </select>
-        </label>
+        <!-- Categoría y subtipo ya los elegiste en el paso anterior (los trae
+             el borrador y los intereses): acá sólo viajan, no se repiten. La
+             categoría se puede cambiar en el próximo paso (form final). -->
+        <input type="hidden" th:field="*{category}">
         <span class="error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">Error</span>
-
-        <!-- Subtipo de la categoría: el JS de abajo filtra por data-categoria -->
-        <label>Subtipo
-            <select name="subtipo" id="subtipo">
-                <option value="">Elegí una</option>
-                <option th:each="s : ${subrubros}" th:value="${s.id}"
-                        th:attr="data-categoria=${s.categoria}"
-                        th:selected="${subrubroId != null and subrubroId == s.id}"
-                        th:text="${s.nombre}">Subtipo</option>
-            </select>
-        </label>
 
         <label>Qué incluye el precio
             <span class="hint block">Una cosa por línea. Opcional.</span>
@@ -126,26 +112,6 @@
         window.setTimeout(function () { btn.disabled = false; }, 4000);
     });
 
-    // Subtipo: sólo muestra los subrubros de la categoría elegida y limpia la
-    // selección si ya no corresponde. Mismo criterio que el sync
-    // país→moneda de register.html: sin JS el select completo sigue
-    // funcionando (el server valida la categoría igual).
-    (function () {
-        var cat = document.getElementById('category');
-        var sub = document.getElementById('subtipo');
-        if (!cat || !sub) { return; }
-        function filtrar() {
-            for (var i = 0; i < sub.options.length; i++) {
-                var o = sub.options[i];
-                if (!o.value) { continue; }
-                var coincide = o.getAttribute('data-categoria') === cat.value;
-                o.hidden = !coincide;
-                if (!coincide && o.selected) { sub.selectedIndex = 0; }
-            }
-        }
-        cat.addEventListener('change', filtrar);
-        filtrar();
-    })();
 </script>
 </body>
 </html>
