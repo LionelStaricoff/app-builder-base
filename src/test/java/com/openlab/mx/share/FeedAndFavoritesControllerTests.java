@@ -160,7 +160,19 @@ class FeedAndFavoritesControllerTests {
                 .andExpect(content().string(containsString("data-card-booking")))
                 .andExpect(content().string(containsString("name=\"instanceId\"")))
                 .andExpect(content().string(containsString("value=\"" + instanceId + "\"")))
+                // La card paga directo: POST a la reserva de ESA fecha, sin
+                // pasar por el detalle.
+                .andExpect(content().string(containsString("action=\"/reservations/" + instanceId + "\"")))
+                .andExpect(content().string(containsString("method=\"post\"")))
                 .andReturn().getResponse().getContentAsString();
+
+        // El token tiene que estar DENTRO del form de la reserva: el corazón ya
+        // trae uno, así que buscar "_csrf" en la página entera no probaría nada.
+        int inicioForm = html.indexOf("data-card-booking");
+        int finForm = html.indexOf("</form>", inicioForm);
+        String formReserva = inicioForm < 0 || finForm < 0 ? "" : html.substring(inicioForm, finForm);
+        org.junit.jupiter.api.Assertions.assertTrue(formReserva.contains("name=\"_csrf\""),
+                "el form de reservar de la card necesita el token CSRF");
 
         // El input de cupos vive FUERA del bloque de cupos: si estuviera
         // adentro, cambiar de fecha lo borraría y el usuario perdería lo elegido.

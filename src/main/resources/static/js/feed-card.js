@@ -79,6 +79,7 @@
     const botonFechas = card.querySelector('[data-dates-toggle]');
     const capacidad = card.querySelector('[data-card-capacity]');
     const oculto = card.querySelector('[data-card-instance-id]');
+    const reserva = card.querySelector('form[data-card-booking]');
     const experiencia = card.dataset.experienceId;
     const instanceId = opcion.dataset.instanceId;
     const etiqueta = opcion.dataset.dateLabel || '';
@@ -98,6 +99,11 @@
       });
       if (oculto) {
         oculto.value = instanceId;
+      }
+      // El CTA es un POST a /reservations/{instanceId}: si cambia la fecha,
+      // cambia el destino. Sin esto se reservaría la fecha anterior.
+      if (reserva) {
+        reserva.action = '/reservations/' + encodeURIComponent(instanceId);
       }
       if (panel) {
         marcarSeleccion(panel, opcion);

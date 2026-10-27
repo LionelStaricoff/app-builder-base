@@ -222,9 +222,13 @@
               </div>
             </details>
 
-            <!--/* CTA: GET al detalle con la fecha y los cupos ya elegidos. La
-                 card NO crea la reserva (eso pasa en el detalle, contra Stripe). */-->
-            <form method="get" th:action="@{/experiences/{id}(id=${dto.id})}"
+            <!--/* CTA: POST directo a Stripe. La card ya eligió fecha y cupos, así
+                 que no hay pantalla intermedia: el POST crea la reserva
+                 PENDIENTE, la Checkout Session y redirige a Stripe (o a
+                 /verificacion si falta KYC). El detalle queda para leer, no
+                 para pagar. */-->
+            <form th:if="${dto.nextInstanceId != null}" method="post"
+                  th:action="@{/reservations/{id}(id=${dto.nextInstanceId})}"
                   data-card-booking class="space-y-2">
               <input type="hidden" name="instanceId" data-card-instance-id th:value="${dto.nextInstanceId}">
               <div class="flex items-center gap-2">
@@ -234,7 +238,6 @@
                          class="w-16 rounded-lg border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200">
                 </label>
                 <button type="submit"
-                        th:disabled="${dto.nextInstanceId == null}"
                         class="flex-1 bg-gray-100 hover:bg-gray-200 active:scale-[0.99] text-gray-900 font-bold py-3.5 px-5 rounded-2xl flex items-center justify-between border border-gray-200 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                   <span class="mx-auto text-sm">Reservar ahora</span>
                   <div class="flex items-center gap-1.5 opacity-60">
@@ -243,6 +246,8 @@
                 </button>
               </div>
             </form>
+            <p th:unless="${dto.nextInstanceId != null}"
+               class="text-[11px] text-gray-400 text-center py-2">Sin fechas disponibles</p>
           </div>
         </div>
 <!--/* Lista completa: UNICA definicion de "como se pinta N cards". La usan el

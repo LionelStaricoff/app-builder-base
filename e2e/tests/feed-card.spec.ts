@@ -118,7 +118,7 @@ test.describe('card del feed', () => {
     await expect(cuerpo).toContainText('no hay reseñas');
   });
 
-  test('el CTA lleva al detalle con la fecha y los cupos elegidos', async ({ page }) => {
+  test('el CTA postea directo a la reserva, sin pantalla intermedia', async ({ page }) => {
     const card = await cardCerca(page);
 
     await card.locator('[data-dates-toggle]').click();
@@ -126,18 +126,36 @@ test.describe('card del feed', () => {
     const instanceId = (await segunda.getAttribute('data-instance-id'))!;
     await segunda.click();
 
+    // La fecha elegida mueve el destino del POST: si no, reservaría la anterior.
+    const form = card.locator('form[data-card-booking]');
+    await expect(form).toHaveAttribute('action', `/reservations/${instanceId}`);
+    await expect(form).toHaveAttribute('method', 'post');
+    // El token tiene que estar en la card: sin CSRF el POST da 403.
+    await expect(form.locator('input[name="_csrf"]')).toHaveCount(1);
+
+    // No se toca Stripe de verdad: se intercepta el POST y se responde 200. Así
+    // se verifica lo que SOLO el navegador puede mostrar — que el submit nativo
+    // manda fecha, cupos y token, y que navega DIRECTO al endpoint de la reserva
+    // (que es el que redirige a Stripe: eso lo cubre la suite Java).
+    let cuerpo = '';
+    await page.route('**/reservations/**', async (route) => {
+      cuerpo = route.request().postData() || '';
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: '<p id="stripe-fake">Stripe</p>',
+      });
+    });
+
     await card.locator('input[name="attendees"]').fill('2');
     await card.getByRole('button', { name: 'Reservar ahora' }).click();
 
-    await expect(page).toHaveURL(
-      new RegExp(`/experiences/\\d+\\?instanceId=${instanceId}&attendees=2$`),
+    expect(cuerpo, 'la card tiene que postear a /reservations/{instanceId}').toContain(
+      `instanceId=${instanceId}`,
     );
-    // Nada de pantalla intermedia: el detalle es el último paso antes de Stripe.
-    await expect(page).not.toHaveURL(/\/checkout/);
-
-    // El detalle arranca con esa fecha seleccionada y esos cupos cargados.
-    const fechas = page.locator('#fechas');
-    await expect(fechas).toBeVisible();
-    await expect(fechas.locator('.ring-2 input[name="attendees"]')).toHaveValue('2');
+    expect(cuerpo).toContain('attendees=2');
+    expect(cuerpo).toContain('_csrf=');
+    await expect(page).toHaveURL(new RegExp(`/reservations/${instanceId}$`));
+    await expect(page.locator('#stripe-fake')).toBeVisible();
   });
 });
