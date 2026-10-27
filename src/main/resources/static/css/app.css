@@ -1398,6 +1398,10 @@ input.missing, select.missing, textarea.missing {
 .interest-page [hidden],
 .interest-sheet [hidden] { display: none !important; }
 
+/* Las cards del flujo de propuesta ya se separan con el gap del flex; el
+   margin-bottom de .card (diseñado para el flujo de .app-main) los desalinearía. */
+.interest-page .card { margin-bottom: 0; }
+
 /* --- cabecera ------------------------------------------------------- */
 .interest-head-top { display: flex; justify-content: flex-end; }
 

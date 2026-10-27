@@ -41,68 +41,79 @@
         <p class="interest-empty" th:if="${#lists.isEmpty(intereses)}">Todavía no elegiste intereses.</p>
     </section>
 
-    <!-- Generar / Regenerar: mismo endpoint; tras un error el mismo botón hace de Reintentar -->
-    <form class="interest-form" id="proposal-generar-form" method="post"
+    <!-- Generar / Regenerar: mismo endpoint; tras un error el mismo botón hace de
+         Reintentar. El form ES la card (.card .section): mismo panel que las otras
+         secciones y el CTA toma el estilo .card .btn-primary + .interest-cta. -->
+    <form class="card section" id="proposal-generar-form" method="post"
           th:action="@{/onboarding/propuesta/generar}">
         <input type="hidden" name="next" th:value="${next}">
-        <label>Contá qué te gustaría ofrecer
-            <!-- Sin placeholder: el label ya dice exactamente lo mismo (copy del plan) -->
-            <textarea name="textoLibre" rows="3" maxlength="1000"></textarea>
-        </label>
-        <button type="submit" class="btn-primary" id="proposal-generar"
+        <label class="section-title" for="proposal-texto">Contá qué te gustaría ofrecer</label>
+        <!-- Sin placeholder: el label (título de la card) ya dice exactamente lo mismo -->
+        <textarea id="proposal-texto" name="textoLibre" rows="3" maxlength="1000"></textarea>
+        <button type="submit" class="btn-primary interest-cta" id="proposal-generar"
                 th:disabled="${!generatorPresent}"
                 th:text="${borrador == null} ? 'Generar propuesta' : 'Regenerar'">Generar propuesta</button>
     </form>
 
     <!-- Spec §5: los campos editables aparecen TRAS la propuesta; sin borrador
          no hay nada que editar (y el form vacío duplicaría /experiences/new). -->
-    <form class="interest-form" id="proposal-crear-form" method="post"
+    <form class="card section" id="proposal-crear-form" method="post"
           th:action="@{/onboarding/propuesta/crear}" th:object="${form}"
           th:if="${mostrarForm}">
         <input type="hidden" name="next" th:value="${next}">
         <input type="hidden" name="draft" th:value="${draftId}">
 
-        <section class="card section">
-            <h2 class="section-title">Editá tu propuesta</h2>
-            <p class="hint">Sólo el contenido: el resto de los datos los completás en el próximo paso.</p>
+        <h2 class="section-title">Editá tu propuesta</h2>
+        <p class="hint">Sólo el contenido: el resto de los datos los completás en el próximo paso.</p>
 
-            <label>Nombre
-                <input type="text" th:field="*{name}" required>
-            </label>
-            <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Error</span>
+        <label>Nombre
+            <input type="text" th:field="*{name}" required>
+        </label>
+        <span class="error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Error</span>
 
-            <label>Descripción
-                <textarea th:field="*{description}" rows="4" required></textarea>
-            </label>
-            <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Error</span>
+        <label>Descripción
+            <textarea th:field="*{description}" rows="4" required></textarea>
+        </label>
+        <span class="error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}">Error</span>
 
-            <label>Categoría
-                <select th:field="*{category}" required>
-                    <option value="">Elegí una</option>
-                    <option th:each="c : ${categorias}" th:value="${c}"
-                            th:text="${c.label}">Categoría</option>
-                </select>
-            </label>
-            <span class="error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">Error</span>
+        <label>Categoría
+            <select th:field="*{category}" required>
+                <option value="">Elegí una</option>
+                <option th:each="c : ${categorias}" th:value="${c}"
+                        th:text="${c.label}">Categoría</option>
+            </select>
+        </label>
+        <span class="error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">Error</span>
 
-            <label>Qué incluye el precio
-                <span class="hint block">Una cosa por línea. Opcional.</span>
-                <textarea th:field="*{includes}" rows="3" maxlength="2000"
-                          placeholder="Entrada al museo, guía bilingüe"></textarea>
-            </label>
-            <span class="error" th:if="${#fields.hasErrors('includes')}" th:errors="*{includes}">Error</span>
+        <label>Qué incluye el precio
+            <span class="hint block">Una cosa por línea. Opcional.</span>
+            <textarea th:field="*{includes}" rows="3" maxlength="2000"
+                      placeholder="Entrada al museo, guía bilingüe"></textarea>
+        </label>
+        <span class="error" th:if="${#fields.hasErrors('includes')}" th:errors="*{includes}">Error</span>
 
-            <label>Qué tiene que llevar la gente
-                <span class="hint block">Una cosa por línea. Opcional.</span>
-                <textarea th:field="*{bring}" rows="3" maxlength="2000"
-                          placeholder="Calzado cómodo, protector solar"></textarea>
-            </label>
-            <span class="error" th:if="${#fields.hasErrors('bring')}" th:errors="*{bring}">Error</span>
+        <label>Qué tiene que llevar la gente
+            <span class="hint block">Una cosa por línea. Opcional.</span>
+            <textarea th:field="*{bring}" rows="3" maxlength="2000"
+                      placeholder="Calzado cómodo, protector solar"></textarea>
+        </label>
+        <span class="error" th:if="${#fields.hasErrors('bring')}" th:errors="*{bring}">Error</span>
 
-            <button type="submit" class="btn-primary">Crear experiencia</button>
-        </section>
+        <button type="submit" class="btn-primary interest-cta">Crear experiencia</button>
     </form>
 </main>
 
+<script>
+    // Feedback de submit (ui-ux-pro-max: "show loading then success/error"):
+    // sin esto, con un proveedor lento el botón no reacciona y un doble click
+    // dispara dos INSERTs / dos llamadas al proveedor. Mismo patrón que
+    // interest-picker.js: se deshabilita en 'submit' (el form ya se está
+    // mandando) y se re-habilita por si el navegador vuelve atrás.
+    document.getElementById('proposal-generar-form').addEventListener('submit', function () {
+        var btn = document.getElementById('proposal-generar');
+        btn.disabled = true;
+        window.setTimeout(function () { btn.disabled = false; }, 4000);
+    });
+</script>
 </body>
 </html>
