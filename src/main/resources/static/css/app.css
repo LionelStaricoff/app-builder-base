@@ -529,9 +529,11 @@ input[type=text], input[type=email], input[type=password], input[type=number], i
 /* El preflight del Tailwind CDN se inyecta DESPUÉS de app.css y empata en
    especificidad (selector de elemento) con las reglas de arriba: sin este
    empuje, textarea y select quedan con padding:0 (letras pegadas al borde y
-   control achatado a 24px en vez de 47px). Los inputs sobreviven solos porque
-   sus selectores llevan atributo (0,1,1). body = (0,0,2) gana el empate. */
-body textarea, body select { padding: .65rem .75rem; }
+   control achatado a 24px en vez de 47px), font-size:100% (14.4px en vez de
+   1rem) y color:inherit. Los inputs con [type] sobreviven solos porque sus
+   selectores llevan atributo (0,1,1). body = (0,0,2) gana el empate sin
+   pisar clases: cualquier .form-input o utility sigue ganando. */
+body textarea, body select { padding: .65rem .75rem; font-size: 1rem; color: #111827; }
 
 .confirm-screen {
   min-height: 100vh;
