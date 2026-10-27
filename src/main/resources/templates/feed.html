@@ -57,8 +57,6 @@
                 </div>
             </div>
 
-            <p class="text-rose-100 text-xs sm:text-sm opacity-90 font-medium">Explorá los mejores rincones del mundo</p>
-
             <!--/* BUSCADOR INTEGRADO: aparece y desaparece con la lupa de la cabecera */-->
             <div id="feed-search" class="feed-search" th:classappend="${searchedQuery != null} ? 'is-open'">
               <form th:action="@{/feed}" method="get" class="relative flex items-center">
@@ -84,10 +82,6 @@
 
             <!--/* Carrusel de Categorías */-->
             <div class="pt-4">
-              <div class="flex items-center justify-between text-white/80 text-[11px] font-semibold mb-3 px-1">
-                <span class="uppercase tracking-widest opacity-80">Filtros por categoría</span>
-                <span class="text-rose-200 animate-pulse">Deslizar →</span>
-              </div>
               <div id="category-container" class="flex items-center gap-3 overflow-x-auto overflow-y-hidden no-scrollbar py-2 w-full">
                 <!--/* Todas: limpia SOLO la categoría. El radio se conserva (si no,
                      tocar una categoría borraba en silencio la distancia elegida).

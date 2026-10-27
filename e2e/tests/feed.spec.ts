@@ -43,6 +43,31 @@ test.describe('feed', () => {
     expect((await cardTitles(page)).sort()).toEqual([CERCA, MEDIO, LEJOS].sort());
   });
 
+  test('la lupa abre el buscador y el submit arma /feed?city=', async ({ page }) => {
+    await page.goto('/feed');
+
+    // El copy decorativo del hero se fue; tiene que seguir fuera.
+    await expect(page.getByText('Explorá los mejores rincones del mundo')).toHaveCount(0);
+    await expect(page.getByText('Filtros por categoría')).toHaveCount(0);
+
+    const panel = page.locator('#feed-search');
+    await expect(panel).toBeHidden();
+
+    await page.locator('#btn-search').click();
+    await expect(panel).toBeVisible();
+    const input = panel.locator('input[name="city"]');
+    await expect(input).toBeFocused();
+
+    await input.fill('Cartagena');
+    await input.press('Enter');
+    await expect(page).toHaveURL(/\/feed\?.*city=Cartagena/);
+
+    // Con busqueda activa el servidor la renderiza abierta y la lupa la cierra.
+    await expect(panel).toBeVisible();
+    await page.locator('#btn-search').click();
+    await expect(panel).toBeHidden();
+  });
+
   test('el corazon de favoritos refleja el estado en el feed y en /favorites', async ({ page }) => {
     // Radio de 1 km: queda una sola card, asi la seleccion no depende del orden.
     await page.goto('/feed?distance=1');
