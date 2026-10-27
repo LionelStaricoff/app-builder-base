@@ -30,9 +30,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -75,9 +73,15 @@ class UnconfiguredCheckoutTests {
     @WithMockUser("demo_user")
     void postSinKeysFallaConMensajeClaroYNoCreaNada() throws Exception {
         Long instanceId = fechaFutura();
+        Long experienceId = instanceRepository.findById(instanceId).orElseThrow()
+                .getExperience().getId();
 
-        mockMvc.perform(post("/checkout/" + instanceId).with(csrf()).param("attendees", "1"))
+        mockMvc.perform(post("/reservations/" + instanceId).with(csrf()).param("attendees", "1"))
                 .andExpect(status().is3xxRedirection())
+                // Sin checkout intermedio: vuelve al detalle en la sección de
+                // fechas, con la fecha y los cupos todavía elegidos.
+                .andExpect(redirectedUrl("/experiences/" + experienceId
+                        + "?instanceId=" + instanceId + "&attendees=1#fechas"))
                 .andExpect(flash().attribute("error",
                         containsString("El pago no está disponible")));
 

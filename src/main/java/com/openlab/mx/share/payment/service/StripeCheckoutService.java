@@ -75,6 +75,7 @@ public class StripeCheckoutService {
         GatewayCheckoutRequest request = new GatewayCheckoutRequest(
                 price, currency, reservation.getAttendees(), instance.getExperience().getName(),
                 Map.of("instanceId", String.valueOf(instanceId),
+                        "experienceId", String.valueOf(instance.getExperience().getId()),
                         "userId", String.valueOf(user.getId()),
                         "attendees", String.valueOf(reservation.getAttendees()),
                         "reservationId", String.valueOf(reservation.getId())));

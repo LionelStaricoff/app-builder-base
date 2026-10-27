@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
 <body>
-<!-- Selector de cupos: abre el checkout de la fecha elegida.
-     refundPercent = % que se devuelve si cancela esta fecha. -->
-<form th:fragment="picker(instanceId, refundPercent)" th:action="@{/reservations/{id}(id=${instanceId})}"
+<!-- Selector de cupos: reserva la fecha elegida y arranca el pago.
+     refundPercent = % que se devuelve si cancela esta fecha.
+     attendees = cupos que ya venían elegidos en la card del feed. -->
+<form th:fragment="picker(instanceId, refundPercent, attendees)" th:action="@{/reservations/{id}(id=${instanceId})}"
       method="post" class="picker">
     <label class="hint" style="display:flex;gap:.5rem;align-items:center">
         Cupos
-        <input type="number" name="attendees" min="1" max="20" value="1"
+        <input type="number" name="attendees" min="1" max="20"
+               th:value="${attendees != null ? attendees : 1}"
                style="width:4.5rem;padding:.4rem;border-radius:8px;border:1px solid #ddd">
     </label>
     <button type="submit" class="btn-primary">Reservar</button>

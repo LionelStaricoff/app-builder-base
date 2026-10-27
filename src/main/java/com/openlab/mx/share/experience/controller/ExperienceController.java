@@ -141,7 +141,10 @@ public class ExperienceController {
     }
 
     @GetMapping("/experiences/{id}")
-    public String detail(@PathVariable Long id, Model model) {
+    public String detail(@PathVariable Long id,
+                         @RequestParam(required = false) Long instanceId,
+                         @RequestParam(defaultValue = "1") int attendees,
+                         Model model) {
         Experience experience = experienceService.get(id);
         List<ExperienceImage> images = imageRepository.findByExperienceIdOrderByIdAsc(id);
         List<ExperienceInstance> instances = instanceRepository
@@ -156,6 +159,12 @@ public class ExperienceController {
         model.addAttribute("stopsJson", jacksonHelper.toJson(stops));
         model.addAttribute("images", images);
         model.addAttribute("instances", instances);
+        // La card del feed manda la fecha y los cupos elegidos en el GET: el
+        // detalle arranca con esa selección para que el usuario solo confirme.
+        boolean instanciaElegida = instanceId != null
+                && instances.stream().anyMatch(i -> i.getId().equals(instanceId));
+        model.addAttribute("selectedInstanceId", instanciaElegida ? instanceId : null);
+        model.addAttribute("selectedAttendees", Math.max(1, Math.min(attendees, 20)));
         // Reseñas con texto (Rating + Comment de fechas terminadas).
         model.addAttribute("reviews", ratingService.reviewsFor(id));
         // Política de reembolso visible ANTES de reservar (cartel) y el % que

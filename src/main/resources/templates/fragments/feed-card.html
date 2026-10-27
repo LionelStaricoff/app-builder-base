@@ -14,7 +14,7 @@
   true el POST va a /favorites/{id}/remove, si no a /add. Por eso el mismo
   fragmento sirve en las dos pantallas sin parametro de modo.
 */-->
-        <div th:fragment="card(dto)" th:if="${dto != null}" th:id="'card-' + ${dto.id}" class="card feed-card w-full bg-white rounded-3xl shadow-xl overflow-hidden font-sans transition-transform duration-300 hover:scale-[1.02]">
+        <div th:fragment="card(dto)" th:if="${dto != null}" th:id="'card-' + ${dto.id}" th:data-experience-id="${dto.id}" class="card feed-card w-full bg-white rounded-3xl shadow-xl overflow-hidden font-sans transition-transform duration-300 hover:scale-[1.02]">
           
           <div class="relative w-full overflow-hidden group feed-card-cover">
             <img th:if="${(dto.images == null or #lists.isEmpty(dto.images)) and dto.coverBase64 != null}"
@@ -74,7 +74,9 @@
           <div class="space-y-4 feed-card-body">
             <div class="flex items-start justify-between gap-2">
               <div class="max-w-[70%]">
-                <h2 class="font-black text-gray-900 tracking-tight flex items-center gap-2 feed-card-title" th:text="${dto.name}">Nombre</h2>
+                <h2 class="font-black text-gray-900 tracking-tight flex items-center gap-2 feed-card-title">
+              <a th:href="@{/experiences/{id}(id=${dto.id})}" th:text="${dto.name}" class="hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 rounded">Nombre</a>
+            </h2>
               </div>
             </div>
 
@@ -90,8 +92,15 @@
 
             <div class="grid grid-cols-3 gap-2 py-3 text-center text-xs text-gray-600 border-y border-gray-100">
               <div class="flex flex-col items-center gap-1.5">
-                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span class="font-bold text-gray-900" th:text="${dto.nextDate != null ? T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(dto.nextDate) : 'Sin fecha'}">24 oct</span>
+                <button type="button"
+                        data-dates-toggle
+                        th:disabled="${dto.nextInstanceId == null}"
+                        aria-expanded="false"
+                        class="flex flex-col items-center gap-1.5 rounded-xl px-2 py-1 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span class="font-bold text-gray-900" data-card-date-label th:text="${dto.nextDate != null ? T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(dto.nextDate) : 'Sin fecha'}">24 oct</span>
+                  <span class="text-[9px] font-semibold text-teal-700" th:text="${dto.nextInstanceId != null ? 'Cambiar' : 'Sin fechas'}">Cambiar</span>
+                </button>
               </div>
               <div class="flex flex-col items-center gap-1.5 border-x border-gray-100 px-2">
                 <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -106,6 +115,11 @@
                 </a>
               </div>
             </div>
+
+            <!--/* Panel de fechas: en flujo normal (la card es overflow-hidden,
+                 así que un absoluto se recortaría). El JS lo llena la primera
+                 vez que se toca la fecha y lo alterna después. */-->
+            <div data-dates-panel hidden class="rounded-2xl border border-gray-100 bg-white p-3"></div>
 
             <!--/* SECCIÓN DE PARADAS: <details> nativo. Da teclado (Enter/Space),
                  estado expandido al lector de pantalla y funciona igual en las
@@ -161,23 +175,10 @@
             </details>
 
             <div class="grid grid-cols-5 gap-3">
-              <div class="col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between space-y-3">
-                <div class="flex justify-between items-center gap-2 text-xs">
-                  <span class="font-semibold text-gray-800 whitespace-nowrap">Lugares libres</span>
-                  <span class="text-gray-400 font-medium text-[11px] whitespace-nowrap" th:text="${dto.maxCapacity != null ? dto.maxCapacity + ' cupos' : '0 cupos'}">10 cupos</span>
-                </div>
-                <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
-                  <div class="bg-teal-700 h-full rounded-full transition-all duration-300" th:style="'width:' + ${dto.maxCapacity != null and dto.maxCapacity > 0 ? T(java.lang.Math).round(dto.reservedCount * 100.0 / dto.maxCapacity) : 0} + '%'"></div>
-                </div>
-                <div class="flex items-center justify-between text-[11px] text-gray-500">
-                  <div class="flex items-center gap-1.5">
-                    <div class="flex -space-x-1.5">
-                      <img th:each="av : ${dto.reservedAvatars}" class="w-4 h-4 rounded-full ring-1 ring-white object-cover" th:src="'data:image/jpeg;base64,' + ${av}" alt="">
-                    </div>
-                    <span th:text="${dto.reservedCount} + ' reservaron'">2 reservaron</span>
-                  </div>
-                  <span class="font-bold text-teal-700" th:text="${dto.availableCapacity != null ? dto.availableCapacity + ' libres' : '0 libres'}">6 libres</span>
-                </div>
+              <div class="col-span-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 flex flex-col justify-between space-y-3"
+                   data-card-capacity
+                   th:data-instance-id="${dto.nextInstanceId}">
+                <th:block th:replace="~{experience/card-dates :: availabilityContent(${dto.maxCapacity}, ${dto.availableCapacity}, ${dto.reservedCount}, ${dto.reservedAvatars})}"></th:block>
               </div>
               <div class="col-span-2 bg-gray-50 px-2 py-4 rounded-2xl border border-gray-100 flex flex-col items-center justify-center text-center">
                 <span class="text-[9px] font-extrabold uppercase tracking-wider text-gray-400 whitespace-nowrap">Precio total</span>
@@ -188,12 +189,60 @@
               </div>
             </div>
             
-            <a class="w-full bg-gray-100 hover:bg-gray-200 active:scale-[0.99] text-gray-900 font-bold py-3.5 px-5 rounded-2xl flex items-center justify-between border border-gray-200 transition-all shadow-sm" th:href="@{/experiences/{id}(id=${dto.id})}">
-              <span class="mx-auto text-sm">Reservar ahora</span>
-              <div class="flex items-center gap-1.5 opacity-60">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            <!--/* Preguntas y reseñas: mismo <details> nativo, pero el cuerpo se
+                 pide la primera vez que se abre (lazy). data-loaded lo pone el JS
+                 para no volver a pedirlo; el contador llega con el fragmento. */-->
+            <details class="feed-details border-b border-gray-100 pb-2"
+                     data-lazy-section
+                     th:data-lazy-url="@{/experiences/{id}/questions(id=${dto.id})}">
+              <summary class="w-full flex items-center justify-between py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors cursor-pointer">
+                <span class="flex items-center gap-2">
+                  <svg aria-hidden="true" class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Preguntas <span data-lazy-count class="text-gray-400"></span>
+                </span>
+                <svg aria-hidden="true" class="feed-details-chevron w-3 h-3 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              </summary>
+              <div data-lazy-content class="py-2">
+                <p class="text-[11px] text-gray-400">Tocá para cargar las preguntas.</p>
               </div>
-            </a>
+            </details>
+
+            <details class="feed-details border-b border-gray-100 pb-2"
+                     data-lazy-section
+                     th:data-lazy-url="@{/experiences/{id}/reviews(id=${dto.id})}">
+              <summary class="w-full flex items-center justify-between py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider hover:text-gray-600 transition-colors cursor-pointer">
+                <span class="flex items-center gap-2">
+                  <svg aria-hidden="true" class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118L2.03 10.1c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                  Reseñas <span data-lazy-count class="text-gray-400"></span>
+                </span>
+                <svg aria-hidden="true" class="feed-details-chevron w-3 h-3 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              </summary>
+              <div data-lazy-content class="py-2">
+                <p class="text-[11px] text-gray-400">Tocá para cargar las reseñas.</p>
+              </div>
+            </details>
+
+            <!--/* CTA: GET al detalle con la fecha y los cupos ya elegidos. La
+                 card NO crea la reserva (eso pasa en el detalle, contra Stripe). */-->
+            <form method="get" th:action="@{/experiences/{id}(id=${dto.id})}"
+                  data-card-booking class="space-y-2">
+              <input type="hidden" name="instanceId" data-card-instance-id th:value="${dto.nextInstanceId}">
+              <div class="flex items-center gap-2">
+                <label class="flex items-center gap-1.5 text-[11px] font-semibold text-gray-500 whitespace-nowrap">
+                  Cupos
+                  <input type="number" name="attendees" min="1" max="20" value="1"
+                         class="w-16 rounded-lg border border-gray-200 px-2 py-1.5 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-rose-200">
+                </label>
+                <button type="submit"
+                        th:disabled="${dto.nextInstanceId == null}"
+                        class="flex-1 bg-gray-100 hover:bg-gray-200 active:scale-[0.99] text-gray-900 font-bold py-3.5 px-5 rounded-2xl flex items-center justify-between border border-gray-200 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span class="mx-auto text-sm">Reservar ahora</span>
+                  <div class="flex items-center gap-1.5 opacity-60">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                  </div>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 <!--/* Lista completa: UNICA definicion de "como se pinta N cards". La usan el

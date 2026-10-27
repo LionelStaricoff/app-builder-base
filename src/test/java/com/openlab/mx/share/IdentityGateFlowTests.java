@@ -39,10 +39,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Gate de identidad end-to-end con el bean REAL (sin TestIdentityGateConfig):
  * reservar sin verificar redirige a /verificacion con returnUrl; verificado
- * pasa al checkout.
+ * arranca el pago.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@org.springframework.context.annotation.Import(com.openlab.mx.share.shared.TestGatewayConfig.class)
 class IdentityGateFlowTests {
 
     @Autowired
@@ -118,18 +119,20 @@ class IdentityGateFlowTests {
     }
 
     @Test
-    void reserva_verificada_pasa_al_checkout() throws Exception {
+    void reserva_verificada_arranca_el_pago() throws Exception {
         User creador = usuarioNuevo();
         Long instanceId = instanciaFuturaComo(creador);
         User participante = usuarioNuevo();
         marcarVerificado(participante);
 
+        // Verificado pasa el gate y el POST arranca Stripe directo (sin la
+        // pantalla intermedia de revisión que existía antes).
         mockMvc.perform(post("/reservations/" + instanceId)
                         .with(user(participante.getUsername()))
                         .with(csrf())
                         .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/checkout/" + instanceId + "?attendees=1"));
+                .andExpect(redirectedUrlPattern("/__fake_stripe_/checkout/*"));
     }
 
     @Test

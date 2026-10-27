@@ -75,26 +75,20 @@ class ReservationFlowTests {
 
     @Test
     @WithMockUser("demo_user")
-    void flujoReservaCheckoutYConfirmation() throws Exception {
+    void flujoReservaYPagoDirectoAStripe() throws Exception {
         Long instanceId = fechaFutura();
 
-        mockMvc.perform(post("/reservations/" + instanceId).with(csrf())
-                        .param("attendees", "2"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/checkout/" + instanceId + "?attendees=2"));
-
-        mockMvc.perform(get("/checkout/" + instanceId).param("attendees", "2"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("MXN")));
-
-        // Checkout Stripe: POST redirige a la página hosted (fake) y el retorno
-        // /pago/exito revalida la sesión ante la puerta real (spec §6).
+        // Sin pantalla intermedia: el POST de la fecha ya crea la sesión de
+        // Stripe y redirige a la página hosted.
         String[] redirect = new String[1];
-        mockMvc.perform(post("/checkout/" + instanceId).with(csrf())
+        mockMvc.perform(post("/reservations/" + instanceId).with(csrf())
                         .param("attendees", "2"))
                 .andExpect(status().is3xxRedirection())
                 .andDo(r -> redirect[0] = r.getResponse().getRedirectedUrl());
         org.junit.jupiter.api.Assertions.assertNotNull(redirect[0]);
+        org.junit.jupiter.api.Assertions.assertTrue(
+                redirect[0].contains("/__fake_stripe_/checkout/"),
+                "tiene que ir derecho a Stripe, no a una revisión intermedia");
 
         Long userId = userRepository.findByUsername("demo_user").orElseThrow().getId();
         var reservation = reservationRepository.findFirstByInstanceIdAndUserIdAndStatus(
@@ -116,15 +110,6 @@ class ReservationFlowTests {
     @Test
     void sinSesionLosFluujosRedirigenALogin() throws Exception {
         mockMvc.perform(post("/reservations/1").with(csrf()))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login"));
-
-        mockMvc.perform(get("/checkout/1"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login"));
-
-        mockMvc.perform(post("/checkout/1").with(csrf())
-                        .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
 

@@ -1,5 +1,8 @@
 package com.openlab.mx.share.reservation.controller;
 
+import com.openlab.mx.share.experience.repository.ExperienceInstanceRepository;
+import com.openlab.mx.share.payment.gateway.GatewaySession;
+import com.openlab.mx.share.payment.service.StripeCheckoutService;
 import com.openlab.mx.share.reservation.dto.ReservationRequest;
 import com.openlab.mx.share.reservation.entity.Reservation;
 import com.openlab.mx.share.reservation.entity.ReservationStatus;
@@ -24,6 +27,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * Reservas: abrir checkout, confirmar como creador, ver las propias
@@ -40,6 +44,8 @@ public class ReservationController {
             requireVerifiedIdentityService;
     private final RefundPolicy refundPolicy;
     private final CalendarIcsService calendarIcsService;
+    private final StripeCheckoutService stripeCheckoutService;
+    private final ExperienceInstanceRepository instanceRepository;
 
     @Value("${escrow.commission-rate}")
     private java.math.BigDecimal commissionRate = new java.math.BigDecimal("0.05");
@@ -47,11 +53,14 @@ public class ReservationController {
     @PostMapping("/reservations/{instanceId}")
     public String reserve(@PathVariable Long instanceId,
                           @Valid @ModelAttribute ReservationRequest request,
-                          BindingResult bindingResult) {
-        // Opción A: sin pago no hay reserva. Este paso solo lleva al checkout
-        // con los cupos elegidos, no persiste nada en DB.
+                          BindingResult bindingResult,
+                          RedirectAttributes redirectAttributes) {
+        // Sin pantalla intermedia: este POST crea la reserva PENDIENTE y la
+        // Checkout Session, y manda derecho a Stripe. Si algo falla, vuelve al
+        // detalle con la fecha y los cupos ya elegidos.
         // KYC (Didit): el primer paso de reservar ya exige identidad verificada
-        // (el service de reserva también lo exige al persistir).
+        // (el service de reserva también lo exige al persistir). Va FUERA del
+        // try: el handler global lo convierte en redirect a /verificacion.
         User user = currentUser.require();
         requireVerifiedIdentityService.requireVerified(user.getId());
         int attendees = request != null ? request.attendees() : 1;
@@ -61,7 +70,28 @@ public class ReservationController {
         if (attendees > 20) {
             attendees = 20;
         }
-        return "redirect:/checkout/" + instanceId + "?attendees=" + attendees;
+        String volver = volverAlDetalle(instanceId, attendees);
+        try {
+            GatewaySession session = stripeCheckoutService.start(instanceId, attendees, user);
+            return "redirect:" + session.url();
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:" + volver;
+        }
+    }
+
+    /** A dónde volver si Stripe no arranca: el detalle, en la sección de fechas. */
+    private String volverAlDetalle(Long instanceId, int attendees) {
+        Long experienceId = instanceRepository.findById(instanceId)
+                .map(i -> i.getExperience().getId())
+                .orElse(null);
+        if (experienceId == null) {
+            return "/feed";
+        }
+        return "/experiences/" + experienceId
+                + "?instanceId=" + instanceId
+                + "&attendees=" + attendees
+                + "#fechas";
     }
 
     @GetMapping("/reservations")

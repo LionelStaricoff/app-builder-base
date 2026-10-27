@@ -19,6 +19,8 @@ public record ExperienceFeedDTO(
         String meetingPointLabel,
         int durationMinutes,
         LocalDate nextDate,
+        /** Instancia de {@link #nextDate}: la card la usa para pedir fechas y cupos. */
+        Long nextInstanceId,
         BigDecimal price,
         double ratingAverage,
         boolean favorite,

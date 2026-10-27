@@ -83,10 +83,10 @@ class StripeWebhookControllerTests {
                 .get(0).getId();
     }
 
-    /** Crea reserva+payment (PENDING) vía el flujo web y devuelve el session id. */
+    /** Crea reserva+payment (PENDING) vía el flujo web (POST de la reserva) y devuelve el session id. */
     private String armaSessionId() throws Exception {
         Long instanceId = fechaFutura();
-        mockMvc.perform(post("/checkout/" + instanceId).with(csrf()).param("attendees", "1"))
+        mockMvc.perform(post("/reservations/" + instanceId).with(csrf()).param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
         var reservation = reservationRepository.findFirstByInstanceIdAndUserIdAndStatus(
                 instanceId, userRepository.findByUsername("demo_user").orElseThrow().getId(),

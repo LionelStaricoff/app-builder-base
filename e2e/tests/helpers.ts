@@ -14,13 +14,34 @@ export const CREATOR = 'demo_creator';
 const USER_LAT = 19.4326;
 const USER_LNG = -99.1332;
 
+function inDays(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function inThirtyDays(): string {
+  return inDays(30);
+}
+
 /**
  * Tres experiencias a distancias conocidas del usuario: 0 km, ~2.6 km y ~9.1 km.
  * Con radios de 1/5/10 km se puede verificar el corte exacto sin depender de
  * decimales: 1 => 1, 5 => 2, 10 => 3.
+ *
+ * La de cerca lleva una SEGUNDA fecha: la card del feed tiene que poder cambiar
+ * de fecha sin recargar y refrescar cupos/avatares de la elegida.
  */
-export const SEED = [
-  { name: 'E2E Cerca', description: 'A metros del usuario.', lat: USER_LAT, lng: USER_LNG },
+export type Seed = {
+  name: string;
+  description: string;
+  lat: number;
+  lng: number;
+  extraDate?: string;
+};
+
+export const SEED: Seed[] = [
+  { name: 'E2E Cerca', description: 'A metros del usuario.', lat: USER_LAT, lng: USER_LNG, extraDate: inDays(37) },
   { name: 'E2E Medio', description: 'A poco mas de dos kilometros.', lat: 19.456, lng: USER_LNG },
   { name: 'E2E Lejos', description: 'Cerca del limite del radio grande.', lat: 19.5143, lng: USER_LNG },
 ];
@@ -56,18 +77,12 @@ export async function loginViaApi(api: APIRequestContext, username: string): Pro
   return extractCsrf(await formPage.text());
 }
 
-function inThirtyDays(): string {
-  const date = new Date();
-  date.setDate(date.getDate() + 30);
-  return date.toISOString().slice(0, 10);
-}
-
 /** Crea una experiencia por la API real (multipart + CSRF), no tocando la base. */
 export async function createExperienceViaApi(
   api: APIRequestContext,
   csrf: string,
-  seed: (typeof SEED)[number],
-): Promise<void> {
+  seed: Seed,
+): Promise<string> {
   const response = await api.post('/experiences', {
     maxRedirects: 0,
     multipart: {
@@ -84,6 +99,14 @@ export async function createExperienceViaApi(
       'schedules[0].date': inThirtyDays(),
       'schedules[0].startTime': '10:00',
       'schedules[0].endTime': '12:00',
+      // Segunda fecha opcional: el caso de "cambiar de fecha en la card".
+      ...(seed.extraDate
+        ? {
+            'schedules[1].date': seed.extraDate,
+            'schedules[1].startTime': '15:00',
+            'schedules[1].endTime': '17:00',
+          }
+        : {}),
       meetingLat: String(seed.lat),
       meetingLng: String(seed.lng),
       images: {
@@ -99,9 +122,11 @@ export async function createExperienceViaApi(
   expect(response.status(), `crear "${seed.name}": ${(await response.text()).slice(0, 400)}`).toBe(302);
   // Tomcat puede mandar el Location absoluto (http://host/experiences/1) o
   // relativo; las dos son validas.
-  expect(response.headers()['location'], `crear "${seed.name}"`).toMatch(
+  const location = response.headers()['location'] ?? '';
+  expect(location, `crear "${seed.name}"`).toMatch(
     /^(?:https?:\/\/[^/]+)?\/experiences\/\d+$/,
   );
+  return location.match(/\/experiences\/(\d+)/)![1];
 }
 
 /** Login por la UI, como lo haria una persona. */

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<body>
+<!--/*
+  Preguntas dentro de la card del feed. Es el mismo contenido del detalle
+  (#preguntas) pero sin el <section> ni el <h2>: la card pone su propio
+  <summary> y este fragmento solo llena el cuerpo.
+
+  data-count lo lee el JS para actualizar el contador del summary sin volver a
+  pedir el fragmento.
+*/-->
+<div th:fragment="section(experienceId, questions, puedePreguntar, esDueno, creatorName, ok, error)"
+     th:data-count="${#lists.size(questions)}" class="space-y-2">
+  <div class="rounded-xl bg-rose-50 border border-rose-100 text-rose-700 text-xs px-3 py-2"
+       th:if="${error}" th:text="${error}">Error</div>
+  <div class="rounded-xl bg-teal-50 border border-teal-100 text-teal-800 text-xs px-3 py-2"
+       th:if="${ok}" th:text="${ok}">Listo</div>
+
+  <div class="rounded-2xl border border-dashed border-gray-200 p-4 text-center text-[11px] text-gray-500"
+       th:if="${#lists.isEmpty(questions)}">
+    Todavía nadie preguntó. Si tenés una duda, preguntá acá: la respuesta queda para todos.
+  </div>
+
+  <div class="space-y-2" th:if="${!#lists.isEmpty(questions)}">
+    <article class="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm"
+             th:each="q : ${questions}">
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="w-6 h-6 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-bold overflow-hidden shrink-0">
+          <img th:if="${q.askerAvatar != null and !#strings.isEmpty(q.askerAvatar)}"
+               th:src="'data:image/jpeg;base64,' + ${q.askerAvatar}" alt="" class="w-full h-full object-cover">
+          <span th:if="${q.askerAvatar == null or #strings.isEmpty(q.askerAvatar)}"
+                th:text="${#strings.toUpperCase(#strings.substring(q.askerName, 0, 1))}">A</span>
+        </span>
+        <div class="flex flex-col leading-tight">
+          <strong class="text-xs text-gray-900" th:text="${q.askerName}">Ana</strong>
+          <span class="text-[10px] text-gray-400"
+                th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(q.createdAt.toLocalDate())}">24 oct</span>
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-800 font-medium leading-relaxed" th:text="${q.body}">¿Puedo ir aunque nunca haya tocado barro?</p>
+
+      <div th:if="${q.answered}" class="mt-2 pl-3 border-l-2 border-teal-200">
+        <p class="text-[10px] font-extrabold uppercase tracking-wider text-teal-700 mb-0.5"
+           th:text="${creatorName != null ? 'Responde ' + creatorName : 'Responde la anfitriona'}">Responde Lionel</p>
+        <p class="text-xs text-gray-600 leading-relaxed" th:text="${q.answer}">¡Claro! El taller está pensado para quien empieza desde cero.</p>
+      </div>
+
+      <p th:if="${!q.answered}"
+         class="mt-2 inline-flex items-center gap-1.5 text-[10px] font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
+        Sin respuesta aún
+      </p>
+
+      <form th:if="${esDueno and !q.answered}"
+            th:action="@{/questions/{id}/answer(id=${q.id})}" method="post"
+            class="mt-2 space-y-2">
+        <textarea name="answer" rows="2" maxlength="500" required
+                  class="w-full text-xs rounded-xl border border-gray-200 p-2 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                  placeholder="Respondé en público: queda para todo el que lea el detalle."></textarea>
+        <button type="submit"
+                class="bg-gray-900 hover:bg-black text-white text-[11px] font-bold px-3 py-1.5 rounded-xl transition-all active:scale-95">
+          Publicar respuesta
+        </button>
+      </form>
+    </article>
+  </div>
+
+  <form th:if="${puedePreguntar}"
+        th:action="@{/experiences/{id}/questions(id=${experienceId})}" method="post"
+        data-question-form
+        th:attr="data-fragment-action=@{/experiences/{id}/questions/fragment(id=${experienceId})}"
+        class="bg-white rounded-2xl border border-gray-100 p-3 shadow-sm space-y-2">
+    <label for="card-question-body" class="block text-[10px] font-extrabold uppercase tracking-wider text-gray-400">
+      Preguntale a la anfitriona
+    </label>
+    <textarea id="card-question-body" name="body" rows="2" maxlength="500" minlength="3" required
+              class="w-full text-xs rounded-xl border border-gray-200 p-2 focus:outline-none focus:ring-2 focus:ring-rose-200"
+              placeholder="¿Puedo ir aunque nunca haya tocado barro?"></textarea>
+    <div class="flex items-center justify-between gap-2">
+      <span class="text-[10px] text-gray-400">Se publica con tu nombre.</span>
+      <button type="submit"
+              class="bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-md transition-all active:scale-95">
+        Preguntar
+      </button>
+    </div>
+  </form>
+  <p th:if="${!esDueno and !puedePreguntar}" class="text-[11px] text-gray-500">
+    <a th:href="@{/login}" class="font-bold text-rose-600 hover:underline">Ingresá</a>
+    para preguntarle a la anfitriona.
+  </p>
+</div>
+</body>
+</html>

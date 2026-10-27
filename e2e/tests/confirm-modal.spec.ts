@@ -111,7 +111,12 @@ test.describe('modal de confirmación (reemplaza a confirm())', () => {
       .click();
     await expect(page).toHaveURL(/\/experiences\/\d+/);
 
-    const trigger = page.getByRole('button', { name: 'Cancelar fecha' });
+    // La experiencia sembrada puede tener más de una fecha (el caso de la card
+    // que cambia de fecha): el modal se prueba con la primera.
+    const trigger = page
+      .locator('#fechas')
+      .getByRole('button', { name: 'Cancelar fecha' })
+      .first();
     await expect(trigger).toBeVisible();
     await trigger.click();
 

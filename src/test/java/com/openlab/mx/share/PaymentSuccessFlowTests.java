@@ -92,12 +92,12 @@ class PaymentSuccessFlowTests {
 
     @Test
     @WithMockUser("demo_user")
-    void postCheckoutRedirigeAStripeYElRetornoPoneHeld() throws Exception {
+    void postDeReservaRedirigeAStripeYElRetornoPoneHeld() throws Exception {
         Long instanceId = fechaFutura();
 
         // (a) POST → 302 a la página hosted de Stripe (fake)
         String[] redirect = new String[1];
-        mockMvc.perform(post("/checkout/" + instanceId).with(csrf()).param("attendees", "2"))
+        mockMvc.perform(post("/reservations/" + instanceId).with(csrf()).param("attendees", "2"))
                 .andExpect(status().is3xxRedirection())
                 .andDo(r -> redirect[0] = r.getResponse().getRedirectedUrl());
         org.junit.jupiter.api.Assertions.assertNotNull(redirect[0]);
@@ -127,12 +127,12 @@ class PaymentSuccessFlowTests {
         Long instanceId = fechaFutura();
 
         String[] primera = new String[1];
-        mockMvc.perform(post("/checkout/" + instanceId).with(csrf()).param("attendees", "1"))
+        mockMvc.perform(post("/reservations/" + instanceId).with(csrf()).param("attendees", "1"))
                 .andExpect(status().is3xxRedirection())
                 .andDo(r -> primera[0] = r.getResponse().getRedirectedUrl());
         org.junit.jupiter.api.Assertions.assertNotNull(primera[0]);
         // el reintento redirige a la MISMA listar/Checkout Session (Review Focus 1)
-        mockMvc.perform(post("/checkout/" + instanceId).with(csrf()).param("attendees", "1"))
+        mockMvc.perform(post("/reservations/" + instanceId).with(csrf()).param("attendees", "1"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl(primera[0]));
 
@@ -148,7 +148,7 @@ class PaymentSuccessFlowTests {
     @Test
     void usuarioAjenoRecibe403YElPagoQuedaPendiente() throws Exception {
         Long instanceId = fechaFutura();
-        mockMvc.perform(post("/checkout/" + instanceId)
+        mockMvc.perform(post("/reservations/" + instanceId)
                         .with(user("demo_user")).with(csrf()).param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
         Payment pago = pago(instanceId, "demo_user");
@@ -181,9 +181,9 @@ class PaymentSuccessFlowTests {
 
     // ---------- instant book: el pago confirma y notifica (spec §6) ----------
 
-    /** Flujo completo: checkout → sesión Stripe → retorno de Stripe. Devuelve el sessionId. */
+    /** Flujo completo: reserva → sesión Stripe → retorno de Stripe. Devuelve el sessionId. */
     private String pagar(Long instanceId, String username) throws Exception {
-        mockMvc.perform(post("/checkout/" + instanceId).with(csrf()).param("attendees", "2"))
+        mockMvc.perform(post("/reservations/" + instanceId).with(csrf()).param("attendees", "2"))
                 .andExpect(status().is3xxRedirection());
         String sessionId = pago(instanceId, username).getStripeSessionId();
         mockMvc.perform(get("/pago/exito").param("session_id", sessionId))

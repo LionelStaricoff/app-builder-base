@@ -81,7 +81,7 @@
 
         <!--/* FECHA / DURACIÓN / PUNTO DE ENCUENTRO */-->
         <div class="grid grid-cols-3 gap-2 py-4 text-center text-xs text-gray-600 border-y border-gray-100">
-            <div class="flex flex-col items-center gap-1.5">
+            <a href="#fechas" class="flex flex-col items-center gap-1.5 rounded-xl hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 py-1">
                 <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
@@ -89,7 +89,7 @@
                       th:text="${#lists.isEmpty(instances) ? 'Sin fecha' : T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(instances[0].date)}">24 oct</span>
                 <span class="text-[10px] text-gray-500"
                       th:text="${#lists.isEmpty(instances) ? 'Próximamente' : 'Próxima fecha'}">Próxima fecha</span>
-            </div>
+            </a>
             <div class="flex flex-col items-center gap-1.5 border-x border-gray-100 px-2">
                 <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -345,10 +345,11 @@
                      th:if="${#lists.isEmpty(instances)}">No hay fechas disponibles</div>
 
                 <div class="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col items-center gap-3"
-                     th:each="inst : ${instances}">
+                     th:each="inst : ${instances}"
+                     th:classappend="${selectedInstanceId != null and selectedInstanceId == inst.id} ? ' ring-2 ring-teal-300' : ''">
                     <p class="text-sm font-bold text-gray-900"
                        th:text="${#temporals.format(inst.date, 'dd/MM/yyyy')} + ' — ' + ${#temporals.format(inst.startTime, 'HH:mm')}">01/11/2026 — 10:00</p>
-                    <div th:replace="~{experience/picker-modal :: picker(${inst.id}, ${refundPercentByInstance[inst.id]})}"></div>
+                    <div th:replace="~{experience/picker-modal :: picker(${inst.id}, ${refundPercentByInstance[inst.id]}, ${selectedInstanceId != null and selectedInstanceId == inst.id ? selectedAttendees : 1})}"></div>
                     <th:block th:if="${esDueno}">
                         <button type="button" class="btn-secondary"
                                 th:attr="data-modal-open=${'modal-cancel-' + inst.id}">Cancelar fecha</button>

@@ -61,6 +61,9 @@ class FeedAndFavoritesControllerTests {
     @Autowired
     private ExperienceStopRepository stopRepository;
 
+    @Autowired
+    private com.openlab.mx.share.experience.repository.ExperienceInstanceRepository instanceRepository;
+
     private User creator() {
         return userRepository.findByUsername("demo_creator").orElseThrow();
     }
@@ -137,6 +140,35 @@ class FeedAndFavoritesControllerTests {
         mockMvc.perform(get("/feed").param("category", "SOCIAL"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(nombre)));
+    }
+
+    @Test
+    @WithMockUser("demo_user")
+    void feedCardTieneFechasPreguntasReseniasYFormDeReserva() throws Exception {
+        vaciar(ExperienceCategory.SOCIAL);
+        Long id = createExperience("Card Completa " + UUID.randomUUID(), ExperienceCategory.SOCIAL);
+        Long instanceId = instanceRepository.findByExperienceIdOrderByDateAsc(id).get(0).getId();
+
+        String html = mockMvc.perform(get("/feed").param("category", "SOCIAL"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("data-dates-toggle")))
+                .andExpect(content().string(containsString("data-dates-panel")))
+                .andExpect(content().string(containsString(
+                        "data-lazy-url=\"/experiences/" + id + "/questions\"")))
+                .andExpect(content().string(containsString(
+                        "data-lazy-url=\"/experiences/" + id + "/reviews\"")))
+                .andExpect(content().string(containsString("data-card-booking")))
+                .andExpect(content().string(containsString("name=\"instanceId\"")))
+                .andExpect(content().string(containsString("value=\"" + instanceId + "\"")))
+                .andReturn().getResponse().getContentAsString();
+
+        // El input de cupos vive FUERA del bloque de cupos: si estuviera
+        // adentro, cambiar de fecha lo borraría y el usuario perdería lo elegido.
+        int capacidad = html.indexOf("data-card-capacity");
+        int cupos = html.indexOf("name=\"attendees\"");
+        assertFalse(capacidad < 0 || cupos < 0, "la card debe tener cupos y bloque de capacidad");
+        org.junit.jupiter.api.Assertions.assertTrue(cupos > capacidad,
+                "el input de cupos va después del bloque que se reemplaza al cambiar de fecha");
     }
 
     @Test

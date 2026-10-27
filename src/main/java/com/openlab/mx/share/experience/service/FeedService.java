@@ -376,6 +376,9 @@ public class FeedService {
         } catch (Exception _) {
             // Tabla aún no creada en H2 viejo (ddl-auto=update la crea al arrancar).
         }
+        // Una sola lectura de la próxima instancia: fecha, cupos y avatares
+        // salen de la MISMA fila (antes se consultaba tres veces por card).
+        var nextInstance = nextInstance(experience);
         return new ExperienceFeedDTO(
                 experience.getId(),
                 experience.getName(),
@@ -385,6 +388,7 @@ public class FeedService {
                 label,
                 experience.getDurationMinutes(),
                 nextDate,
+                nextInstance == null ? null : nextInstance.getId(),
                 experience.getPrice(),
                 experience.getRatingAverage(),
                 favorite,
@@ -394,9 +398,9 @@ public class FeedService {
                 experience.getCreator() == null ? null : experience.getCreator().getUsername(),
                 experience.getCreator() == null ? null : experience.getCreator().getAvatarBase64(),
                 experience.getMaxCapacity(),
-                availableCapacityFor(experience),
-                reservedCountFor(experience),
-                reservedAvatarsFor(experience),
+                availableCapacityFor(experience, nextInstance),
+                reservedCountFor(nextInstance),
+                reservedAvatarsFor(experience, nextInstance),
                 experience.getIncludes(),
                 experience.getBring(),
                 distanceKm
@@ -416,8 +420,7 @@ public class FeedService {
         }
     }
 
-    private int reservedCountFor(Experience experience) {
-        var instance = nextInstance(experience);
+    private int reservedCountFor(com.openlab.mx.share.experience.entity.ExperienceInstance instance) {
         if (instance == null || instance.getId() == null) return 0;
         try {
             return (int) reservationRepository.countAttendees(instance.getId());
@@ -426,14 +429,15 @@ public class FeedService {
         }
     }
 
-    private int availableCapacityFor(Experience experience) {
-        int reserved = reservedCountFor(experience);
+    private int availableCapacityFor(Experience experience,
+                                     com.openlab.mx.share.experience.entity.ExperienceInstance instance) {
+        int reserved = reservedCountFor(instance);
         int max = experience.getMaxCapacity();
         return Math.max(0, max - reserved);
     }
 
-    private List<String> reservedAvatarsFor(Experience experience) {
-        var instance = nextInstance(experience);
+    private List<String> reservedAvatarsFor(Experience experience,
+                                            com.openlab.mx.share.experience.entity.ExperienceInstance instance) {
         if (instance == null || instance.getId() == null) return List.of();
         try {
             var reservations = reservationRepository.findByInstanceIdAndStatusNot(instance.getId(),

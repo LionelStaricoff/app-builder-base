@@ -83,13 +83,16 @@ class RefundPolicyViewTests {
 
     @Test
     @WithMockUser("demo_user")
-    void elCheckoutMuestraElCartelYElPorcentajeDeEstaFecha() throws Exception {
+    void elDetalleMuestraElPorcentajeDeEstaFecha() throws Exception {
+        // Ya no hay pantalla de checkout: el % de la fecha elegida tiene que
+        // verse en el detalle, junto al selector de cupos.
         Long instanceId = instanciaEnDias();
+        Long experienceId = instanceRepository.findById(instanceId).orElseThrow()
+                .getExperience().getId();
 
-        mockMvc.perform(get("/checkout/" + instanceId))
+        mockMvc.perform(get("/experiences/" + experienceId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Política de cancelación")))
-                .andExpect(content().string(containsString("90%")));
+                .andExpect(content().string(containsString("te devuelven el 90% del monto")));
     }
 
     @Test

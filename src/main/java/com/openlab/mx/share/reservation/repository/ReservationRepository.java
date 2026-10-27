@@ -22,6 +22,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByInstanceIdInAndStatus(List<Long> instanceIds, ReservationStatus status);
 
+    /** Reservas vigentes de varias fechas en UNA query (cupos y avatares del card). */
+    List<Reservation> findByInstanceIdInAndStatusNot(List<Long> instanceIds, ReservationStatus status);
+
     List<Reservation> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     List<Reservation> findByUserIdAndStatus(Long userId, ReservationStatus status);

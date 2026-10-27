@@ -83,15 +83,9 @@ class E2eSmokeTests {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString(nombre)));
 
-        // 3. demo_user reserva y paga
+        // 3. demo_user reserva: el POST redirige derecho a la página de Stripe
+        //    (fake) y el retorno /pago/exito revalida la sesión (spec §6).
         mockMvc.perform(post("/reservations/" + instanceId).with(user("demo_user")).with(csrf())
-                        .param("attendees", "1"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/checkout/" + instanceId + "?attendees=1"));
-
-        // 3. demo_user reserva: POST redirige a la página de Stripe (fake) y el
-        //    retorno /pago/exito revalida la sesión (spec §6) antes de confirmar.
-        mockMvc.perform(post("/checkout/" + instanceId).with(user("demo_user")).with(csrf())
                         .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
 

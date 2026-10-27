@@ -95,7 +95,7 @@ class FavoriteServiceTest {
         when(feedService.dtoFor(any(Experience.class), eq(7L)))
                 .thenReturn(new com.openlab.mx.share.experience.dto.ExperienceFeedDTO(
                         3L, "n", "d", "c", List.of("c"), "1.0, 2.0", 60,
-                        java.time.LocalDate.of(2026, 12, 1),
+                        java.time.LocalDate.of(2026, 12, 1), null,
                         java.math.BigDecimal.TEN, 4.5, true, "MXN", List.of(), "[]",
                         "creador", null, 5, 2, 3, List.of(), null, null,
                         // favoritos va por dtoFor(), que no mide distancia: null

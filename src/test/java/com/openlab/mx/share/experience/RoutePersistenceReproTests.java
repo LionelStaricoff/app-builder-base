@@ -326,7 +326,7 @@ class RoutePersistenceReproTests {
         Long instanceId = instanceRepository.findByExperienceIdOrderByDateAsc(expId).get(0).getId();
 
         // demo_user reserva la fecha y paga con Stripe (PENDIENTE -> HELD).
-        mockMvc.perform(post("/checkout/" + instanceId)
+        mockMvc.perform(post("/reservations/" + instanceId)
                         .with(user("demo_user")).with(csrf())
                         .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
@@ -523,7 +523,7 @@ class RoutePersistenceReproTests {
             String includes, String bring, Double distanceKm) {
         return new com.openlab.mx.share.experience.dto.ExperienceFeedDTO(
                 999L, "Ruta test", "Desc", "QUJD", List.of("QUJD"), "Mirador del Cerro · —",
-                150, LocalDate.now().plusDays(7), BigDecimal.valueOf(250), 4.5, false,
+                150, LocalDate.now().plusDays(7), null, BigDecimal.valueOf(250), 4.5, false,
                 "MXN", paradas, "[{\"placeName\":\"Mirador del Cerro\"}]",
                 "creador-demo", null, 4, 2, 2, List.of(), includes, bring, distanceKm);
     }

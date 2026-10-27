@@ -101,8 +101,8 @@ class CancellationFlowTests {
     @Test
     void participanteCancelaSuReservaConReembolso() throws Exception {
         Long instanceId = fechaFutura();
-        // Flujo Stripe nuevo: checkout crea PENDIENTE + payment, exito lo pone HELD.
-        mockMvc.perform(post("/checkout/" + instanceId)
+        // Flujo Stripe nuevo: la reserva crea PENDIENTE + payment, exito lo pone HELD.
+        mockMvc.perform(post("/reservations/" + instanceId)
                         .with(user("demo_user")).with(csrf()).param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
         Reservation reserva = reservationRepository
@@ -132,7 +132,7 @@ class CancellationFlowTests {
     @Test
     void participanteCancelaConMenosDe24hDevuelve50() throws Exception {
         Long instanceId = fechaEnMenosDe24h();
-        mockMvc.perform(post("/checkout/" + instanceId)
+        mockMvc.perform(post("/reservations/" + instanceId)
                         .with(user("demo_user")).with(csrf()).param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
         Reservation reserva = reservationRepository
@@ -178,9 +178,9 @@ class CancellationFlowTests {
     void reservarYPagarGeneranNotificaciones() throws Exception {
         Long instanceId = fechaFutura();
 
-        // Instant book (spec §6): el checkout crea la PENDIENTE y el pago la
+        // Instant book (spec §6): la reserva crea la PENDIENTE y el pago la
         // confirma, avisando a creador y huésped en el mismo momento.
-        mockMvc.perform(post("/checkout/" + instanceId)
+        mockMvc.perform(post("/reservations/" + instanceId)
                         .with(user("demo_user")).with(csrf())
                         .param("attendees", "1"))
                 .andExpect(status().is3xxRedirection());
