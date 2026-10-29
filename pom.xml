@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.openlab.mx</groupId>
-	<artifactId>share</artifactId>
+	<artifactId>movo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name/>
-	<description/>
+	<name>Movo</name>
+	<description>Movo API</description>
 	<url/>
 	<licenses>
 		<license/>
