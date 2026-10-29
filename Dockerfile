@@ -1,22 +1,28 @@
 # syntax=docker/dockerfile:1
-FROM openjdk:25-ea-slim AS builder
 
-RUN apt-get update && apt-get install -y maven curl && rm -rf /var/lib/apt/lists/*
+# -------------------------------------------------------------
+# Etapa 1: build con el wrapper de Maven y JDK 25 (Temurin, no Early Access)
+# -------------------------------------------------------------
+FROM eclipse-temurin:25-jdk AS builder
 
 WORKDIR /app
 
-COPY pom.xml .
+COPY .mvn .mvn
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw
+
 COPY src ./src
 
-# Monta la carpeta ~/.m2/repository como una cache persistente de Docker
-RUN --mount=type=cache,target=/root/.m2 mvn package -DskipTests
+# Cache persistente de ~/.m2 entre builds
+RUN --mount=type=cache,target=/root/.m2 ./mvnw -B package -DskipTests
 
 # -------------------------------------------------------------
-# Etapa 2: Imagen de ejecución (Runtime)
+# Etapa 2: imagen de ejecución
 # -------------------------------------------------------------
-FROM openjdk:25-ea-slim
+FROM eclipse-temurin:25-jre
 
 WORKDIR /app
+
 COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080
