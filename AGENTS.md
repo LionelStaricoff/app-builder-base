@@ -1,3 +1,36 @@
+## Entorno (JDK 25 obligatorio)
+
+`pom.xml` declara `java.version=25`. Si el `JAVA_HOME` de la máquina apunta a
+otra versión, Maven falla con `release version 25 not supported`. Usar siempre el
+wrapper del repo:
+
+```powershell
+.\scripts\dev.ps1 -v          # reporta la versión de Maven y del JDK
+.\scripts\dev.ps1 compile
+.\scripts\dev.ps1 test
+.\scripts\dev.ps1 spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+`scripts/dev.ps1` resuelve un JDK 25 (respeta `JAVA_HOME` si ya es 25, si no lo
+busca en las rutas habituales) y no modifica variables globales.
+
+## Arranque local sin Postgres
+
+El perfil `local` usa H2 en memoria con las mismas migraciones Flyway, apaga el
+gate de identidad y fuerza el stub de IA. Arranca sin `.env`, sin Stripe y sin
+Didit:
+
+```powershell
+.\scripts\dev.ps1 spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+Usuarios demo (los siembra `DataSeeder` solo con H2): `demo_user` /
+`demo_creator`, password `Clave1234!`. El seeder solo crea usuarios: las
+experiencias hay que crearlas.
+
+Contra Postgres, en cambio, se completa `.env` (ver `.env.example`); sin
+`SPRING_DATASOURCE_*` la app no arranca.
+
 ## Verificación en navegador (obligatoria para cambios de UI)
 
 La suite Java (MockMvc + Thymeleaf) NO ejecuta JavaScript: sola, no puede ver
