@@ -86,7 +86,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
                 <span class="font-bold text-gray-900"
-                      th:text="${#lists.isEmpty(instances) ? 'Sin fecha' : T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(instances[0].date)}">24 oct</span>
+                      th:text="${#lists.isEmpty(instances) ? 'Sin fecha' : T(com.openlab.mx.movo.shared.ui.UiLabels).fechaCorta(instances[0].date)}">24 oct</span>
                 <span class="text-[10px] text-gray-500"
                       th:text="${#lists.isEmpty(instances) ? 'Próximamente' : 'Próxima fecha'}">Próxima fecha</span>
             </a>
@@ -248,7 +248,7 @@
                         <div class="flex flex-col leading-tight">
                             <strong class="text-xs text-gray-900" th:text="${q.askerName}">Ana</strong>
                             <span class="text-[10px] text-gray-400"
-                                  th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(q.createdAt.toLocalDate())}">24 oct</span>
+                                  th:text="${T(com.openlab.mx.movo.shared.ui.UiLabels).fechaCorta(q.createdAt.toLocalDate())}">24 oct</span>
                         </div>
                     </div>
 
@@ -321,7 +321,7 @@
                     <div class="flex items-center justify-between gap-2 mb-1">
                         <strong class="text-sm text-gray-900" th:text="${rv.username}">usuario</strong>
                         <span class="text-xs text-gray-400"
-                              th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).mesAnio(rv.date)}">oct 2026</span>
+                              th:text="${T(com.openlab.mx.movo.shared.ui.UiLabels).mesAnio(rv.date)}">oct 2026</span>
                     </div>
                     <div class="flex items-center gap-1 text-amber-500 mb-2">
                         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

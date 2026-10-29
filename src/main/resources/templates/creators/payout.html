@@ -14,7 +14,7 @@
     <div class="card section" th:if="${status.hasConnectedAccount}">
         <div class="card-head">
             <h3>Cuenta Stripe Connect</h3>
-            <span class="chip" th:text="${T(com.openlab.mx.share.payment.entity.ConnectAccountStatus).labelOf(status.status)}">Activa</span>
+            <span class="chip" th:text="${T(com.openlab.mx.movo.payment.entity.ConnectAccountStatus).labelOf(status.status)}">Activa</span>
         </div>
         <p class="meta" th:if="${status.payoutsEnabled}">
             Tu cuenta está habilitada para recibir pagos.

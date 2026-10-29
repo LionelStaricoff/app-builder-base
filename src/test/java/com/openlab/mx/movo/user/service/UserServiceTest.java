@@ -1,0 +1,73 @@
+package com.openlab.mx.movo.user.service;
+
+import com.openlab.mx.movo.user.dto.RegisterRequest;
+import com.openlab.mx.movo.user.entity.Role;
+import com.openlab.mx.movo.user.entity.User;
+import com.openlab.mx.movo.user.repository.UserRepository;
+import com.openlab.mx.movo.shared.exception.DuplicateEmailException;
+import com.openlab.mx.movo.shared.exception.DuplicateUsernameException;
+import com.openlab.mx.movo.shared.exception.MenorDeEdadException;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDate;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @InjectMocks
+    private UserService userService;
+
+    @Test
+    void testRegistraUsuarioMayorDeEdad() {
+        when(userRepository.existsByUsername("lionel")).thenReturn(false);
+        when(passwordEncoder.encode("Clave1234!")).thenReturn("hash-bcrypt");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        User u = userService.register(new RegisterRequest(
+                "lionel", "lionel@x.com", "Clave1234!", LocalDate.of(1990, 5, 10), "México", "MXN"));
+
+        assertEquals("lionel", u.getUsername());
+        assertEquals("hash-bcrypt", u.getPasswordHash());
+        assertEquals(Role.USER, u.getRole());
+        assertNotNull(u.getBirthDate());
+    }
+
+    @Test
+    void testRechazaMenorDe18() {
+        RegisterRequest menor = new RegisterRequest(
+                "kid", "kid@x.com", "Clave1234!", LocalDate.now().minusYears(10), null, null);
+
+        assertThrows(MenorDeEdadException.class, () -> userService.register(menor));
+    }
+
+    @Test
+    void testRechazaUsernameDuplicado() {
+        when(userRepository.existsByUsername("dup")).thenReturn(true);
+
+        assertThrows(DuplicateUsernameException.class, () -> userService.register(
+                new RegisterRequest("dup", "dup@x.com", "Clave1234!", LocalDate.of(1990, 1, 1), null, null)));
+    }
+
+    @Test
+    void testRechazaEmailDuplicado() {
+        when(userRepository.existsByEmail("lionel1@gmail.com")).thenReturn(true);
+
+        assertThrows(DuplicateEmailException.class, () -> userService.register(
+                new RegisterRequest("otro-user", "lionel1@gmail.com", "Clave1234!", LocalDate.of(1990, 1, 1), null, null)));
+    }
+}

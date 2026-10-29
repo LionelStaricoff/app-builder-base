@@ -98,7 +98,7 @@
                         aria-expanded="false"
                         class="flex flex-col items-center gap-1.5 rounded-xl px-2 py-1 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-200 disabled:opacity-50 disabled:cursor-not-allowed">
                   <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                  <span class="font-bold text-gray-900" data-card-date-label th:text="${dto.nextDate != null ? T(com.openlab.mx.share.shared.ui.UiLabels).fechaCorta(dto.nextDate) : 'Sin fecha'}">24 oct</span>
+                  <span class="font-bold text-gray-900" data-card-date-label th:text="${dto.nextDate != null ? T(com.openlab.mx.movo.shared.ui.UiLabels).fechaCorta(dto.nextDate) : 'Sin fecha'}">24 oct</span>
                   <span class="text-[9px] font-semibold text-teal-700" th:text="${dto.nextInstanceId != null ? 'Cambiar' : 'Sin fechas'}">Cambiar</span>
                 </button>
               </div>

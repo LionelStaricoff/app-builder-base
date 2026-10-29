@@ -109,7 +109,7 @@
                         <label>Categoría
                             <select th:field="*{category}" required>
                                 <option value="">Elegí una</option>
-                                <option th:each="c : ${T(com.openlab.mx.share.experience.entity.ExperienceCategory).values()}"
+                                <option th:each="c : ${T(com.openlab.mx.movo.experience.entity.ExperienceCategory).values()}"
                                         th:value="${c}" th:text="${c.label}">Categoría</option>
                             </select>
                         </label>
@@ -186,7 +186,7 @@
                         <div class="weekly-row">
                             <select name="schedules[0].dayOfWeek" aria-label="Día de la semana">
                                 <option th:each="d : ${T(java.time.DayOfWeek).values()}" th:value="${d}"
-                                        th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).diaSemana(d)}"
+                                        th:text="${T(com.openlab.mx.movo.shared.ui.UiLabels).diaSemana(d)}"
                                         th:selected="${experienceForm.schedules != null and !#lists.isEmpty(experienceForm.schedules) and experienceForm.schedules[0].dayOfWeek == d}">Lunes</option>
                             </select>
                             <input type="time" name="schedules[0].startTime" value="18:00" aria-label="Hora de inicio"
@@ -201,7 +201,7 @@
                         <div class="weekly-row" th:each="ws, stat : ${experienceForm.schedules}" th:if="${stat.index > 0}">
                             <select th:name="'schedules[' + ${stat.index} + '].dayOfWeek'" aria-label="Día de la semana">
                                 <option th:each="d : ${T(java.time.DayOfWeek).values()}" th:value="${d}"
-                                        th:text="${T(com.openlab.mx.share.shared.ui.UiLabels).diaSemana(d)}"
+                                        th:text="${T(com.openlab.mx.movo.shared.ui.UiLabels).diaSemana(d)}"
                                         th:selected="${ws.dayOfWeek == d}">Lunes</option>
                             </select>
                             <input type="time" th:name="'schedules[' + ${stat.index} + '].startTime'" aria-label="Hora de inicio" th:value="${ws.startTime}">
