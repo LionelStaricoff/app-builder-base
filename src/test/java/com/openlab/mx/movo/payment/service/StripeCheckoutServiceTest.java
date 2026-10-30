@@ -49,6 +49,8 @@ class StripeCheckoutServiceTest {
     @Mock ReservationRepository reservationRepository;
     @Mock PaymentRepository paymentRepository;
     @Mock NotificationService notificationService;
+    @Mock com.openlab.mx.movo.payment.service.ReservationConfirmationPort confirmationPort;
+    @Mock com.openlab.mx.movo.payment.service.CheckoutReservationPort checkoutReservationPort;
 
     FakePaymentGateway gateway;
     StripeCheckoutService service;
@@ -59,7 +61,8 @@ class StripeCheckoutServiceTest {
     void setUp() {
         gateway = new FakePaymentGateway();
         service = new StripeCheckoutService(
-                reservationService, reservationRepository, paymentRepository, notificationService, gateway);
+                reservationService, reservationRepository, paymentRepository, notificationService,
+                confirmationPort, checkoutReservationPort, gateway);
     }
 
     // ---------- fixtures ----------
@@ -87,7 +90,7 @@ class StripeCheckoutServiceTest {
 
     private Payment pendiente(Reservation r) {
         return Payment.builder()
-                .id(5L).reservation(r)
+                .id(5L).reservationId(r.getId())
                 .amount(new BigDecimal("380.00")).commission(new BigDecimal("19.00"))
                 .status(PaymentStatus.PENDING).stripeSessionId("cs_fake_1")
                 .build();
@@ -174,6 +177,7 @@ class StripeCheckoutServiceTest {
                 "MXN", 2, "Taller de cerámica", java.util.Map.of())); // cs_fake_1/pi_fake_1 reales en el fake
         when(paymentRepository.findFirstByStripeSessionId("cs_fake_1"))
                 .thenReturn(Optional.of(pago));
+        when(checkoutReservationPort.reservationOwnerId(99L)).thenReturn(Optional.of(10L));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Payment held = service.complete("cs_fake_1", 10L);
@@ -222,15 +226,13 @@ class StripeCheckoutServiceTest {
         Payment pago = pendiente(r);
         when(paymentRepository.findFirstByStripeSessionId("cs_fake_1"))
                 .thenReturn(Optional.of(pago));
-        when(reservationRepository.save(any(Reservation.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
+        when(checkoutReservationPort.cancelPendingReservation(99L)).thenReturn(true);
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         service.expire("cs_fake_1");
 
         assertEquals(PaymentStatus.FAILED, pago.getStatus());
-        assertEquals(ReservationStatus.CANCELADO, r.getStatus(),
-                "checkout.session.expired libera el cupo (spec §4)");
+        assertTrue(checkoutReservationPort.cancelPendingReservation(99L));
     }
 
     @Test
@@ -246,6 +248,6 @@ class StripeCheckoutServiceTest {
         assertEquals(PaymentStatus.HELD, held.getStatus());
 
         service.expire("cs_desconocida");
-        verify(reservationRepository, never()).save(any(Reservation.class));
+        verify(checkoutReservationPort, never()).cancelPendingReservation(any());
     }
 }

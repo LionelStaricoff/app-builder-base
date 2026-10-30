@@ -42,6 +42,8 @@ public class StripeCheckoutService {
     private final ReservationRepository reservationRepository;
     private final PaymentRepository paymentRepository;
     private final NotificationService notificationService;
+    private final ReservationConfirmationPort confirmationPort;
+    private final CheckoutReservationPort checkoutReservationPort;
     private final PaymentGateway gateway;
 
     @Value("${escrow.commission-rate}")
@@ -84,7 +86,7 @@ public class StripeCheckoutService {
         // Único save del pago: ya con la sesión dentro (si el persist falla,
         // el rollback no persigue una fila PENDING sessionless).
         Payment nuevo = Payment.builder()
-                .reservation(reservation)
+                .reservationId(reservation.getId())
                 .amount(amount)
                 .commission(commission)
                 .status(PaymentStatus.PENDING)
@@ -107,9 +109,12 @@ public class StripeCheckoutService {
         if (pago.getStatus() != PaymentStatus.PENDING) {
             return pago; // HELD y después: no-op idempotente
         }
-        if (userId == null || pago.getReservation() == null
-                || pago.getReservation().getUser() == null
-                || !userId.equals(pago.getReservation().getUser().getId())) {
+        Long reservationOwnerId = null;
+        if (pago.getReservationId() != null) {
+            reservationOwnerId = checkoutReservationPort.reservationOwnerId(pago.getReservationId()).orElse(null);
+        }
+        if (userId == null || reservationOwnerId == null
+                || !userId.equals(reservationOwnerId)) {
             throw new NotOwnerException();
         }
         String estado;
@@ -128,38 +133,8 @@ public class StripeCheckoutService {
         pago.setStripePaymentIntentId(paymentIntentId);
         pago.setHeldAt(LocalDateTime.now(ZoneId.systemDefault()));
         Payment guardado = paymentRepository.save(pago);
-        // Instant book (spec §6): con el pago completado la reserva queda
-        // CONFIRMADA y ambos reciben RESERVA_CONFIRMADA (una sola vez: acá
-        // solo se entra con el pago en PENDING).
-        confirmarAlPagar(guardado.getReservation());
+        confirmationPort.confirmarAlPagar(pago.getReservationId());
         return guardado;
-    }
-
-    /**
-     * Instant book: PENDIENTE → CONFIRMADA al cobrar + aviso al huésped
-     * (link al chat) y al creador. Si la reserva no está PENDIENTE no hace
-     * nada (ya confirmada, cancelada o reserva ajena): idempotente por diseño.
-     */
-    private void confirmarAlPagar(Reservation reserva) {
-        if (reserva == null || reserva.getStatus() != ReservationStatus.PENDIENTE) {
-            return;
-        }
-        reserva.setStatus(ReservationStatus.CONFIRMADA);
-        reservationRepository.save(reserva);
-
-        var experiencia = reserva.getInstance().getExperience();
-        String nombre = experiencia.getName();
-        if (reserva.getUser() != null) {
-            notificationService.notify(reserva.getUser(), NotificationType.RESERVA_CONFIRMADA,
-                    "Tu reserva en " + nombre + " está confirmada — entrá al chat grupal",
-                    "/chats/" + reserva.getInstance().getId());
-        }
-        if (experiencia.getCreator() != null && reserva.getUser() != null) {
-            notificationService.notify(experiencia.getCreator(), NotificationType.RESERVA_CONFIRMADA,
-                    reserva.getUser().getUsername() + " reservó " + reserva.getAttendees()
-                            + " lugar(es) en " + nombre,
-                    "/reservations");
-        }
     }
 
     /**
@@ -174,12 +149,41 @@ public class StripeCheckoutService {
         }
         pago.setStatus(PaymentStatus.FAILED);
         paymentRepository.save(pago);
-        Reservation reservation = pago.getReservation();
-        if (reservation != null
-                && reservation.getStatus() == ReservationStatus.PENDIENTE) {
-            reservation.setStatus(ReservationStatus.CANCELADO);
-            reservationRepository.save(reservation);
+        if (pago.getReservationId() != null) {
+            checkoutReservationPort.cancelPendingReservation(pago.getReservationId());
         }
+    }
+
+    /**
+     * Resuelve el usuario dueño de un pago por su session id, sin exponer
+     * la entidad {@code Reservation} al webhook/controller (preparacion para
+     * desacoplar payment de reservation).
+     */
+    public Long userIdForSession(String sessionId) {
+        return paymentRepository.findFirstByStripeSessionId(sessionId)
+                .map(p -> {
+                    if (p.getReservationId() == null) return null;
+                    return checkoutReservationPort.reservationOwnerId(p.getReservationId()).orElse(null);
+                })
+                .orElse(null);
+    }
+
+    /**
+     * Marca FAILED un pago iniciado por Stripe PaymentIntent (webhook
+     * payment_intent.payment_failed). Devuelve false si no se conoce el piId.
+     */
+    @Transactional
+    public boolean markPaymentFailed(String paymentIntentId) {
+        Payment pago = paymentRepository.findFirstByStripePaymentIntentId(paymentIntentId).orElse(null);
+        if (pago == null) {
+            return false;
+        }
+        if (pago.getStatus() == PaymentStatus.PENDING
+                || pago.getStatus() == PaymentStatus.HELD) {
+            pago.setStatus(PaymentStatus.FAILED);
+            paymentRepository.save(pago);
+        }
+        return true;
     }
 
     private java.util.Optional<Reservation> pendiente(Long instanceId, User user) {

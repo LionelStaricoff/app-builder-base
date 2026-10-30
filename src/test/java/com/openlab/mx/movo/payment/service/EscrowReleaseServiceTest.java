@@ -5,7 +5,7 @@ import com.openlab.mx.movo.payment.entity.PaymentStatus;
 import com.openlab.mx.movo.payment.repository.PaymentRepository;
 import com.openlab.mx.movo.reservation.entity.Reservation;
 import com.openlab.mx.movo.reservation.entity.ReservationStatus;
-import com.openlab.mx.movo.reservation.repository.ReservationRepository;
+import com.openlab.mx.movo.payment.service.InstanceConfirmedReservationsPort;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 class EscrowReleaseServiceTest {
 
     @Mock
-    private ReservationRepository reservationRepository;
+    private InstanceConfirmedReservationsPort instanceReservationsPort;
     @Mock
     private PaymentRepository paymentRepository;
     @Mock
@@ -60,8 +60,8 @@ class EscrowReleaseServiceTest {
     void testLiberaSoloLosPagosVencidos() {
         Reservation vencida = reserva(1L);
         Reservation vigente = reserva(2L);
-        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
-                .thenReturn(List.of(vencida, vigente));
+        when(instanceReservationsPort.confirmedReservationIds(10L))
+                .thenReturn(List.of(1L, 2L));
         when(paymentRepository.findByReservationId(1L))
                 .thenReturn(Optional.of(pago(PaymentStatus.HELD, LocalDateTime.now().minusDays(3))));
         when(paymentRepository.findByReservationId(2L))
@@ -77,8 +77,8 @@ class EscrowReleaseServiceTest {
 
     @Test
     void testNoTocaPagosNoHeld() {
-        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
-                .thenReturn(List.of(reserva(1L)));
+        when(instanceReservationsPort.confirmedReservationIds(10L))
+                .thenReturn(List.of(1L));
         when(paymentRepository.findByReservationId(1L))
                 .thenReturn(Optional.of(pago(PaymentStatus.REFUNDED_FULL, LocalDateTime.now().minusDays(5))));
 

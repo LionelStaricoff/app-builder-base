@@ -9,6 +9,7 @@ import com.openlab.mx.movo.payment.gateway.PaymentGateway;
 import com.openlab.mx.movo.payment.repository.ConnectAccountRepository;
 import com.openlab.mx.movo.payment.repository.ConnectPayoutRepository;
 import com.openlab.mx.movo.payment.repository.PaymentRepository;
+import com.openlab.mx.movo.payment.service.PayoutCurrencyPort;
 import com.openlab.mx.movo.shared.CurrentUser;
 import com.openlab.mx.movo.shared.exception.DomainException;
 import com.openlab.mx.movo.user.entity.User;
@@ -35,6 +36,7 @@ public class ConnectPayoutService {
     private final ConnectPayoutRepository connectPayoutRepository;
     private final ConnectAccountRepository connectAccountRepository;
     private final PaymentRepository paymentRepository;
+    private final PayoutCurrencyPort payoutCurrencyPort;
     private final PaymentGateway gateway;
     private final StripeConnectService stripeConnectService;
     private final CurrentUser currentUser;
@@ -96,7 +98,7 @@ public class ConnectPayoutService {
             transferId = gateway.transferToConnectedAccount(
                     account.getStripeAccountId(),
                     totalAmount,
-                    pendingPayments.get(0).getReservation().getInstance().getExperience().getCurrencyCode(),
+                    currencyOf(pendingPayments.get(0)),
                     idempotencyKey
             );
             log.info("[payout] paso 6 OK: transferId={}", transferId);
@@ -109,7 +111,7 @@ public class ConnectPayoutService {
                         .payment(payment)
                         .amount(payment.getPayout())
                         .commission(payment.getCommission())
-                        .currency(payment.getReservation().getInstance().getExperience().getCurrencyCode())
+                        .currency(currencyOf(payment))
                         .status(PayoutStatus.FAILED)
                         .failureReason(e.getMessage())
                         .idempotencyKey(idempotencyKey + "-" + payment.getId())
@@ -127,7 +129,7 @@ public class ConnectPayoutService {
                     .payment(payment)
                     .amount(payment.getPayout())
                     .commission(payment.getCommission())
-                    .currency(payment.getReservation().getInstance().getExperience().getCurrencyCode())
+                    .currency(currencyOf(payment))
                     .stripeTransferId(transferId)
                     .status(PayoutStatus.COMPLETED)
                     .idempotencyKey(idempotencyKey + "-" + payment.getId())
@@ -174,5 +176,13 @@ public class ConnectPayoutService {
         return paymentRepository.findPendingPayoutsByCreator(creator).stream()
                 .map(Payment::getPayout)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /** Resuelve la moneda del pago vía port (sin exponer Reservation en payment). */
+    private String currencyOf(Payment payment) {
+        if (payment.getReservationId() == null) {
+            return null;
+        }
+        return payoutCurrencyPort.currencyOfReservation(payment.getReservationId()).orElse(null);
     }
 }

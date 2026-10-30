@@ -3,9 +3,7 @@ package com.openlab.mx.movo.payment.service;
 import com.openlab.mx.movo.payment.entity.Payment;
 import com.openlab.mx.movo.payment.entity.PaymentStatus;
 import com.openlab.mx.movo.payment.repository.PaymentRepository;
-import com.openlab.mx.movo.reservation.entity.Reservation;
-import com.openlab.mx.movo.reservation.entity.ReservationStatus;
-import com.openlab.mx.movo.reservation.repository.ReservationRepository;
+import com.openlab.mx.movo.payment.service.InstanceConfirmedReservationsPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -22,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EscrowReleaseService {
 
-    private final ReservationRepository reservationRepository;
+    private final InstanceConfirmedReservationsPort instanceReservationsPort;
     private final PaymentRepository paymentRepository;
     private final EscrowService escrowService;
 
@@ -32,19 +30,18 @@ public class EscrowReleaseService {
     /** @return cuántas liberaciones ocurrieron en esta corrida. */
     @Transactional
     public int releaseIfDue(Long instanceId) {
-        List<Reservation> confirmadas =
-                reservationRepository.findByInstanceIdAndStatus(instanceId, ReservationStatus.CONFIRMADA);
+        List<Long> confirmadas = instanceReservationsPort.confirmedReservationIds(instanceId);
         LocalDateTime corte = LocalDateTime.now(ZoneId.systemDefault()).minusDays(autoReleaseDays);
         int liberados = 0;
-        for (Reservation reservation : confirmadas) {
-            Payment payment = paymentRepository.findByReservationId(reservation.getId()).orElse(null);
+        for (Long reservationId : confirmadas) {
+            Payment payment = paymentRepository.findByReservationId(reservationId).orElse(null);
             if (payment == null
                     || payment.getStatus() != PaymentStatus.HELD
                     || payment.getHeldAt() == null
                     || payment.getHeldAt().isAfter(corte)) {
                 continue;
             }
-            if (escrowService.tryRelease(reservation.getId())) {
+            if (escrowService.tryRelease(reservationId)) {
                 liberados++;
             }
         }

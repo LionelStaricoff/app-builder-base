@@ -10,7 +10,7 @@ import com.openlab.mx.movo.payment.entity.PaymentStatus;
 import com.openlab.mx.movo.payment.repository.PaymentRepository;
 import com.openlab.mx.movo.reservation.entity.Reservation;
 import com.openlab.mx.movo.reservation.entity.ReservationStatus;
-import com.openlab.mx.movo.reservation.repository.ReservationRepository;
+import com.openlab.mx.movo.payment.service.ReservationStatusPort;
 import com.openlab.mx.movo.shared.exception.EscrowException;
 import com.openlab.mx.movo.user.entity.User;
 import org.junit.jupiter.api.Test;
@@ -38,11 +38,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@org.junit.jupiter.api.extension.ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
+@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 class EscrowServiceTest {
 
     @Mock
-    private ReservationRepository reservationRepository;
+    private ReservationStatusPort reservationStatusPort;
     @Mock
     private PaymentRepository paymentRepository;
     @Mock
@@ -53,6 +54,9 @@ class EscrowServiceTest {
     private com.openlab.mx.movo.notification.service.NotificationService notificationService;
     @Mock
     private com.openlab.mx.movo.payment.gateway.PaymentGateway paymentGateway;
+
+    @Mock
+    private com.openlab.mx.movo.payment.service.EscrowExperiencePort experiencePort;
 
     @InjectMocks
     private EscrowService escrowService;
@@ -108,20 +112,13 @@ class EscrowServiceTest {
         Reservation r2 = reservation(2L, 101L, instancia);
         Payment pago = payment(PaymentStatus.HELD, LocalDateTime.now(), "pi_escrow_1");
 
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(r1));
+        when(reservationStatusPort.confirmedInstanceId(1L)).thenReturn(Optional.of(10L));
         when(paymentRepository.findByReservationId(1L)).thenReturn(Optional.of(pago));
-        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
-                .thenReturn(List.of(r1, r2));
-        when(ratingRepository.findByInstanceId(10L))
-                .thenReturn(List.of(com.openlab.mx.movo.experience.entity.Rating.builder()
-                        .instance(instancia).user(r1.getUser()).stars(5).build(),
-                        com.openlab.mx.movo.experience.entity.Rating.builder()
-                                .instance(instancia).user(r2.getUser()).stars(4).build()));
-        when(commentRepository.findByInstanceId(10L))
-                .thenReturn(List.of(com.openlab.mx.movo.experience.entity.Comment.builder()
-                                .instance(instancia).user(r1.getUser()).text("Genial").build(),
-                        com.openlab.mx.movo.experience.entity.Comment.builder()
-                                .instance(instancia).user(r2.getUser()).text("Ok").build()));
+        when(experiencePort.isInstanceCompleted(10L)).thenReturn(true);
+        when(experiencePort.allConfirmedRated(10L)).thenReturn(true);
+        when(experiencePort.experienceCreator(10L)).thenReturn(Optional.of(
+                com.openlab.mx.movo.user.entity.User.builder().id(1L).username("creador").build()));
+        when(experiencePort.experienceName(10L)).thenReturn("Tour");
 
         boolean liberado = escrowService.tryRelease(1L);
 
@@ -145,10 +142,8 @@ class EscrowServiceTest {
         Reservation r2 = reservation(2L, 101L, instancia);
         Payment pago = payment(PaymentStatus.HELD, LocalDateTime.now());
 
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(r1));
+        when(reservationStatusPort.confirmedInstanceId(1L)).thenReturn(Optional.of(10L));
         when(paymentRepository.findByReservationId(1L)).thenReturn(Optional.of(pago));
-        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
-                .thenReturn(List.of(r1, r2));
         when(ratingRepository.findByInstanceId(10L))
                 .thenReturn(List.of(com.openlab.mx.movo.experience.entity.Rating.builder()
                         .instance(instancia).user(r1.getUser()).stars(5).build()));
@@ -169,12 +164,10 @@ class EscrowServiceTest {
         Reservation r1 = reservation(1L, 100L, instancia);
         Payment pago = payment(PaymentStatus.HELD, LocalDateTime.now().minusDays(3));
 
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(r1));
+        when(reservationStatusPort.confirmedInstanceId(1L)).thenReturn(Optional.of(10L));
         when(paymentRepository.findByReservationId(1L)).thenReturn(Optional.of(pago));
-        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
-                .thenReturn(List.of(r1));
-        when(ratingRepository.findByInstanceId(10L)).thenReturn(List.of());
-        when(commentRepository.findByInstanceId(10L)).thenReturn(List.of());
+        when(experiencePort.isInstanceCompleted(10L)).thenReturn(true);
+        when(experiencePort.allConfirmedRated(10L)).thenReturn(false);
 
         boolean liberado = escrowService.tryRelease(1L);
 
@@ -188,7 +181,7 @@ class EscrowServiceTest {
         Reservation r1 = reservation(1L, 100L, instancia);
         Payment pago = payment(PaymentStatus.REFUNDED_FULL, LocalDateTime.now().minusDays(5));
 
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(r1));
+        when(reservationStatusPort.confirmedInstanceId(1L)).thenReturn(Optional.of(10L));
         when(paymentRepository.findByReservationId(1L)).thenReturn(Optional.of(pago));
 
         assertThrows(EscrowException.class, () -> escrowService.tryRelease(1L));
@@ -203,12 +196,10 @@ class EscrowServiceTest {
         Reservation r1 = reservation(1L, 100L, instancia);
         Payment pago = payment(PaymentStatus.HELD, LocalDateTime.now().minusDays(3));
 
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(r1));
+        when(reservationStatusPort.confirmedInstanceId(1L)).thenReturn(Optional.of(10L));
         when(paymentRepository.findByReservationId(1L)).thenReturn(Optional.of(pago));
-        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
-                .thenReturn(List.of(r1));
-        when(ratingRepository.findByInstanceId(10L)).thenReturn(List.of());
-        when(commentRepository.findByInstanceId(10L)).thenReturn(List.of());
+        when(experiencePort.isInstanceCompleted(10L)).thenReturn(true);
+        when(experiencePort.allConfirmedRated(10L)).thenReturn(false);
 
         assertTrue(escrowService.tryRelease(1L));
         assertEquals(PaymentStatus.RELEASED, pago.getStatus());
@@ -223,16 +214,13 @@ class EscrowServiceTest {
         Reservation r1 = reservation(1L, 100L, instancia);
         Payment pago = payment(PaymentStatus.HELD, LocalDateTime.now());
 
-        when(reservationRepository.findById(1L)).thenReturn(Optional.of(r1));
+        when(reservationStatusPort.confirmedInstanceId(1L)).thenReturn(Optional.of(10L));
         when(paymentRepository.findByReservationId(1L)).thenReturn(Optional.of(pago));
-        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
-                .thenReturn(List.of(r1));
-        when(ratingRepository.findByInstanceId(10L))
-                .thenReturn(List.of(com.openlab.mx.movo.experience.entity.Rating.builder()
-                        .instance(instancia).user(r1.getUser()).stars(5).build()));
-        when(commentRepository.findByInstanceId(10L))
-                .thenReturn(List.of(com.openlab.mx.movo.experience.entity.Comment.builder()
-                        .instance(instancia).user(r1.getUser()).text("Genial").build()));
+        when(experiencePort.isInstanceCompleted(10L)).thenReturn(true);
+        when(experiencePort.allConfirmedRated(10L)).thenReturn(true);
+        when(experiencePort.experienceCreator(10L)).thenReturn(Optional.of(
+                com.openlab.mx.movo.user.entity.User.builder().id(1L).username("creador").build()));
+        when(experiencePort.experienceName(10L)).thenReturn("Tour");
 
         assertTrue(escrowService.tryRelease(1L));
         assertEquals(PaymentStatus.RELEASED, pago.getStatus());

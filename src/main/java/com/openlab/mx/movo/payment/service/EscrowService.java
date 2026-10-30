@@ -2,19 +2,11 @@ package com.openlab.mx.movo.payment.service;
 
 import com.openlab.mx.movo.notification.entity.NotificationType;
 import com.openlab.mx.movo.notification.service.NotificationService;
-import com.openlab.mx.movo.experience.entity.Comment;
-import com.openlab.mx.movo.experience.entity.ExperienceInstance;
-import com.openlab.mx.movo.experience.entity.InstanceStatus;
-import com.openlab.mx.movo.experience.entity.Rating;
-import com.openlab.mx.movo.experience.repository.CommentRepository;
-import com.openlab.mx.movo.experience.repository.RatingRepository;
 import com.openlab.mx.movo.payment.entity.Payment;
 import com.openlab.mx.movo.payment.entity.PaymentStatus;
 import com.openlab.mx.movo.payment.entity.PayoutStatus;
 import com.openlab.mx.movo.payment.repository.PaymentRepository;
-import com.openlab.mx.movo.reservation.entity.Reservation;
-import com.openlab.mx.movo.reservation.entity.ReservationStatus;
-import com.openlab.mx.movo.reservation.repository.ReservationRepository;
+import com.openlab.mx.movo.payment.service.ReservationStatusPort;
 import com.openlab.mx.movo.shared.exception.DomainException;
 import com.openlab.mx.movo.shared.exception.EscrowException;
 import lombok.RequiredArgsConstructor;
@@ -36,12 +28,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class EscrowService {
 
-    private final ReservationRepository reservationRepository;
+    private final ReservationStatusPort reservationStatusPort;
     private final PaymentRepository paymentRepository;
-    private final RatingRepository ratingRepository;
-    private final CommentRepository commentRepository;
     private final NotificationService notificationService;
     private final com.openlab.mx.movo.payment.gateway.PaymentGateway gateway;
+    private final EscrowExperiencePort experiencePort;
 
     @Value("${escrow.auto-release-days}")
     private long autoReleaseDays = 2;
@@ -51,8 +42,6 @@ public class EscrowService {
      */
     @Transactional
     public boolean tryRelease(Long reservationId) {
-        Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new DomainException("Reserva no encontrada"));
         Payment payment = paymentRepository.findByReservationId(reservationId)
                 .orElseThrow(() -> new EscrowException("Pago no encontrado para esa reserva"));
 
@@ -65,13 +54,14 @@ public class EscrowService {
                 break;
         }
 
-        if (reservation.getStatus() != ReservationStatus.CONFIRMADA) {
+        Long instanceId = reservationStatusPort.confirmedInstanceId(reservationId).orElse(null);
+        if (instanceId == null) {
             return false;
         }
-        if (reservation.getInstance().getStatus() != InstanceStatus.COMPLETED) {
+        if (!experiencePort.isInstanceCompleted(instanceId)) {
             return false;
         }
-        if (!todosEvaluaron(reservation.getInstance()) && !ventanaVencida(payment)) {
+        if (!experiencePort.allConfirmedRated(instanceId) && !ventanaVencida(payment)) {
             return false;
         }
 
@@ -87,32 +77,14 @@ public class EscrowService {
             gateway.capture(payment.getStripePaymentIntentId());
         }
 
-        var creador = reservation.getInstance().getExperience().getCreator();
+        var creador = experiencePort.experienceCreator(instanceId).orElse(null);
         if (creador != null) {
             notificationService.notify(creador, NotificationType.PAGO_LIBERADO,
                     "Te liberamos $" + payment.getPayout() + " por "
-                            + reservation.getInstance().getExperience().getName(),
+                            + experiencePort.experienceName(instanceId),
                     "/reservations");
         }
         return true;
-    }
-
-    private boolean todosEvaluaron(ExperienceInstance instance) {
-        List<Reservation> confirmadas =
-                reservationRepository.findByInstanceIdAndStatus(instance.getId(), ReservationStatus.CONFIRMADA);
-        if (confirmadas.isEmpty()) {
-            return false;
-        }
-        Set<Long> conRating = ratingRepository.findByInstanceId(instance.getId()).stream()
-                .map(Rating::getUser)
-                .map(u -> u.getId())
-                .collect(Collectors.toSet());
-        Set<Long> conComentario = commentRepository.findByInstanceId(instance.getId()).stream()
-                .map(Comment::getUser)
-                .map(u -> u.getId())
-                .collect(Collectors.toSet());
-        return confirmadas.stream().allMatch(r ->
-                conRating.contains(r.getUser().getId()) && conComentario.contains(r.getUser().getId()));
     }
 
     private boolean ventanaVencida(Payment payment) {
