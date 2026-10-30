@@ -6,9 +6,15 @@ import com.openlab.mx.movo.payment.service.ReservationStatusPort;
 import com.openlab.mx.movo.reservation.entity.Reservation;
 import com.openlab.mx.movo.reservation.entity.ReservationStatus;
 import com.openlab.mx.movo.reservation.repository.ReservationRepository;
+import com.openlab.mx.movo.reservation.service.ReservationService;
+import com.openlab.mx.movo.user.entity.User;
+import com.openlab.mx.movo.user.repository.UserRepository;
+import com.openlab.mx.movo.shared.exception.DomainException;
+import com.openlab.mx.movo.experience.entity.ExperienceInstance;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +23,8 @@ import java.util.Optional;
 public class ReservationPaymentAdapter implements InstanceConfirmedReservationsPort, ReservationStatusPort, CheckoutReservationPort {
 
     private final ReservationRepository reservationRepository;
+    private final ReservationService reservationService;
+    private final UserRepository userRepository;
 
     @Override
     public List<Long> confirmedReservationIds(Long instanceId) {
@@ -52,5 +60,31 @@ public class ReservationPaymentAdapter implements InstanceConfirmedReservationsP
         reservation.setStatus(ReservationStatus.CANCELADO);
         reservationRepository.save(reservation);
         return true;
+    }
+
+    @Override
+    public Optional<CheckoutReservationPort.ReservationCheckoutData> findPendingReservation(Long instanceId, Long userId) {
+        return reservationRepository.findFirstByInstanceIdAndUserIdAndStatus(
+                instanceId, userId, ReservationStatus.PENDIENTE)
+                .map(this::toCheckoutData);
+    }
+
+    @Override
+    public CheckoutReservationPort.ReservationCheckoutData reserveReservation(Long instanceId, int attendees, Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new DomainException("Usuario no encontrado"));
+        Reservation reservation = reservationService.reserve(instanceId, attendees, user);
+        return toCheckoutData(reservation);
+    }
+
+    private CheckoutReservationPort.ReservationCheckoutData toCheckoutData(Reservation reservation) {
+        ExperienceInstance instance = reservation.getInstance();
+        com.openlab.mx.movo.experience.entity.Experience experience = instance.getExperience();
+        return new CheckoutReservationPort.ReservationCheckoutData(
+                reservation.getId(),
+                reservation.getAttendees(),
+                experience.getId(),
+                experience.getPrice(),
+                experience.getCurrencyCode(),
+                experience.getName());
     }
 }

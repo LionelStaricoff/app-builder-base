@@ -1,6 +1,5 @@
 package com.openlab.mx.movo.payment.service;
 
-import com.openlab.mx.movo.experience.entity.ExperienceInstance;
 import com.openlab.mx.movo.notification.entity.NotificationType;
 import com.openlab.mx.movo.notification.service.NotificationService;
 import com.openlab.mx.movo.payment.entity.Payment;
@@ -9,10 +8,6 @@ import com.openlab.mx.movo.payment.repository.PaymentRepository;
 import com.openlab.mx.movo.payment.gateway.GatewayCheckoutRequest;
 import com.openlab.mx.movo.payment.gateway.GatewaySession;
 import com.openlab.mx.movo.payment.gateway.PaymentGateway;
-import com.openlab.mx.movo.reservation.entity.Reservation;
-import com.openlab.mx.movo.reservation.entity.ReservationStatus;
-import com.openlab.mx.movo.reservation.repository.ReservationRepository;
-import com.openlab.mx.movo.reservation.service.ReservationService;
 import com.openlab.mx.movo.shared.exception.DomainException;
 import com.openlab.mx.movo.shared.exception.NotOwnerException;
 import com.openlab.mx.movo.user.entity.User;
@@ -38,8 +33,6 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 public class StripeCheckoutService {
 
-    private final ReservationService reservationService;
-    private final ReservationRepository reservationRepository;
     private final PaymentRepository paymentRepository;
     private final NotificationService notificationService;
     private final ReservationConfirmationPort confirmationPort;
@@ -55,38 +48,38 @@ public class StripeCheckoutService {
      */
     @Transactional
     public GatewaySession start(Long instanceId, int attendees, User user) {
-        Reservation reservation = pendiente(instanceId, user).orElse(null);
+        CheckoutReservationPort.ReservationCheckoutData reservation =
+                checkoutReservationPort.findPendingReservation(instanceId, user.getId()).orElse(null);
         if (reservation == null) {
-            reservation = reservationService.reserve(instanceId, attendees, user);
+            reservation = checkoutReservationPort.reserveReservation(instanceId, attendees, user.getId());
         }
-        Payment pago = paymentRepository.findByReservationId(reservation.getId()).orElse(null);
+        Payment pago = paymentRepository.findByReservationId(reservation.reservationId()).orElse(null);
         if (pago != null && pago.getStatus() == PaymentStatus.PENDING
                 && pago.getStripeSessionId() != null) {
             return gateway.authorizeInfo(pago.getStripeSessionId());
         }
 
-        ExperienceInstance instance = reservation.getInstance();
-        BigDecimal price = instance.getExperience().getPrice();
-        BigDecimal amount = price.multiply(BigDecimal.valueOf(reservation.getAttendees()))
+        BigDecimal price = reservation.price();
+        BigDecimal amount = price.multiply(BigDecimal.valueOf(reservation.attendees()))
                 .setScale(2, RoundingMode.HALF_UP);
         BigDecimal commission = amount.multiply(commissionRate)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        String currency = instance.getExperience().getCurrencyCode() == null
-                ? "MXN" : instance.getExperience().getCurrencyCode();
+        String currency = reservation.currency() == null
+                ? "MXN" : reservation.currency();
         GatewayCheckoutRequest request = new GatewayCheckoutRequest(
-                price, currency, reservation.getAttendees(), instance.getExperience().getName(),
+                price, currency, reservation.attendees(), reservation.name(),
                 Map.of("instanceId", String.valueOf(instanceId),
-                        "experienceId", String.valueOf(instance.getExperience().getId()),
+                        "experienceId", String.valueOf(reservation.experienceId()),
                         "userId", String.valueOf(user.getId()),
-                        "attendees", String.valueOf(reservation.getAttendees()),
-                        "reservationId", String.valueOf(reservation.getId())));
+                        "attendees", String.valueOf(reservation.attendees()),
+                        "reservationId", String.valueOf(reservation.reservationId())));
         GatewaySession session = gateway.createCheckout(request);
 
         // Único save del pago: ya con la sesión dentro (si el persist falla,
         // el rollback no persigue una fila PENDING sessionless).
         Payment nuevo = Payment.builder()
-                .reservationId(reservation.getId())
+                .reservationId(reservation.reservationId())
                 .amount(amount)
                 .commission(commission)
                 .status(PaymentStatus.PENDING)
@@ -186,8 +179,4 @@ public class StripeCheckoutService {
         return true;
     }
 
-    private java.util.Optional<Reservation> pendiente(Long instanceId, User user) {
-        return reservationRepository.findFirstByInstanceIdAndUserIdAndStatus(
-                instanceId, user.getId(), ReservationStatus.PENDIENTE);
-    }
 }

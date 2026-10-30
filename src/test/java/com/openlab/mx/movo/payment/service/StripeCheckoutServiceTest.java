@@ -45,8 +45,6 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class StripeCheckoutServiceTest {
 
-    @Mock ReservationService reservationService;
-    @Mock ReservationRepository reservationRepository;
     @Mock PaymentRepository paymentRepository;
     @Mock NotificationService notificationService;
     @Mock com.openlab.mx.movo.payment.service.ReservationConfirmationPort confirmationPort;
@@ -61,7 +59,7 @@ class StripeCheckoutServiceTest {
     void setUp() {
         gateway = new FakePaymentGateway();
         service = new StripeCheckoutService(
-                reservationService, reservationRepository, paymentRepository, notificationService,
+                paymentRepository, notificationService,
                 confirmationPort, checkoutReservationPort, gateway);
     }
 
@@ -103,9 +101,9 @@ class StripeCheckoutServiceTest {
         User u = usuario(10L);
         ExperienceInstance instance = instancia();
         Reservation r = reserva(99L, instance, u, 2);
-        when(reservationRepository.findFirstByInstanceIdAndUserIdAndStatus(1L, 10L,
-                ReservationStatus.PENDIENTE)).thenReturn(Optional.empty());
-        when(reservationService.reserve(1L, 2, u)).thenReturn(r);
+        when(checkoutReservationPort.findPendingReservation(1L, 10L)).thenReturn(Optional.empty());
+        CheckoutReservationPort.ReservationCheckoutData rdata = new CheckoutReservationPort.ReservationCheckoutData(99L, 2, 7L, new BigDecimal("380.00"), "MXN", "Taller de cerámica");
+        when(checkoutReservationPort.reserveReservation(1L, 2, 10L)).thenReturn(rdata);
         when(paymentRepository.findByReservationId(99L)).thenReturn(Optional.empty());
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -140,9 +138,9 @@ class StripeCheckoutServiceTest {
         ExperienceInstance instance = instancia();
         instance.getExperience().setCurrencyCode(null);
         Reservation r = reserva(99L, instance, u, 1);
-        when(reservationRepository.findFirstByInstanceIdAndUserIdAndStatus(1L, 10L,
-                ReservationStatus.PENDIENTE)).thenReturn(Optional.empty());
-        when(reservationService.reserve(1L, 1, u)).thenReturn(r);
+        when(checkoutReservationPort.findPendingReservation(1L, 10L)).thenReturn(Optional.empty());
+        CheckoutReservationPort.ReservationCheckoutData rdata = new CheckoutReservationPort.ReservationCheckoutData(99L, 1, 7L, new BigDecimal("380.00"), null, "Taller de cerámica");
+        when(checkoutReservationPort.reserveReservation(1L, 1, 10L)).thenReturn(rdata);
         when(paymentRepository.findByReservationId(99L)).thenReturn(Optional.empty());
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -157,14 +155,14 @@ class StripeCheckoutServiceTest {
         Payment pago = pendiente(r);
         gateway.createCheckout(new GatewayCheckoutRequest(new BigDecimal("380.00"),
                 "MXN", 2, "Taller de cerámica", java.util.Map.of())); // sesión cs_fake_1 existe en el fake
-        when(reservationRepository.findFirstByInstanceIdAndUserIdAndStatus(1L, 10L,
-                ReservationStatus.PENDIENTE)).thenReturn(Optional.of(r));
+        CheckoutReservationPort.ReservationCheckoutData ddata = new CheckoutReservationPort.ReservationCheckoutData(99L, 2, 7L, new BigDecimal("380.00"), "MXN", "Taller de cerámica");
+        when(checkoutReservationPort.findPendingReservation(1L, 10L)).thenReturn(Optional.of(ddata));
         when(paymentRepository.findByReservationId(99L)).thenReturn(Optional.of(pago));
 
         GatewaySession gs = service.start(1L, 2, u);
 
         assertEquals("cs_fake_1", gs.sessionId(), "reusa la sesión del POST anterior (spec §11.2)");
-        verify(reservationService, never()).reserve(any(), org.mockito.ArgumentMatchers.anyInt(), any());
+        verify(checkoutReservationPort, never()).reserveReservation(any(), org.mockito.ArgumentMatchers.anyInt(), any());
         verify(paymentRepository, never()).save(any(Payment.class));
     }
 
