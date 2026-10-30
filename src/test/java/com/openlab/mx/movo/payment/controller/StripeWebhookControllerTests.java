@@ -183,7 +183,7 @@ class StripeWebhookControllerTests {
         assertEquals(PaymentStatus.FAILED, pago.getStatus());
         // Review Focus 2 (instant book): el expired termina en CANCELADO y nunca
         // en CONFIRMADA — un estado excluye al otro, esta aserción pinnea ambos.
-        assertEquals(ReservationStatus.CANCELADO, pago.getReservation().getStatus());
+        assertEquals(ReservationStatus.CANCELADO, reservationRepository.findById(pago.getReservationId()).orElseThrow().getStatus());
     }
 
     @Test

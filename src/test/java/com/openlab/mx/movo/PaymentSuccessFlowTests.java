@@ -209,7 +209,7 @@ class PaymentSuccessFlowTests {
         assertEquals(ReservationStatus.CONFIRMADA, r.getStatus(), "el pago confirma la reserva");
         assertEquals(PaymentStatus.HELD, pago(instanceId, "demo_user").getStatus(),
                 "el escrow no se libera al confirmar");
-        mockMvc.perform(get("/chats/" + instanceId)).andExpect(status().isOk());
+        mockMvc.perform(get("/reservations").with(user("demo_user"))).andExpect(status().isOk());
     }
 
     @Test
@@ -224,8 +224,8 @@ class PaymentSuccessFlowTests {
 
         assertTrue(notificationRepository.findByUserIdOrderByCreatedAtDesc(huespedId).stream().anyMatch(
                         n -> n.getType() == NotificationType.RESERVA_CONFIRMADA
-                                && ("/chats/" + instanceId).equals(n.getLink())),
-                "aviso al huésped con link al chat");
+                                && "/reservations".equals(n.getLink())),
+                "aviso al huésped confirmado con link a reservas");
         assertTrue(notificationRepository.findByUserIdOrderByCreatedAtDesc(creadorId).stream().anyMatch(
                         n -> n.getType() == NotificationType.RESERVA_CONFIRMADA
                                 && "/reservations".equals(n.getLink())),

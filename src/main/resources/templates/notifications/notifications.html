@@ -8,11 +8,7 @@
         <p>Confirmaciones, solicitudes y reembolsos</p>
     </div>
 
-    <!--/* Dos pantallas distintas, no dos pestañas: cada una tiene su URL. */-->
-    <nav class="tabs" aria-label="Avisos y mensajes">
-        <span class="tab active" aria-current="page">Notificaciones</span>
-        <a class="tab" th:href="@{/chats}">Mensajes</a>
-    </nav>
+    <h1 class="page-title">Notificaciones</h1>
 
     <div class="empty-illustration" th:if="${#lists.isEmpty(notificaciones)}">
         <img th:src="@{/img/empty-notifications.svg}" alt="">

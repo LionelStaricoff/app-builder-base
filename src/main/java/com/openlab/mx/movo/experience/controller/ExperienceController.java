@@ -13,7 +13,7 @@ import com.openlab.mx.movo.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.movo.experience.service.ExperienceService;
 import com.openlab.mx.movo.experience.service.QuestionService;
 import com.openlab.mx.movo.experience.service.RatingService;
-import com.openlab.mx.movo.proposal.service.ProposalService;
+
 import com.openlab.mx.movo.reservation.entity.ReservationStatus;
 import com.openlab.mx.movo.reservation.repository.ReservationRepository;
 import com.openlab.mx.movo.reservation.service.RefundPolicy;
@@ -58,7 +58,6 @@ public class ExperienceController {
     private final RatingService ratingService;
     private final QuestionService questionService;
     private final ReservationRepository reservationRepository;
-    private final ProposalService proposalService;
 
     @Value("${identity.verification.enabled:true}")
     private boolean verificationEnabled;
@@ -90,14 +89,7 @@ public class ExperienceController {
      * antes de tocar nada → form vacío, nunca un 400.
      */
     private ExperienceFormRequest rellenar(User user, String draft) {
-        ExperienceFormRequest base = emptyForm();
-        return proposalService.borradorPropio(user, draft)
-                .map(d -> new ExperienceFormRequest(
-                        d.getName(), d.getDescription(),
-                        base.durationMinutes(), base.minCapacity(), base.maxCapacity(), base.price(),
-                        d.getCategory(), base.recurrenceType(), base.meetingLat(), base.meetingLng(),
-                        base.schedules(), base.images(), d.getIncludes(), d.getBring()))
-                .orElse(base);
+        return emptyForm();
     }
 
     @PostMapping("/experiences")

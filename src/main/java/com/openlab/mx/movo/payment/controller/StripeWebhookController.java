@@ -1,12 +1,9 @@
 package com.openlab.mx.movo.payment.controller;
 
-import com.openlab.mx.movo.payment.entity.Payment;
-import com.openlab.mx.movo.payment.entity.PaymentStatus;
 import com.openlab.mx.movo.payment.entity.PayoutStatus;
 import com.openlab.mx.movo.payment.entity.StripeEvent;
 import com.openlab.mx.movo.payment.repository.ConnectAccountRepository;
 import com.openlab.mx.movo.payment.repository.ConnectPayoutRepository;
-import com.openlab.mx.movo.payment.repository.PaymentRepository;
 import com.openlab.mx.movo.payment.repository.StripeEventRepository;
 import com.openlab.mx.movo.payment.service.ConnectAccountService;
 import com.openlab.mx.movo.payment.service.StripeCheckoutService;
@@ -40,7 +37,6 @@ import java.time.ZoneId;import java.time.LocalDateTime;
 public class StripeWebhookController {
 
     private final StripeEventRepository stripeEventRepository;
-    private final PaymentRepository paymentRepository;
     private final StripeCheckoutService stripeCheckoutService;
     private final ConnectAccountRepository connectAccountRepository;
     private final ConnectPayoutRepository connectPayoutRepository;
@@ -119,7 +115,7 @@ public class StripeWebhookController {
                 stripeCheckoutService.expire(objectId);
                 return Resultado.APLICADO;
             case "payment_intent.payment_failed":
-                return marcarFailed(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
+                return stripeCheckoutService.markPaymentFailed(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
             // ─── Stripe Connect ─────────────────────────────────────────────
             case "account.updated":
                 return actualizarCuentaConnect(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
@@ -133,8 +129,12 @@ public class StripeWebhookController {
     }
 
     private void asegurarCompleto(String sessionId) {
+        Long userId = stripeCheckoutService.userIdForSession(sessionId);
+        if (userId == null) {
+            throw new DomainException("Sesión de pago no encontrada");
+        }
         try {
-            stripeCheckoutService.complete(sessionId, stripeUser(sessionId));
+            stripeCheckoutService.complete(sessionId, userId);
         } catch (DomainException e) {
             log.warn("checkout.session.completed sobre session_id conocido pero no en DB: {}", e.getMessage());
             throw e;
@@ -185,23 +185,5 @@ public class StripeWebhookController {
         return true;
     }
 
-    private Long stripeUser(String sessionId) {
-        return paymentRepository.findFirstByStripeSessionId(sessionId)
-                .map(p -> p.getReservation().getUser().getId())
-                .orElseThrow(() -> new DomainException("Sesión de pago no encontrada"));
-    }
-
-    private boolean marcarFailed(String paymentIntentId) {
-        Payment pago = paymentRepository.findFirstByStripePaymentIntentId(paymentIntentId)
-                .orElse(null);
-        if (pago == null) {
-            return false; // pi no conocido: no-op idempotente
-        }
-        if (pago.getStatus() == PaymentStatus.PENDING
-                || pago.getStatus() == PaymentStatus.HELD) {
-            pago.setStatus(PaymentStatus.FAILED);
-            paymentRepository.save(pago);
-        }
-        return true;
-    }
+    // reserva no navega entidades marketplace: delega al servicio
 }

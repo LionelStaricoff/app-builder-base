@@ -7,6 +7,9 @@ import com.openlab.mx.movo.mobility.promotion.entity.Promotion;
 import com.openlab.mx.movo.mobility.promotion.entity.PromotionStatus;
 import com.openlab.mx.movo.mobility.promotion.repository.DiscountRepository;
 import com.openlab.mx.movo.mobility.promotion.repository.PromotionRepository;
+import com.openlab.mx.movo.shared.audit.AdminAuditService;
+
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 
+@PreAuthorize("hasRole('ADMIN')")
 @Controller
 @RequestMapping("/admin/promotions")
 public class PromotionAdminController {
@@ -25,9 +29,12 @@ public class PromotionAdminController {
     private final PromotionRepository promotions;
     private final DiscountRepository discounts;
 
-    public PromotionAdminController(PromotionRepository promotions, DiscountRepository discounts) {
+    private final AdminAuditService audit;
+
+    public PromotionAdminController(PromotionRepository promotions, DiscountRepository discounts, AdminAuditService audit) {
         this.promotions = promotions;
         this.discounts = discounts;
+        this.audit = audit;
     }
 
     @GetMapping
@@ -46,6 +53,7 @@ public class PromotionAdminController {
     @PostMapping
     public String save(@ModelAttribute Promotion promotion, RedirectAttributes ra) {
         promotions.save(promotion);
+        audit.record("PROMOTION_SAVED", "Promotion", String.valueOf(promotion.getId()), promotion.getName());
         ra.addFlashAttribute("message", "Promoción guardada");
         return "redirect:/admin/promotions";
     }
@@ -55,6 +63,7 @@ public class PromotionAdminController {
         Promotion p = promotions.findById(id).orElseThrow();
         p.setStatus(PromotionStatus.ACTIVE);
         promotions.save(p);
+        audit.record("PROMOTION_ACTIVATED", "Promotion", String.valueOf(id), p.getName());
         ra.addFlashAttribute("message", "Promoción activada");
         return "redirect:/admin/promotions";
     }
@@ -64,6 +73,7 @@ public class PromotionAdminController {
         Promotion p = promotions.findById(id).orElseThrow();
         p.setStatus(PromotionStatus.EXPIRED);
         promotions.save(p);
+        audit.record("PROMOTION_EXPIRED", "Promotion", String.valueOf(id), p.getName());
         ra.addFlashAttribute("message", "Promoción expirada");
         return "redirect:/admin/promotions";
     }
@@ -77,6 +87,7 @@ public class PromotionAdminController {
     @PostMapping("/discounts")
     public String saveDiscount(@ModelAttribute Discount discount, RedirectAttributes ra) {
         discounts.save(discount);
+        audit.record("DISCOUNT_SAVED", "Discount", String.valueOf(discount.getId()), discount.getType() == null ? null : discount.getType().name());
         ra.addFlashAttribute("message", "Descuento guardado");
         return "redirect:/admin/promotions";
     }
@@ -86,6 +97,7 @@ public class PromotionAdminController {
         Discount d = discounts.findById(id).orElseThrow();
         d.setStatus(DiscountStatus.DISABLED);
         discounts.save(d);
+        audit.record("DISCOUNT_DISABLED", "Discount", String.valueOf(id), null);
         ra.addFlashAttribute("message", "Descuento deshabilitado");
         return "redirect:/admin/promotions";
     }

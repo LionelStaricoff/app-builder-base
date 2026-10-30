@@ -15,7 +15,6 @@ import com.openlab.mx.movo.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.movo.experience.repository.UserViewedExperienceRepository;
 import com.openlab.mx.movo.reservation.entity.ReservationStatus;
 import com.openlab.mx.movo.reservation.repository.ReservationRepository;
-import com.openlab.mx.movo.favorite.repository.FavoriteRepository;
 import com.openlab.mx.movo.shared.JacksonHelper;
 import com.openlab.mx.movo.shared.location.GeocodingService;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +54,6 @@ public class FeedService {
     private final ExperienceStopRepository stopRepository;
     private final ExperienceInstanceRepository instanceRepository;
     private final ReservationRepository reservationRepository;
-    private final FavoriteRepository favoriteRepository;
     private final UserViewedExperienceRepository viewedExperienceRepository;
     private final JacksonHelper jacksonHelper;
     private final GeocodingService geocodingService;
@@ -359,8 +357,7 @@ public class FeedService {
                 .map(img -> img.getData())
                 .toList();
         String cover = images.isEmpty() ? null : images.get(0);
-        boolean favorite = userId != null
-                && favoriteRepository.existsByExperienceIdAndUserId(experience.getId(), userId);
+        boolean favorite = false;
         String label = String.format(Locale.US, "%.4f, %.4f",
                 experience.getMeetingLat(), experience.getMeetingLng());
         List<ExperienceStopDTO> stops = List.of();

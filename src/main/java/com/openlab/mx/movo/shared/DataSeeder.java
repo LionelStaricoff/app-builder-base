@@ -45,8 +45,11 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
         // Idempotente: recrea los demos si faltan (una BD compartida puede
         // perderlos; sin ellos la suite de tests y el login demo se rompen).
+        // Idempotente: recrea los demos si faltan (una BD compartida puede
+        // perderlos; sin ellos la suite de tests y el login demo se rompen).
         if (userRepository.existsByUsername("demo_creator")
-                && userRepository.existsByUsername("demo_user")) {
+                && userRepository.existsByUsername("demo_user")
+                && userRepository.existsByUsername("demo_admin")) {
             return;
         }
         // Fail fast: una contraseña vacía (p. ej. DEMO_PASSWORD= en el .env)
@@ -84,6 +87,22 @@ public class DataSeeder implements CommandLineRunner {
                 .country("México")
                 .currencyCode("MXN")
                 .role(Role.USER)
+                .spPoints(0)
+                .interestsOnboarded(true)
+                .proposalOnboarded(true)
+                .build());
+        userRepository.save(User.builder()
+                .username("demo_admin")
+                .email("admin@shared.mx")
+                .passwordHash(passwordEncoder.encode(demoPassword))
+                .birthDate(java.time.LocalDate.of(1985, 1, 1))
+                .avatarBase64(AVATAR_1PX)
+                .city("CDMX")
+                .lat(19.4326)
+                .lng(-99.1332)
+                .country("México")
+                .currencyCode("MXN")
+                .role(Role.ADMIN)
                 .spPoints(0)
                 .interestsOnboarded(true)
                 .proposalOnboarded(true)

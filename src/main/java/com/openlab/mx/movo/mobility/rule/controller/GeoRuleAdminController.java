@@ -4,7 +4,9 @@ import com.openlab.mx.movo.mobility.rule.entity.CityRuleOverride;
 import com.openlab.mx.movo.mobility.rule.entity.CountryRule;
 import com.openlab.mx.movo.mobility.rule.repository.CityRuleOverrideRepository;
 import com.openlab.mx.movo.mobility.rule.repository.CountryRuleRepository;
+import com.openlab.mx.movo.shared.audit.AdminAuditService;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+@PreAuthorize("hasRole('ADMIN')")
 @Controller
 @RequestMapping("/admin/geo-rules")
 public class GeoRuleAdminController {
@@ -22,10 +25,14 @@ public class GeoRuleAdminController {
     private final CountryRuleRepository countryRules;
     private final CityRuleOverrideRepository cityOverrides;
 
+    private final AdminAuditService audit;
+
     public GeoRuleAdminController(CountryRuleRepository countryRules,
-                                 CityRuleOverrideRepository cityOverrides) {
+                                  CityRuleOverrideRepository cityOverrides,
+                                  AdminAuditService audit) {
         this.countryRules = countryRules;
         this.cityOverrides = cityOverrides;
+        this.audit = audit;
     }
 
     @GetMapping
@@ -51,6 +58,7 @@ public class GeoRuleAdminController {
             return "admin/country-rule-form";
         }
         countryRules.save(country);
+        audit.record("GEO_RULE_SAVED", "CountryRule", String.valueOf(country.getId()), country.getCountryCode());
         ra.addFlashAttribute("message", "Regla de país guardada");
         return "redirect:/admin/geo-rules";
     }
@@ -78,6 +86,8 @@ public class GeoRuleAdminController {
             return "admin/city-rule-form";
         }
         cityOverrides.save(override);
+        audit.record("GEO_CITY_OVERRIDE_SAVED", "CityRuleOverride", String.valueOf(override.getId()),
+                country.getCountryCode() + "/" + override.getCityName());
         ra.addFlashAttribute("message", "Override de ciudad guardado");
         return "redirect:/admin/geo-rules";
     }

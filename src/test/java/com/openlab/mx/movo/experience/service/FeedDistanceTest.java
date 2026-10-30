@@ -9,7 +9,6 @@ import com.openlab.mx.movo.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.movo.experience.repository.ExperienceRepository;
 import com.openlab.mx.movo.experience.repository.ExperienceStopRepository;
 import com.openlab.mx.movo.experience.repository.UserViewedExperienceRepository;
-import com.openlab.mx.movo.favorite.repository.FavoriteRepository;
 import com.openlab.mx.movo.reservation.repository.ReservationRepository;
 import com.openlab.mx.movo.shared.JacksonHelper;
 import com.openlab.mx.movo.shared.location.GeocodingService;
@@ -48,8 +47,6 @@ class FeedDistanceTest {
     private ExperienceInstanceRepository instanceRepository;
     @Mock
     private ReservationRepository reservationRepository;
-    @Mock
-    private FavoriteRepository favoriteRepository;
     @Mock
     private ExperienceStopRepository stopRepository;
     @Mock

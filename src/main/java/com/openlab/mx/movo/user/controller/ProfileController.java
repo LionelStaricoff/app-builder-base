@@ -1,6 +1,5 @@
 package com.openlab.mx.movo.user.controller;
 
-import com.openlab.mx.movo.interest.service.InterestService;
 import com.openlab.mx.movo.shared.CurrentUser;
 import com.openlab.mx.movo.user.dto.ProfileUpdateRequest;
 import com.openlab.mx.movo.user.entity.User;
@@ -21,6 +20,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
+
 
 /**
  * Configuración (spec §6.5): nombre, avatar base64, vista de SP y logout.
@@ -38,13 +39,12 @@ public class ProfileController {
 
     private final UserRepository userRepository;
     private final CurrentUser currentUser;
-    private final InterestService interestService;
 
     @GetMapping("/settings")
     public String settings(Model model) {
         User user = currentUser.require();
         model.addAttribute("user", user);
-        model.addAttribute("intereses", interestService.intereses(user));
+        model.addAttribute("intereses", List.of());
         return "profile/settings";
     }
 

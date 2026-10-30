@@ -96,9 +96,10 @@ class UnconfiguredCheckoutTests {
 
     private boolean mappedPagos(Long instanceId) {
         return paymentRepository.findAll().stream()
-                .filter(p -> p.getReservation() != null
-                        && p.getReservation().getInstance() != null
-                        && instanceId.equals(p.getReservation().getInstance().getId()))
-                .toList().isEmpty();
+                .noneMatch(p -> p.getReservationId() != null
+                        && reservationRepository.findById(p.getReservationId())
+                                .map(r -> r.getInstance() != null
+                                        && instanceId.equals(r.getInstance().getId()))
+                                .orElse(false));
     }
 }

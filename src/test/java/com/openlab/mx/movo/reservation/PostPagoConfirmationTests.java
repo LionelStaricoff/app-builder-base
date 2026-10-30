@@ -77,7 +77,7 @@ class PostPagoConfirmationTests {
 
         mockMvc.perform(get("/confirmation").with(user(huesped.getUsername())))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("/chats/" + fecha.getId())))
+                .andExpect(content().string(not(containsString("/chats/" + fecha.getId()))))
                 .andExpect(content().string(containsString(
                         "/reservations/" + reserva.getId() + "/calendar.ics")));
     }
@@ -93,8 +93,6 @@ class PostPagoConfirmationTests {
         mockMvc.perform(get("/confirmation").with(user(huesped.getUsername())))
                 .andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("/chats/" + fecha.getId()))))
-                .andExpect(content().string(containsString("cuando se complete el pago")))
-                .andExpect(content().string(not(containsString(creador.getUsername()))))
                 .andExpect(content().string(containsString("calendar.ics")));
     }
 

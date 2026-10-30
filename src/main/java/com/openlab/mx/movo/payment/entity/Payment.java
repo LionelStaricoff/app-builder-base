@@ -1,6 +1,5 @@
 package com.openlab.mx.movo.payment.entity;
 
-import com.openlab.mx.movo.reservation.entity.Reservation;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,8 +7,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,9 +34,8 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "reservation_id", unique = true)
-    private Reservation reservation;
+    @Column(name = "reservation_id", unique = true)
+    private Long reservationId;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
