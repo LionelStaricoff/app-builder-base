@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Nueva regla de país</title></head>
+<body>
+  <h1>Regla de país</h1>
+  <form th:action="@{/admin/geo-rules}" th:object="${country}" method="post">
+    <label>Código país <input th:field="*{countryCode}"/></label><br/>
+    <label>Nombre <input th:field="*{countryName}"/></label><br/>
+    <label>Moneda <input th:field="*{currencyCode}"/></label><br/>
+    <label>Mínimo <input th:field="*{minFare}"/></label><br/>
+    <label><input type="checkbox" th:field="*{requiresPersonalIdentity}"/> Requiere identidad personal</label><br/>
+    <label><input type="checkbox" th:field="*{requiresVehicle}"/> Requiere vehículo</label><br/>
+    <button type="submit">Guardar</button>
+  </form>
+  <p th:if="${#fields.hasErrors('*')}" th:errors="*{all}"></p>
+</body>
+</html>

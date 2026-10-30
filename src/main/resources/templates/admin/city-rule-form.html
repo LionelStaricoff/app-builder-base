@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Override de ciudad</title></head>
+<body>
+  <h1>Override de ciudad — <span th:text="${country.countryCode}"></span></h1>
+  <form th:action="@{/admin/geo-rules/{id}/city(id=${country.id})}" th:object="${override}" method="post">
+    <label>Ciudad <input th:field="*{cityName}"/></label><br/>
+    <label>Moneda (vacío hereda) <input th:field="*{currencyCode}"/></label><br/>
+    <label>Mínimo (vacío hereda) <input th:field="*{minFare}"/></label><br/>
+    <label><input type="checkbox" th:field="*{requiresPersonalIdentity}"/> Requiere identidad personal (opcional, según herencia)</label><br/>
+    <label><input type="checkbox" th:field="*{requiresVehicle}"/> Requiere vehículo (opcional)</label><br/>
+    <button type="submit">Guardar</button>
+  </form>
+  <p>Los campos vacíos heredan del país.</p>
+</body>
+</html>
