@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Promoción</title></head>
+<body>
+  <h1>Promoción</h1>
+  <form th:action="@{/admin/promotions}" th:object="${promotion}" method="post">
+    <label>Nombre <input th:field="*{name}"/></label><br/>
+    <label>Inicio <input th:field="*{startsAt}"/></label><br/>
+    <label>Expira <input th:field="*{expiresAt}"/></label><br/>
+    <label>Tasa comisión (0-1) <input th:field="*{commissionRate}"/></label><br/>
+    <label>Objetivo pasajeros <input th:field="*{targetPassengerCount}"/></label><br/>
+    <label>Cómo se cuentan pasajeros <textarea th:field="*{passengerCountingRule}"></textarea></label><br/>
+    <button type="submit">Guardar</button>
+  </form>
+</body>
+</html>

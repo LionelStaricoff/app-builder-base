@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Promociones y descuentos</title></head>
+<body>
+  <h1>Promociones y descuentos</h1>
+  <p th:if="${message}" th:text="${message}"></p>
+  <h2>Promociones</h2>
+  <table>
+    <tr><th>Nombre</th><th>Vigencia</th><th>Comisión</th><th>Objetivo pasajeros</th><th>Cómo se cuentan</th><th>Estado</th><th>Acciones</th></tr>
+    <tr th:each="p : ${promotions}">
+      <td th:text="${p.name}"></td>
+      <td th:text="${p.startsAt} + ' → ' + ${p.expiresAt}"></td>
+      <td th:text="${p.commissionRate}"></td>
+      <td th:text="${p.targetPassengerCount}"></td>
+      <td th:text="${p.passengerCountingRule}"></td>
+      <td th:text="${p.status}"></td>
+      <td>
+        <form th:action="@{/admin/promotions/{id}/activate(id=${p.id})}" method="post" style="display:inline"><button>Activar</button></form>
+        <form th:action="@{/admin/promotions/{id}/expire(id=${p.id})}" method="post" style="display:inline"><button>Expirar</button></form>
+      </td>
+    </tr>
+  </table>
+  <p><a href="/admin/promotions/new">Nueva promoción</a></p>
+  <h2>Descuentos a pasajeros</h2>
+  <table>
+    <tr><th>Nombre</th><th>Tipo</th><th>Valor</th><th>Vigencia</th><th>Usos</th><th>Estado</th></tr>
+    <tr th:each="d : ${discounts}">
+      <td th:text="${d.name}"></td>
+      <td th:text="${d.type}"></td>
+      <td th:text="${d.value}"></td>
+      <td th:text="${d.startsAt} + ' → ' + ${d.expiresAt}"></td>
+      <td th:text="${d.usageCount} + '/' + ${d.maxUsage}"></td>
+      <td th:text="${d.status}"></td>
+    </tr>
+  </table>
+  <p><a href="/admin/promotions/discounts/new">Nuevo descuento</a></p>
+</body>
+</html>

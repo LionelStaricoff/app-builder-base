@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Descuento pasajero</title></head>
+<body>
+  <h1>Descuento pasajero</h1>
+  <form th:action="@{/admin/promotions/discounts}" th:object="${discount}" method="post">
+    <label>Nombre <input th:field="*{name}"/></label><br/>
+    <label>Tipo <select th:field="*{type}"><option th:each="t : ${T(com.openlab.mx.movo.mobility.promotion.entity.DiscountType).values()}" th:value="${t}" th:text="${t}"></option></select></label><br/>
+    <label>Valor <input th:field="*{value}"/></label><br/>
+    <label>Pasajero (vacío=general) <input th:field="*{passengerId}"/></label><br/>
+    <label>Inicio <input th:field="*{startsAt}"/></label><br/>
+    <label>Expira <input th:field="*{expiresAt}"/></label><br/>
+    <label>Máximos usos <input th:field="*{maxUsage}"/></label><br/>
+    <button type="submit">Guardar</button>
+  </form>
+</body>
+</html>
