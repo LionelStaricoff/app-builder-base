@@ -2,7 +2,12 @@ package com.openlab.mx.movo.experience.service;
 
 import com.openlab.mx.movo.payment.service.CheckoutReservationPort;
 import com.openlab.mx.movo.payment.service.InstanceConfirmedReservationsPort;
+import com.openlab.mx.movo.payment.service.PendingPayoutsPort;
 import com.openlab.mx.movo.payment.service.ReservationStatusPort;
+import com.openlab.mx.movo.payment.entity.Payment;
+import com.openlab.mx.movo.payment.entity.PaymentStatus;
+import com.openlab.mx.movo.payment.entity.PayoutStatus;
+import com.openlab.mx.movo.payment.repository.PaymentRepository;
 import com.openlab.mx.movo.reservation.entity.Reservation;
 import com.openlab.mx.movo.reservation.entity.ReservationStatus;
 import com.openlab.mx.movo.reservation.repository.ReservationRepository;
@@ -20,9 +25,10 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class ReservationPaymentAdapter implements InstanceConfirmedReservationsPort, ReservationStatusPort, CheckoutReservationPort {
+public class ReservationPaymentAdapter implements InstanceConfirmedReservationsPort, ReservationStatusPort, CheckoutReservationPort, PendingPayoutsPort {
 
     private final ReservationRepository reservationRepository;
+    private final PaymentRepository paymentRepository;
     private final ReservationService reservationService;
     private final UserRepository userRepository;
 
@@ -86,5 +92,16 @@ public class ReservationPaymentAdapter implements InstanceConfirmedReservationsP
                 experience.getPrice(),
                 experience.getCurrencyCode(),
                 experience.getName());
+    }
+
+    @Override
+    public List<Payment> pendingPaymentsOfCreator(Long creatorId) {
+        var reservations = reservationRepository.findByExperienceCreatorId(creatorId);
+        if (reservations.isEmpty()) {
+            return List.of();
+        }
+        List<Long> reservationIds = reservations.stream().map(Reservation::getId).toList();
+        return paymentRepository.findByReservationIdInAndStatusAndPayoutStatus(
+                reservationIds, PaymentStatus.RELEASED, PayoutStatus.PENDING);
     }
 }

@@ -67,4 +67,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             @Param("experienceId") Long experienceId,
             @Param("status") ReservationStatus status,
             @Param("today") java.time.LocalDate today);
+
+    @Query("select r from Reservation r where r.instance.experience.creator.id = :creatorId")
+    List<Reservation> findByExperienceCreatorId(@Param("creatorId") Long creatorId);
 }

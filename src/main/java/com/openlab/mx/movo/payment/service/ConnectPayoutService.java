@@ -36,6 +36,7 @@ public class ConnectPayoutService {
     private final ConnectPayoutRepository connectPayoutRepository;
     private final ConnectAccountRepository connectAccountRepository;
     private final PaymentRepository paymentRepository;
+    private final PendingPayoutsPort pendingPayoutsPort;
     private final PayoutCurrencyPort payoutCurrencyPort;
     private final PaymentGateway gateway;
     private final StripeConnectService stripeConnectService;
@@ -67,7 +68,7 @@ public class ConnectPayoutService {
         }
 
         // 2. Buscar pagos pendientes de payout
-        List<Payment> pendingPayments = paymentRepository.findPendingPayoutsByCreator(creator);
+        List<Payment> pendingPayments = pendingPayoutsPort.pendingPaymentsOfCreator(creator.getId());
         log.info("[payout] paso 2: {} pagos pendientes", pendingPayments.size());
         if (pendingPayments.isEmpty()) {
             log.warn("[payout] paso 2 FALLÓ: sin fondos pendientes");
@@ -173,7 +174,7 @@ public class ConnectPayoutService {
      */
     public BigDecimal getPendingAmount() {
         User creator = currentUser.require();
-        return paymentRepository.findPendingPayoutsByCreator(creator).stream()
+        return pendingPayoutsPort.pendingPaymentsOfCreator(creator.getId()).stream()
                 .map(Payment::getPayout)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
