@@ -80,6 +80,11 @@ legacy sin tocar las vistas Thymeleaf ni las rutas existentes:
   - respuesta: `ExperienceDetailResponse`
     (`id, name, description, includes, bring, durationMinutes, minCapacity, maxCapacity, price, currencyCode, category, ratingAverage, meetingLat, meetingLng, creatorName, images[]`).
 
+- `com.openlab.mx.movo.notification.controller.api.NotificationApiController`
+  - `GET /api/notifications` → `List<NotificationResponse>`
+    (`id, type, message, link, read, createdAt`)
+  - `POST /api/notifications/{id}/read` → `NotificationResponse`
+
 Notas para el front:
 - Autenticados: como el resto de la app, van con cookie de sesión.
 - `GET` no requiere CSRF.
