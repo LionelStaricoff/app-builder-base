@@ -37,6 +37,18 @@ public class Payment {
     @Column(name = "reservation_id", unique = true)
     private Long reservationId;
 
+    /** Nueva app (movilidad): ride origen del pago; reemplaza reservation_id. */
+    @Column(name = "ride_id")
+    private Long rideId;
+
+    /** Creador/conductor que recibirá el payout (evita depender de Reservation/Experience). */
+    @Column(name = "creator_id")
+    private Long creatorId;
+
+    /** Moneda del pago/payout; base para no importar entidades legacy. */
+    @Column(name = "currency_code", length = 8)
+    private String currencyCode;
+
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 

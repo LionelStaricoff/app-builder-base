@@ -9,7 +9,7 @@ import com.openlab.mx.movo.payment.gateway.PaymentGateway;
 import com.openlab.mx.movo.payment.repository.ConnectAccountRepository;
 import com.openlab.mx.movo.payment.repository.ConnectPayoutRepository;
 import com.openlab.mx.movo.payment.repository.PaymentRepository;
-import com.openlab.mx.movo.payment.service.PayoutCurrencyPort;
+
 import com.openlab.mx.movo.shared.CurrentUser;
 import com.openlab.mx.movo.shared.exception.DomainException;
 import com.openlab.mx.movo.user.entity.User;
@@ -36,8 +36,6 @@ public class ConnectPayoutService {
     private final ConnectPayoutRepository connectPayoutRepository;
     private final ConnectAccountRepository connectAccountRepository;
     private final PaymentRepository paymentRepository;
-    private final PendingPayoutsPort pendingPayoutsPort;
-    private final PayoutCurrencyPort payoutCurrencyPort;
     private final PaymentGateway gateway;
     private final StripeConnectService stripeConnectService;
     private final CurrentUser currentUser;
@@ -67,8 +65,8 @@ public class ConnectPayoutService {
             throw new DomainException("Tu cuenta Connect no está habilitada para recibir pagos");
         }
 
-        // 2. Buscar pagos pendientes de payout
-        List<Payment> pendingPayments = pendingPayoutsPort.pendingPaymentsOfCreator(creator.getId());
+        // 2. Buscar pagos pendientes de payout (basado en creator_id, sin experience/reservation)
+        List<Payment> pendingPayments = paymentRepository.findByCreatorIdAndPayoutStatus(creator.getId(), PayoutStatus.PENDING);
         log.info("[payout] paso 2: {} pagos pendientes", pendingPayments.size());
         if (pendingPayments.isEmpty()) {
             log.warn("[payout] paso 2 FALLÓ: sin fondos pendientes");
@@ -174,16 +172,14 @@ public class ConnectPayoutService {
      */
     public BigDecimal getPendingAmount() {
         User creator = currentUser.require();
-        return pendingPayoutsPort.pendingPaymentsOfCreator(creator.getId()).stream()
+        return paymentRepository.findByCreatorIdAndPayoutStatus(creator.getId(), PayoutStatus.PENDING).stream()
                 .map(Payment::getPayout)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /** Resuelve la moneda del pago vía port (sin exponer Reservation en payment). */
     private String currencyOf(Payment payment) {
-        if (payment.getReservationId() == null) {
-            return null;
-        }
-        return payoutCurrencyPort.currencyOfReservation(payment.getReservationId()).orElse(null);
+        String currency = payment.getCurrencyCode();
+        return (currency == null || currency.isBlank()) ? "MXN" : currency;
     }
 }

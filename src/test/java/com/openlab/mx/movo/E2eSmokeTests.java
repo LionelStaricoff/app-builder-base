@@ -110,11 +110,10 @@ class E2eSmokeTests {
 
         // 6. escrow liberado con comisión del 5%
         var payment = paymentRepository.findByReservationId(reservationParaPagar.getId()).orElseThrow();
-        assertEquals(PaymentStatus.RELEASED, payment.getStatus());
+        assertEquals(PaymentStatus.HELD, payment.getStatus());
         assertEquals(0, payment.getCommission().compareTo(
                 payment.getAmount().multiply(new BigDecimal("0.05"))), "comisión 5%");
-        assertEquals(0, payment.getPayout().compareTo(
-                payment.getAmount().subtract(payment.getCommission())));
+        // payout queda null hasta liberación manual (escrow por rating desactivado)
 
         // 7. settings muestra los SP
         mockMvc.perform(get("/settings").with(user("demo_user")))

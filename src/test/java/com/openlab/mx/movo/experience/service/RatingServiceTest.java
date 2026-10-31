@@ -7,7 +7,7 @@ import com.openlab.mx.movo.experience.repository.CommentRepository;
 import com.openlab.mx.movo.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.movo.experience.repository.ExperienceRepository;
 import com.openlab.mx.movo.experience.repository.RatingRepository;
-import com.openlab.mx.movo.payment.service.EscrowService;
+
 import com.openlab.mx.movo.reservation.entity.Reservation;
 import com.openlab.mx.movo.reservation.entity.ReservationStatus;
 import com.openlab.mx.movo.reservation.repository.ReservationRepository;
@@ -43,8 +43,6 @@ class RatingServiceTest {
     private RatingRepository ratingRepository;
     @Mock
     private CommentRepository commentRepository;
-    @Mock
-    private EscrowService escrowService;
 
     @InjectMocks
     private RatingService ratingService;
@@ -89,8 +87,6 @@ class RatingServiceTest {
     private void participanteConfirmado(ExperienceInstance instance, Long userId) {
         when(reservationRepository.existsByInstanceIdAndUserIdAndStatus(
                 10L, userId, ReservationStatus.CONFIRMADA)).thenReturn(true);
-        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
-                .thenReturn(List.of(confirmada(instance, userId)));
     }
 
     @Test
@@ -116,21 +112,5 @@ class RatingServiceTest {
         verify(experienceRepository).save(any(Experience.class));
     }
 
-    @Test
-    void testRateDisparaLiberacion() {
-        ExperienceInstance instance = instance(InstanceStatus.COMPLETED);
-        Reservation reservation = confirmada(instance, 200L);
-        when(instanceRepository.findById(10L)).thenReturn(Optional.of(instance));
-        when(reservationRepository.existsByInstanceIdAndUserIdAndStatus(
-                10L, 200L, ReservationStatus.CONFIRMADA)).thenReturn(true);
-        when(reservationRepository.findByInstanceIdAndStatus(10L, ReservationStatus.CONFIRMADA))
-                .thenReturn(List.of(reservation));
-        when(ratingRepository.findByInstanceIdAndUserId(10L, 200L)).thenReturn(Optional.empty());
-        when(commentRepository.findByInstanceIdAndUserId(10L, 200L)).thenReturn(Optional.empty());
-        when(ratingRepository.averageForExperience(1L)).thenReturn(5.0);
 
-        ratingService.rate(10L, user(200L), 4, "Bueno");
-
-        verify(escrowService).tryRelease(7L);
-    }
 }

@@ -10,7 +10,7 @@ import com.openlab.mx.movo.experience.repository.CommentRepository;
 import com.openlab.mx.movo.experience.repository.ExperienceInstanceRepository;
 import com.openlab.mx.movo.experience.repository.ExperienceRepository;
 import com.openlab.mx.movo.experience.repository.RatingRepository;
-import com.openlab.mx.movo.payment.service.EscrowService;
+
 import com.openlab.mx.movo.reservation.entity.ReservationStatus;
 import com.openlab.mx.movo.reservation.repository.ReservationRepository;
 import com.openlab.mx.movo.shared.exception.DomainException;
@@ -34,8 +34,6 @@ public class RatingService {
     private final ReservationRepository reservationRepository;
     private final RatingRepository ratingRepository;
     private final CommentRepository commentRepository;
-    private final EscrowService escrowService;
-
     @Transactional
     public void rate(Long instanceId, User u, int stars, String text) {
         if (stars < 1 || stars > 5) {
@@ -66,9 +64,6 @@ public class RatingService {
         Double promedio = ratingRepository.averageForExperience(experience.getId());
         experience.setRatingAverage(promedio == null ? 0.0 : promedio);
         experienceRepository.save(experience);
-
-        reservationRepository.findByInstanceIdAndStatus(instanceId, ReservationStatus.CONFIRMADA)
-                .forEach(r -> escrowService.tryRelease(r.getId()));
     }
 
     /** Reseñas del detalle de la experiencia (estrella + texto), más nuevas primero. */
