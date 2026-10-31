@@ -85,6 +85,10 @@ legacy sin tocar las vistas Thymeleaf ni las rutas existentes:
     (`id, type, message, link, read, createdAt`)
   - `POST /api/notifications/{id}/read` → `NotificationResponse`
 
+- `com.openlab.mx.movo.user.controller.api.ProfileApiController`
+  - `GET /api/profile` → `UserProfileResponse`
+    (`id, username, email, avatarBase64, city, country, currencyCode, role, spPoints, interestsOnboarded, proposalOnboarded`)
+
 Notas para el front:
 - Autenticados: como el resto de la app, van con cookie de sesión.
 - `GET` no requiere CSRF.
