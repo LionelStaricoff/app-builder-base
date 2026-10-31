@@ -66,3 +66,22 @@ Archivos fuera de `experience/` o `reservation/` que referencian los paquetes le
 - Suite verde (baseline 331/331 actualizado).
 - Flyway valida esquema.
 - Commit por corte, convencional, sin co-author.
+
+## A1 — Endpoints REST para front paralelo (código además del inventario)
+
+Se agregaron dos controladores JSON read-only que reutilizan los servicios
+legacy sin tocar las vistas Thymeleaf ni las rutas existentes:
+
+- `com.openlab.mx.movo.experience.controller.api.FeedApiController`
+  - `GET /api/feed?page&category&country&cityQuery&lat&lng&maxDistanceKm`
+  - respuesta: `Page<ExperienceFeedDTO>` (Spring Page) con todo lo que usa el feed/feed-card.
+- `com.openlab.mx.movo.experience.controller.api.ExperienceApiController`
+  - `GET /api/experiences/{id}`
+  - respuesta: `ExperienceDetailResponse`
+    (`id, name, description, includes, bring, durationMinutes, minCapacity, maxCapacity, price, currencyCode, category, ratingAverage, meetingLat, meetingLng, creatorName, images[]`).
+
+Notas para el front:
+- Autenticados: como el resto de la app, van con cookie de sesión.
+- `GET` no requiere CSRF.
+- Los campos coinciden con los DTOs ya usados por FeedService/ExperienceService;
+  no inventar nuevos contratos en el front.
