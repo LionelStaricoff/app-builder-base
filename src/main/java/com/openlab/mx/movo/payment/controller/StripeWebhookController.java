@@ -6,6 +6,7 @@ import com.openlab.mx.movo.payment.repository.ConnectAccountRepository;
 import com.openlab.mx.movo.payment.repository.ConnectPayoutRepository;
 import com.openlab.mx.movo.payment.repository.StripeEventRepository;
 import com.openlab.mx.movo.payment.service.ConnectAccountService;
+import com.openlab.mx.movo.payment.service.RidePaymentService;
 
 import com.openlab.mx.movo.shared.exception.DomainException;
 import com.stripe.exception.SignatureVerificationException;
@@ -41,6 +42,7 @@ public class StripeWebhookController {
     private final ConnectAccountRepository connectAccountRepository;
     private final ConnectPayoutRepository connectPayoutRepository;
     private final ConnectAccountService connectAccountService;
+    private final RidePaymentService ridePaymentService;
 
     @Value("${stripe.webhook-secret:}")
     private String webhookSecret = "";
@@ -115,6 +117,8 @@ public class StripeWebhookController {
                 return marcarTransferCompletado(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
             case "transfer.reversed":
                 return marcarTransferFallido(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
+            case "checkout.session.completed":
+                return marcarPagoViajeCompletado(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
             default:
                 return Resultado.IGNORADO;
         }
@@ -162,6 +166,17 @@ public class StripeWebhookController {
         payout.setFailureReason("Stripe transfer failed");
         connectPayoutRepository.save(payout);
         return true;
+    }
+
+    /** checkout.session.completed: autoriza (manual capture) el pago del viaje. */
+    private boolean marcarPagoViajeCompletado(String sessionId) {
+        try {
+            ridePaymentService.markPaid(sessionId);
+            return true;
+        } catch (RuntimeException _) {
+            log.warn("Webhook checkout.session.completed sin pago conocido: {}", sessionId);
+            return false;
+        }
     }
 
     // reserva no navega entidades marketplace: delega al servicio

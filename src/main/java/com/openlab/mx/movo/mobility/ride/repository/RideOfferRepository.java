@@ -12,5 +12,6 @@ import java.util.Optional;
 public interface RideOfferRepository extends JpaRepository<RideOffer, Long> {
     List<RideOffer> findByRideIdOrderByCreatedAtAsc(Long rideId);
     Optional<RideOffer> findByIdAndRideId(Long id, Long rideId);
+    Optional<RideOffer> findByRideIdAndStatus(Long rideId, RideOfferStatus status);
     long countByRideIdAndStatus(Long rideId, RideOfferStatus status);
 }

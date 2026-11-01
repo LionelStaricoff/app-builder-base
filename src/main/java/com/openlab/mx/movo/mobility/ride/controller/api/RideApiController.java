@@ -5,6 +5,7 @@ import com.openlab.mx.movo.mobility.ride.entity.RideOffer;
 import com.openlab.mx.movo.mobility.ride.entity.RideOfferStatus;
 import com.openlab.mx.movo.mobility.ride.entity.RideStatus;
 import com.openlab.mx.movo.mobility.ride.service.RideService;
+import com.openlab.mx.movo.payment.service.RidePaymentService;
 import com.openlab.mx.movo.shared.CurrentUser;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -29,6 +30,7 @@ import java.util.List;
 public class RideApiController {
 
     private final RideService rideService;
+    private final RidePaymentService ridePaymentService;
     private final CurrentUser currentUser;
 
     public record CreateRideRequest(
@@ -137,12 +139,16 @@ public class RideApiController {
     public ResponseEntity<RideResponse> advance(@PathVariable Long id,
                                                @Valid @RequestBody AdvanceRequest req) {
         Ride ride = rideService.advance(id, req.next());
+        if (req.next() == RideStatus.FINISHED) {
+            ridePaymentService.captureOnFinish(id);
+        }
         return ResponseEntity.ok(toRideResponse(ride));
     }
 
     @PostMapping("/{id}/cancel")
     public ResponseEntity<RideResponse> cancel(@PathVariable Long id) {
         Ride ride = rideService.cancel(id);
+        ridePaymentService.cancel(id);
         return ResponseEntity.ok(toRideResponse(ride));
     }
 }
