@@ -6,7 +6,7 @@ import com.openlab.mx.movo.payment.repository.ConnectAccountRepository;
 import com.openlab.mx.movo.payment.repository.ConnectPayoutRepository;
 import com.openlab.mx.movo.payment.repository.StripeEventRepository;
 import com.openlab.mx.movo.payment.service.ConnectAccountService;
-import com.openlab.mx.movo.payment.service.StripeCheckoutService;
+
 import com.openlab.mx.movo.shared.exception.DomainException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
@@ -37,7 +37,7 @@ import java.time.ZoneId;import java.time.LocalDateTime;
 public class StripeWebhookController {
 
     private final StripeEventRepository stripeEventRepository;
-    private final StripeCheckoutService stripeCheckoutService;
+
     private final ConnectAccountRepository connectAccountRepository;
     private final ConnectPayoutRepository connectPayoutRepository;
     private final ConnectAccountService connectAccountService;
@@ -108,14 +108,6 @@ public class StripeWebhookController {
      */
     private Resultado aplicar(String type, String objectId) {
         switch (type) {
-            case "checkout.session.completed":
-                asegurarCompleto(objectId);
-                return Resultado.APLICADO;
-            case "checkout.session.expired":
-                stripeCheckoutService.expire(objectId);
-                return Resultado.APLICADO;
-            case "payment_intent.payment_failed":
-                return stripeCheckoutService.markPaymentFailed(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
             // ─── Stripe Connect ─────────────────────────────────────────────
             case "account.updated":
                 return actualizarCuentaConnect(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
@@ -125,19 +117,6 @@ public class StripeWebhookController {
                 return marcarTransferFallido(objectId) ? Resultado.APLICADO : Resultado.SIN_EFFECTO;
             default:
                 return Resultado.IGNORADO;
-        }
-    }
-
-    private void asegurarCompleto(String sessionId) {
-        Long userId = stripeCheckoutService.userIdForSession(sessionId);
-        if (userId == null) {
-            throw new DomainException("Sesión de pago no encontrada");
-        }
-        try {
-            stripeCheckoutService.complete(sessionId, userId);
-        } catch (DomainException e) {
-            log.warn("checkout.session.completed sobre session_id conocido pero no en DB: {}", e.getMessage());
-            throw e;
         }
     }
 
