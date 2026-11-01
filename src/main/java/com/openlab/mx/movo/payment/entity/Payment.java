@@ -34,10 +34,7 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "reservation_id", unique = true)
-    private Long reservationId;
-
-    /** Nueva app (movilidad): ride origen del pago; reemplaza reservation_id. */
+    /** Nueva app (movilidad): ride origen del pago; reemplaza reservation_id legacy. */
     @Column(name = "ride_id")
     private Long rideId;
 

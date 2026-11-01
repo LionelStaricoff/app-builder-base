@@ -13,8 +13,6 @@ import java.util.Optional;
 
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    Optional<Payment> findByReservationId(Long reservationId);
-
     Optional<Payment> findByRideId(Long rideId);
 
     List<Payment> findByCreatorId(Long creatorId);
@@ -30,6 +28,4 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     /** Pagos retenidos de instancias que ya cumplieron la ventana de escrow. */
     List<Payment> findByStatusAndHeldAtBefore(PaymentStatus status, LocalDateTime heldAtBefore);
 
-    List<Payment> findByReservationIdInAndStatusAndPayoutStatus(
-            List<Long> reservationIds, PaymentStatus status, PayoutStatus payoutStatus);
 }
